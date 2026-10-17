@@ -56,6 +56,32 @@ und http://localhost:8765 öffnen. Laufzeit ca. 30 s pro Kachel.
   fehlen noch.
 - Sauberere Umrisse wären mit dem LoD2-Gebäudemodell möglich (geplant).
 
+## Schritt 2 (Test): Balkonerkennung mit der Claude API
+
+`pipeline/balkone_claude.py` schickt die Frontalansichten per Message Batches API
+an Claude und lässt Balkone/Loggien mit Bildkoordinaten, Typ, Geschoss und
+Eignung fürs Balkonkraftwerk melden.
+
+    pip3 install anthropic
+    echo "ANTHROPIC_API_KEY=..." > .env        # wird nicht committet
+    python3 pipeline/balkone_claude.py submit --ids 733,624 --models opus,sonnet,haiku
+    python3 pipeline/balkone_claude.py status
+    python3 pipeline/balkone_claude.py collect
+
+Ohne `--ids` werden alle SO/S/SW-Fassaden eingereicht. Ergebnisse landen in
+`webapp/balkone.json`, Prüfbilder mit eingezeichneten Boxen in `_analyse/claude/`.
+
+Gemessene Kosten (Batch-Preise, Okt. 2026, 2 Testfassaden):
+
+| Modell | Kosten pro Fassade | pro 1.000 Fassaden |
+|---|---|---|
+| Opus 5.5 | ca. 2,0 US-Cent | ca. 20 $ |
+| Sonnet 5.5 | ca. 0,85 US-Cent | ca. 8,50 $ |
+| Haiku 5.5 | ca. 0,03 US-Cent | ca. 0,35 $ |
+
+Opus und Sonnet 5.5 unterstützen kein erzwungenes Werkzeug (`tool_choice: tool`),
+daher `tool_choice: auto` mit Anweisung im Systemprompt.
+
 ## Nächste Schritte
 
 - Balkonerkennung auf den Frontalansichten (multimodales LLM oder

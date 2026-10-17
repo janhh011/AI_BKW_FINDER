@@ -12,3 +12,6 @@ _analyse/
 __pycache__/
 *.pyc
 .DS_Store
+
+# Zugangsdaten (API-Keys)
+.env
