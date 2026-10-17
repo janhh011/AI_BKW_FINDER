@@ -59,6 +59,9 @@ MIN_BUILDING_AREA = 40.0  # m²    kleinste Gebäudefläche
 MAX_HOLE_FILL = 25.0      # m²    kleinere Löcher in der Maske werden gefüllt
 SIMPLIFY = 0.8            # m     Toleranz der Kantenvereinfachung
 MIN_EDGE = 3.0            # m     kürzeste Fassade
+STEP_LEVEL = 3.0          # m     Abstand der Höhenstufen für die Suche nach Höhensprüngen
+STEP_MIN = 3.0            # m     Mindesthöhe eines Höhensprungs (sichtbare Wand über Nachbardach)
+STEP_MIN_EV = 0.5         #       Mindest-Wandnachweis für Höhensprünge (filtert Dachschrägen)
 BORDER_MARGIN = 3.0       # m     Kanten so nah am Kachelrand werden verworfen
 EVIDENCE_RADIUS = 1.5     # m     Suchradius für Wanddreiecke
 EVIDENCE_ANGLE = 35.0     # Grad  max. Abweichung Wandnormale <-> Fassadennormale
@@ -105,7 +108,9 @@ def load_mesh(obj_path, cache_path):
     if os.path.exists(cache_path) and os.path.getmtime(cache_path) > os.path.getmtime(obj_path):
         log(f"Mesh aus Cache: {cache_path}")
         d = np.load(cache_path, allow_pickle=True)
-        return (d["V"], d["F"], d["VT"], d["FT"], d["mat"], list(d["tex_files"]))
+        # Texturpfade immer relativ zum aktuellen Kachelordner auflösen (Ordner kann verschoben sein)
+        tex = [os.path.join(os.path.dirname(obj_path), os.path.basename(str(p))) for p in d["tex_files"]]
+        return (d["V"], d["F"], d["VT"], d["FT"], d["mat"], tex)
 
     log(f"Lese {obj_path}")
     tile_dir = os.path.dirname(obj_path)
@@ -275,7 +280,10 @@ def main(tile_dir, out_dir):
     tile_name = os.path.splitext(os.path.basename(obj))[0]
     V, F, VT, FT, mat, tex_files = load_mesh(obj, os.path.join(cache_dir, "mesh.npz"))
     log("Lade Texturen")
-    tex = [np.asarray(Image.open(p).convert("RGB")) if os.path.exists(p) else None for p in tex_files]
+    missing = [p for p in tex_files if not os.path.exists(p)]
+    if missing:
+        sys.exit(f"Texturen fehlen: {missing}")
+    tex = [np.asarray(Image.open(p).convert("RGB")) for p in tex_files]
     n, area = face_normals(V, F)
 
     xmin, ymin = V[:, 0].min(), V[:, 1].min()
@@ -386,74 +394,128 @@ def main(tile_dir, out_dir):
     nx_, ny_ = to_grid.transform(lon0, lat0 + 0.001)
     north_grid_az = math.degrees(math.atan2(nx_ - cx, ny_ - cy))  # Gitterazimut des wahren Nordens
 
-    facades = []
-    fid = 0
-    for cnt in contours:
-        if len(cnt) < 4:
-            continue
-        approx = cv2.approxPolyDP(cnt, SIMPLIFY / RES, True)[:, 0, :]
-        if len(approx) < 3:
-            continue
-        pts = [to_utm(c, r) for c, r in approx]
-        for k in range(len(pts)):
-            ax, ay = pts[k]
-            bx, by = pts[(k + 1) % len(pts)]
-            dx, dy = bx - ax, by - ay
-            L = math.hypot(dx, dy)
-            if L < MIN_EDGE:
+    dtm32 = dtm.astype(np.float32)
+    dsm_filled = np.where(valid, dsm, dtm32).astype(np.float32)
+
+    def wall_evidence(sx, sy, nrm, ground_z, top_z):
+        hits = 0
+        for nb in tree_kd.query_ball_point(np.c_[sx, sy], EVIDENCE_RADIUS):
+            if not nb:
                 continue
-            tx, ty = dx / L, dy / L
-            # Kachelrand
-            if min(ax, bx) - xmin < BORDER_MARGIN or xmax - max(ax, bx) < BORDER_MARGIN \
-                    or min(ay, by) - ymin < BORDER_MARGIN or ymax - max(ay, by) < BORDER_MARGIN:
-                continue
-            ns = max(int(L / 0.5), 3)
-            s = (np.arange(ns) + 0.5) / ns
-            sx, sy = ax + s * dx, ay + s * dy
+            nb = np.asarray(nb)
+            ok = (wall_n[nb] @ nrm > cos_lim) & (wall_z[nb] > ground_z + 1.0) & (wall_z[nb] < top_z + 1.0)
+            if ok.any():
+                hits += 1
+        return hits / len(sx)
+
+    def process_edge(ax, ay, bx, by, kind):
+        """Prüft eine Umrisskante und liefert die Fassade als dict oder None.
+        kind = "umriss": Gebäude grenzt an Freifläche (Außenseite = keine Gebäudemaske)
+        kind = "stufe":  Wand über einem niedrigeren Nachbardach (Höhensprung)"""
+        dx, dy = bx - ax, by - ay
+        L = math.hypot(dx, dy)
+        if L < MIN_EDGE:
+            return None
+        tx, ty = dx / L, dy / L
+        if min(ax, bx) - xmin < BORDER_MARGIN or xmax - max(ax, bx) < BORDER_MARGIN \
+                or min(ay, by) - ymin < BORDER_MARGIN or ymax - max(ay, by) < BORDER_MARGIN:
+            return None
+        ns = max(int(L / 0.5), 3)
+        s = (np.arange(ns) + 0.5) / ns
+        sx, sy = ax + s * dx, ay + s * dy
+        cand = np.array([ty, -tx])
+        if kind == "umriss":
             # Außennormale: die Seite, auf der keine Gebäudemaske ist
-            cand = np.array([ty, -tx])
             o1 = sample(building, sx + cand[0] * 1.0, sy + cand[1] * 1.0, False).mean()
             o2 = sample(building, sx - cand[0] * 1.0, sy - cand[1] * 1.0, False).mean()
             nrm = cand if o1 < o2 else -cand
-            # außen muss Mesh vorhanden sein, sonst Rand/Datenlücke
-            out_valid = sample(valid, sx + nrm[0] * 2.0, sy + nrm[1] * 2.0, False).mean()
-            if out_valid < 0.6:
+            if sample(valid, sx + nrm[0] * 2.0, sy + nrm[1] * 2.0, False).mean() < 0.6:
+                return None
+            outside = sample(dtm32, sx + nrm[0] * 2.0, sy + nrm[1] * 2.0, np.float32(np.nan))
+        else:
+            # Außennormale: die Seite mit dem niedrigeren Dach
+            h1 = np.nanmedian(sample(ndsm, sx + cand[0] * 1.5, sy + cand[1] * 1.5, np.float32(np.nan)))
+            h2 = np.nanmedian(sample(ndsm, sx - cand[0] * 1.5, sy - cand[1] * 1.5, np.float32(np.nan)))
+            nrm = cand if h1 < h2 else -cand
+            # Außenseite muss überwiegend Dach (Gebäude) sein, sonst ist es eine normale Außenwand
+            if sample(building, sx + nrm[0] * 1.5, sy + nrm[1] * 1.5, False).mean() < 0.6:
+                return None
+            outside = sample(dsm_filled, sx + nrm[0] * 1.5, sy + nrm[1] * 1.5, np.float32(np.nan))
+        inside = sample(dsm_filled, sx - nrm[0] * 1.5, sy - nrm[1] * 1.5, np.float32(np.nan))
+        ground_z = float(np.nanmedian(outside))
+        top_z = float(np.nanpercentile(inside, 80))
+        height = float(np.nanmedian(inside)) - ground_z
+        if not np.isfinite(height) or height < (MIN_HEIGHT if kind == "umriss" else STEP_MIN):
+            return None
+        evidence = wall_evidence(sx, sy, nrm, ground_z, top_z)
+        if kind == "stufe" and evidence < STEP_MIN_EV:
+            return None
+        grid_az = math.degrees(math.atan2(nrm[0], nrm[1]))
+        az = (grid_az - north_grid_az) % 360
+        cls = SECTORS[int(((az + 22.5) % 360) // 45)]
+        lla = to_ll.transform(ax, ay)
+        llb = to_ll.transform(bx, by)
+        return dict(
+            cls=cls, az=round(az, 1), len=round(L, 1), h=round(height, 1),
+            area=round(L * height, 0), ev=round(evidence, 2), kind=kind,
+            a=[round(ax, 2), round(ay, 2)], b=[round(bx, 2), round(by, 2)],
+            n=[round(float(nrm[0]), 4), round(float(nrm[1]), 4)],
+            ll=[[round(lla[1], 7), round(lla[0], 7)], [round(llb[1], 7), round(llb[0], 7)]],
+            ground=round(ground_z, 2), top=round(top_z, 2),
+            target=cls in TARGET_CLASSES,
+        )
+
+    def edges_of(mask_):
+        cs, _ = cv2.findContours(mask_.astype(np.uint8), cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE)
+        for cnt in cs:
+            if len(cnt) < 4:
                 continue
-            # Höhen
-            h_in = sample(ndsm, sx - nrm[0] * 1.5, sy - nrm[1] * 1.5, np.float32(0))
-            height = float(np.median(h_in))
-            if height < MIN_HEIGHT:
+            approx = cv2.approxPolyDP(cnt, SIMPLIFY / RES, True)[:, 0, :]
+            if len(approx) < 3:
                 continue
-            g_out = sample(dtm.astype(np.float32), sx + nrm[0] * 2.0, sy + nrm[1] * 2.0, np.float32(np.nan))
-            ground_z = float(np.nanmedian(g_out))
-            top_z = ground_z + float(np.percentile(h_in, 80))
-            # Wandnachweis
-            hits = 0
-            for qi, nb in enumerate(tree_kd.query_ball_point(np.c_[sx, sy], EVIDENCE_RADIUS)):
-                if not nb:
-                    continue
-                nb = np.asarray(nb)
-                ok = (wall_n[nb] @ nrm > cos_lim) & (wall_z[nb] > ground_z + 1.5) & (wall_z[nb] < top_z + 1.0)
-                if ok.any():
-                    hits += 1
-            evidence = hits / ns
-            # Himmelsrichtung
-            grid_az = math.degrees(math.atan2(nrm[0], nrm[1]))
-            az = (grid_az - north_grid_az) % 360
-            cls = SECTORS[int(((az + 22.5) % 360) // 45)]
-            lla = to_ll.transform(ax, ay)
-            llb = to_ll.transform(bx, by)
-            facades.append(dict(
-                id=fid, cls=cls, az=round(az, 1), len=round(L, 1), h=round(height, 1),
-                area=round(L * height, 0), ev=round(evidence, 2),
-                a=[round(ax, 2), round(ay, 2)], b=[round(bx, 2), round(by, 2)],
-                n=[round(float(nrm[0]), 4), round(float(nrm[1]), 4)],
-                ll=[[round(lla[1], 7), round(lla[0], 7)], [round(llb[1], 7), round(llb[0], 7)]],
-                ground=round(ground_z, 2), top=round(top_z, 2),
-                target=cls in TARGET_CLASSES,
-            ))
-            fid += 1
-    log(f"{len(facades)} Fassaden, davon {sum(f['target'] for f in facades)} nach SO/S/SW")
+            pts = [to_utm(c, r) for c, r in approx]
+            for k in range(len(pts)):
+                yield pts[k], pts[(k + 1) % len(pts)]
+
+    facades = []
+    for (ax, ay), (bx, by) in edges_of(building):
+        f = process_edge(ax, ay, bx, by, "umriss")
+        if f:
+            facades.append(f)
+    n_outline = len(facades)
+
+    # Höhensprünge: Umrisse auf mehreren Höhenstufen innerhalb der Gebäudemaske
+    log("Suche Höhensprünge zwischen Gebäuden")
+    accepted = []   # (Stützpunkte, Normale) zur Duplikatprüfung
+
+    def is_duplicate(f):
+        A, B = np.array(f["a"]), np.array(f["b"])
+        k = max(int(f["len"] / 0.5), 3)
+        p = A + (np.arange(k)[:, None] + 0.5) / k * (B - A)
+        nf = np.array(f["n"])
+        for q, nq in accepted:
+            if nf @ nq < 0.9:
+                continue
+            dmin = np.sqrt(((p[:, None, :] - q[None, :, :]) ** 2).sum(-1)).min(axis=1)
+            if (dmin < 1.5).mean() > 0.5:
+                return True
+        accepted.append((p, nf))
+        return False
+
+    max_h = float(np.nanpercentile(ndsm[building], 99)) if building.any() else 0
+    for lv in np.arange(MIN_HEIGHT + STEP_LEVEL, max_h, STEP_LEVEL):
+        m = building & (ndsm > lv)
+        m = cv2.morphologyEx(m.astype(np.uint8), cv2.MORPH_OPEN, k1).astype(bool)
+        m = cv2.morphologyEx(m.astype(np.uint8), cv2.MORPH_CLOSE, k1).astype(bool)
+        m = remove_small(m, MIN_BUILDING_AREA / 2 / RES ** 2)
+        for (ax, ay), (bx, by) in edges_of(m):
+            f = process_edge(ax, ay, bx, by, "stufe")
+            if f and not is_duplicate(f):
+                facades.append(f)
+    for i, f in enumerate(facades):
+        f["id"] = i
+    log(f"{len(facades)} Fassaden ({n_outline} Außenwände, {len(facades) - n_outline} Höhensprünge), "
+        f"davon {sum(f['target'] for f in facades)} nach SO/S/SW")
 
     # ---------------------------------------------------------------- 7. Frontalansichten
     log("Rendere Frontalansichten")
@@ -491,8 +553,15 @@ def main(tile_dir, out_dir):
         img = shade(ftid, fb0, fb1, F, FT, VT, mat, tex, bg=(236, 236, 236))
         # leere Ränder oben abschneiden
         rows = np.nonzero((ftid >= 0).any(axis=1))[0]
+        r0 = max(rows[0] - 4, 0) if len(rows) else 0
         if len(rows):
-            img = img[max(rows[0] - 4, 0):rows[-1] + 4]
+            img = img[r0:rows[-1] + 4]
+        # Bildgeometrie für spätere Maßberechnung: Pixelgröße, Höhe der obersten Bildzeile,
+        # linker Bildrand (0,5 m vor Fassadenpunkt A in Richtung t)
+        fc["img_res"] = round(res, 5)
+        fc["img_ztop"] = round(zhi - r0 * res, 2)
+        fc["img_left"] = [round(float(A[0] - 0.5 * t[0]), 2), round(float(A[1] - 0.5 * t[1]), 2)]
+        fc["img_t"] = [round(float(t[0]), 4), round(float(t[1]), 4)]
         name = f"f{fc['id']:04d}.jpg"
         Image.fromarray(img).save(os.path.join(img_dir, name), quality=82)
         fc["img"] = f"fassaden/{name}"

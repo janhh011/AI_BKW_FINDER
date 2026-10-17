@@ -52,40 +52,45 @@ und http://localhost:8765 öffnen. Laufzeit ca. 30 s pro Kachel.
 ## Bekannte Grenzen
 
 - Wo Bäume über Dachkanten ragen, werden Umrisse zackig oder fehlen.
-- Fassaden zwischen aneinandergebauten Häusern unterschiedlicher Höhe
-  fehlen noch.
 - Sauberere Umrisse wären mit dem LoD2-Gebäudemodell möglich (geplant).
 
-## Schritt 2 (Test): Balkonerkennung mit der Claude API
+## Schritt 2: Balkonerkennung mit der Claude API
 
 `pipeline/balkone_claude.py` schickt die Frontalansichten per Message Batches API
-an Claude und lässt Balkone/Loggien mit Bildkoordinaten, Typ, Geschoss und
-Eignung fürs Balkonkraftwerk melden.
+an Claude. Das Modell meldet nur Boxen, Typ (Balkon/Loggia/unsicher) und Geschoss.
+Breite, Höhe und Lage jedes Balkons werden im Code aus der Box und dem bekannten
+Bildmaßstab berechnet (Genauigkeit ca. ±0,3–0,5 m).
 
     pip3 install anthropic
     echo "ANTHROPIC_API_KEY=..." > .env        # wird nicht committet
-    python3 pipeline/balkone_claude.py submit --ids 733,624 --models opus,sonnet,haiku
+    python3 pipeline/balkone_claude.py submit --classes S --model sonnet
     python3 pipeline/balkone_claude.py status
     python3 pipeline/balkone_claude.py collect
 
-Ohne `--ids` werden alle SO/S/SW-Fassaden eingereicht. Ergebnisse landen in
-`webapp/balkone.json`, Prüfbilder mit eingezeichneten Boxen in `_analyse/claude/`.
+Ergebnisse landen in `webapp/balkone.json` / `balkone.js`, Prüfbilder in `_analyse/claude/`.
 
-Gemessene Kosten (Batch-Preise, Okt. 2026, 2 Testfassaden):
-
-| Modell | Kosten pro Fassade | pro 1.000 Fassaden |
-|---|---|---|
-| Opus 5.5 | ca. 2,0 US-Cent | ca. 20 $ |
-| Sonnet 5.5 | ca. 0,85 US-Cent | ca. 8,50 $ |
-| Haiku 5.5 | ca. 0,03 US-Cent | ca. 0,35 $ |
+Stand Kachel 3858_58171_-002: alle 95 Südfassaden mit Sonnet 5.5 ausgewertet,
+Kosten 0,26 $ (ca. 0,27 US-Cent pro Fassade, Batch-Preise Okt. 2026).
 
 Opus und Sonnet 5.5 unterstützen kein erzwungenes Werkzeug (`tool_choice: tool`),
 daher `tool_choice: auto` mit Anweisung im Systemprompt.
 
+### Webseite
+
+Klick auf eine Fassade öffnet eine Eintauch-Ansicht mit der Frontalansicht.
+Erkannte Balkone sind anklickbar und zeigen Breite, Höhe, Geschoss, Unterkante,
+einen Modulvorschlag (Standardmodul 1,72 × 1,13 m, max. 2 Module) und eine grobe
+Ertragsschätzung für senkrecht montierte Module ohne Verschattung.
+
+### Fassadenerkennung: Höhensprünge
+
+Neben Außenwänden erkennt die Pipeline jetzt auch Wände über niedrigeren
+Nachbardächern (Höhensprünge). Abdeckung der südgerichteten Wandfläche im Mesh:
+84 % (vorher 73 %). Rest: Kachelrand, Wände unter Baumkronen, Stufen unter 3 m.
+
 ## Nächste Schritte
 
-- Balkonerkennung auf den Frontalansichten (multimodales LLM oder
-  Zero-Shot-Detektor als Start, später eigenes YOLO-Modell)
+- Auswertung auf SO/SW ausweiten
 - Verschattung durch Nachbargebäude über das Jahr
 - LoD2-Umrisse statt Mesh-Umrisse
 
