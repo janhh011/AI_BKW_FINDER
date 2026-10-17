@@ -3,3 +3,6 @@ pillow
 opencv-python
 scipy
 pyproj
+pandas
+pvlib
+demandlib

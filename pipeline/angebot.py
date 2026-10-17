@@ -1,0 +1,578 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Durchrechnung je Balkon für die Angebotsseite.
+
+1. Punktwolke aus dem 3D-Mesh; Bäume werden über den Grünanteil der Textur markiert.
+2. Horizont je Modulpunkt: Gebäude blockieren die Sonne, Bäume lassen je nach Jahreszeit
+   einen Teil durch (belaubt / unbelaubt).
+3. Stündliche Simulation über ein Referenzjahr mit pvlib: Sonnenstand, Einstrahlung auf das
+   senkrechte Modul am Geländer, Verschattung, Modultemperatur, 800-W-Wechselrichter.
+4. Kennzahlen aller Balkone -> webapp/ertrag.js (für den Fassaden-Explorer).
+5. Für ausgewählte Balkone eine Angebotsseite mit 3D-Szene -> webapp/angebot/<fassade>_<balkon>/
+
+Nutzung:
+  python3 pipeline/angebot.py data/<kachel> webapp
+  python3 pipeline/angebot.py data/<kachel> webapp --szene 376:0 --szene 12:1
+  python3 pipeline/angebot.py data/<kachel> webapp --wetter pvgis_tmy.json
+
+Wetter: ohne --wetter wird ein synthetisches Referenzjahr erzeugt, das auf mittlere
+Monatssummen der Globalstrahlung in Berlin kalibriert ist. Besser ist ein echtes typisches
+Jahr von PVGIS (JSON oder CSV), z. B.:
+  https://re.jrc.ec.europa.eu/api/v5_2/tmy?lat=52.494&lon=13.321&outputformat=json
+"""
+import argparse
+import json
+import math
+import os
+import shutil
+import sys
+import time
+
+import numpy as np
+import pandas as pd
+import pvlib
+from demandlib import bdew
+from PIL import Image
+from pyproj import Geod, Transformer
+
+Image.MAX_IMAGE_PIXELS = None
+
+# ------------------------------------------------------------------ Parameter
+MODUL = dict(w=1.72, h=1.13, wp=430, gap=0.04)   # Standardmodul quer am Geländer
+KLEIN = dict(w=1.15, h=1.03, wp=250)              # kleines Modul für schmale Balkone
+MAX_MODULE = 2
+WR_AC = 800.0            # W, Grenze Steckersolargerät
+WR_ETA = 0.96
+VERLUSTE = 0.03          # Kabel, Mismatch, Verschmutzung
+GAMMA = -0.0035          # Temperaturkoeffizient Leistung 1/K
+ALBEDO = 0.15            # städtischer Boden
+TAU_BELAUBT = 0.20       # Lichtdurchlass Baumkrone Mai–Oktober
+TAU_KAHL = 0.55          # Lichtdurchlass Baumkrone November–April
+GREEN_EXG = 0.06         # Grünindex-Schwelle für Baum-Dreiecke (wie in der Fassaden-Pipeline)
+PUNKT_ABSTAND = 0.6      # m, Dichte der Punktwolke
+HORIZONT_RADIUS = 220.0  # m
+AZ_STEP = 2              # Grad je Horizont-Sektor
+NB = 360 // AZ_STEP
+RAND_WARNUNG = 60.0      # m, Balkone näher am Kachelrand haben unvollständigen Horizont
+SZENE_RADIUS = 85.0      # m, Ausschnitt der 3D-Szene
+JAHR = 2025
+
+# Mittlere Monatssummen Globalstrahlung horizontal (kWh/m²) und Lufttemperatur (°C), Raum Berlin,
+# gerundete Klimamittel. Linke-Trübung typisch Mitteleuropa, Stadt.
+GHI_MONAT = [21, 38, 77, 123, 155, 163, 160, 136, 92, 52, 23, 15]
+T_MONAT = [1.0, 1.9, 5.0, 10.1, 14.5, 17.7, 19.8, 19.4, 15.1, 10.0, 5.4, 2.1]
+LINKE_MONAT = [3.0, 3.3, 3.6, 4.0, 4.2, 4.4, 4.5, 4.4, 4.0, 3.6, 3.2, 3.0]
+
+AZC = (np.arange(NB) + 0.5) * AZ_STEP
+ELC = np.arange(0.5, 90.0, 1.0)
+
+
+def log(*a):
+    print(time.strftime("%H:%M:%S"), *a, flush=True)
+
+
+# ------------------------------------------------------------------ Eingaben
+def lade_eingaben(tile_dir, web):
+    txt = open(os.path.join(web, "data.js"), encoding="utf-8").read()
+    D = json.loads(txt[txt.index("=") + 1:].strip().rstrip(";"))
+    p = os.path.join(web, "balkone.json")
+    if not os.path.exists(p):
+        sys.exit("balkone.json fehlt – zuerst balkone_claude.py collect ausführen")
+    BK = json.load(open(p, encoding="utf-8"))
+    d = np.load(os.path.join(web, "_cache", "mesh.npz"), allow_pickle=True)
+    tex = [os.path.join(tile_dir, os.path.basename(str(t))) for t in d["tex_files"]]
+    missing = [t for t in tex if not os.path.exists(t)]
+    if missing:
+        sys.exit(f"Texturen fehlen: {missing}")
+    return D, BK, d["V"], d["F"], d["VT"], d["FT"], d["mat"], tex
+
+
+def baum_dreiecke(F, VT, FT, mat, tex, cache):
+    """Baum-Markierung je Dreieck über den Grünanteil der Textur."""
+    if os.path.exists(cache):
+        return np.load(cache)
+    log("Markiere Baum-Dreiecke")
+    # Farbe je Dreieck: Mittel aus Schwerpunkt und Ecken
+    uvs = VT[FT]                                   # (n, 3, 2)
+    uvs = np.concatenate([uvs, uvs.mean(1, keepdims=True)], axis=1)
+    rgb = np.zeros((len(F), 3), np.float32)
+    for m, p in enumerate(tex):
+        s = mat == m
+        if not s.any():
+            continue
+        im = np.asarray(Image.open(p).convert("RGB"))
+        h, w, _ = im.shape
+        u = uvs[s]
+        px = np.clip(np.round(u[..., 0] * (w - 1)).astype(np.int64), 0, w - 1)
+        py = np.clip(np.round((1 - u[..., 1]) * (h - 1)).astype(np.int64), 0, h - 1)
+        rgb[s] = im[py, px].astype(np.float32).mean(1)
+        del im
+    exg = (2 * rgb[:, 1] - rgb[:, 0] - rgb[:, 2]) / (rgb.sum(1) + 1e-6)
+    tri_baum = exg > GREEN_EXG
+    np.save(cache, tri_baum)
+    return tri_baum
+
+
+def punktwolke(V, F, tri_baum, cache):
+    """Gleichmäßig verteilte Punkte auf allen Dreiecken + Baum-Markierung je Punkt."""
+    if os.path.exists(cache):
+        z = np.load(cache)
+        return z["P"].astype(np.float64) + z["origin"], z["baum"]
+    log("Baue Punktwolke aus dem Mesh")
+    T = V[F]
+    area = 0.5 * np.linalg.norm(np.cross(T[:, 1] - T[:, 0], T[:, 2] - T[:, 0]), axis=1)
+    k = np.clip(np.ceil(area / PUNKT_ABSTAND ** 2), 1, 400).astype(np.int64)
+    idx = np.repeat(np.arange(len(F)), k)
+    rng = np.random.default_rng(0)
+    r1 = np.sqrt(rng.random(len(idx)))
+    r2 = rng.random(len(idx))
+    P = (T[idx, 0] * (1 - r1)[:, None] + T[idx, 1] * (r1 * (1 - r2))[:, None]
+         + T[idx, 2] * (r1 * r2)[:, None])
+    P = np.concatenate([P, V])
+    baum = np.concatenate([tri_baum[idx], np.zeros(len(V), bool)])
+    origin = np.floor(P.min(0))
+    np.savez_compressed(cache, P=(P - origin).astype(np.float32), origin=origin, baum=baum)
+    log(f"Punktwolke: {len(P):,} Punkte, {baum.mean() * 100:.0f} % Baum")
+    return P, baum
+
+
+# ------------------------------------------------------------------ Wetter
+def zeitachse():
+    idx = pd.date_range(f"{JAHR}-01-01 00:00", periods=8760, freq="h", tz="Europe/Berlin")
+    return idx, idx + pd.Timedelta(minutes=30)
+
+
+def synth_wetter(lat, lon, mid):
+    loc = pvlib.location.Location(lat, lon, tz="Europe/Berlin", altitude=40)
+    sp = loc.get_solarposition(mid)
+    tl = pd.Series(np.array(LINKE_MONAT)[mid.month - 1], index=mid)
+    cs = loc.get_clearsky(mid, model="ineichen", solar_position=sp, linke_turbidity=tl)
+    ghi_cs = cs["ghi"].to_numpy()
+    rng = np.random.default_rng(42)
+    month = mid.month.to_numpy()
+    doy = mid.dayofyear.to_numpy()
+    kd_h = np.zeros(len(mid))
+    K_h = np.zeros(len(mid))
+    for m in range(1, 13):
+        sel = month == m
+        days = np.unique(doy[sel])
+        target = GHI_MONAT[m - 1] * 1000.0
+        K = min(target / ghi_cs[sel].sum(), 0.92)
+        c = 1.6                                    # klein = viele klare und viele trübe Tage
+        kd = rng.beta(K * c, (1 - K) * c, len(days))
+        day_of = {d: i for i, d in enumerate(days)}
+        di = np.array([day_of[d] for d in doy[sel]])
+        for _ in range(8):                         # exakt auf die Monatssumme skalieren
+            g = (ghi_cs[sel] * kd[di]).sum()
+            kd = np.clip(kd * target / max(g, 1e-6), 0.04, 1.0)
+        kd_h[sel] = kd[di]
+        K_h[sel] = K
+    ghi = ghi_cs * kd_h
+    er = pvlib.irradiance.erbs(ghi, sp["zenith"], mid)
+    dhi = np.clip(er["dhi"].to_numpy(), 0, None)
+    dni = np.clip(np.nan_to_num(er["dni"].to_numpy()), 0, cs["dni"].to_numpy() * 1.05)
+    hour = mid.hour.to_numpy() + 0.5
+    summer = ((month >= 4) & (month <= 9)).astype(float)
+    temp = (np.array(T_MONAT)[month - 1] + 3.5 * np.cos(2 * np.pi * (hour - 15) / 24)
+            + (2 + 3 * summer) * (kd_h - K_h))
+    w = pd.DataFrame(dict(ghi=ghi, dni=dni, dhi=dhi, temp_air=temp, wind_speed=2.0), index=mid)
+    return w, sp, "synthetisches Referenzjahr (kalibriert auf Berliner Monatsmittel der Einstrahlung)"
+
+
+def pvgis_wetter(path, lat, lon, mid):
+    r = pvlib.iotools.read_pvgis_tmy(path, map_variables=True)
+    data = r[0] if isinstance(r, tuple) else r
+    data = data.copy()
+    data.index = pd.DatetimeIndex([t.replace(year=JAHR) for t in data.index])
+    if data.index.tz is None:
+        data.index = data.index.tz_localize("UTC")
+    data = data.tz_convert("Europe/Berlin").sort_index()
+    data = data[~data.index.duplicated()]
+    data = data.reindex(mid, method="nearest")
+    loc = pvlib.location.Location(lat, lon, tz="Europe/Berlin", altitude=40)
+    sp = loc.get_solarposition(mid)
+    w = data[["ghi", "dni", "dhi", "temp_air", "wind_speed"]].astype(float)
+    return w, sp, "PVGIS typisches Referenzjahr (TMY)"
+
+
+# ------------------------------------------------------------------ Geometrie
+def modul_vorschlag(breite):
+    fit = int(math.floor((breite + MODUL["gap"]) / (MODUL["w"] + MODUL["gap"])))
+    n = min(fit, MAX_MODULE)
+    if n >= 1:
+        return dict(n=n, fit=fit, w=MODUL["w"], h=MODUL["h"], wp_modul=MODUL["wp"], wp=n * MODUL["wp"],
+                    text=f"{n} × Standardmodul ({MODUL['w']:.2f} × {MODUL['h']:.2f} m, je {MODUL['wp']} Wp)"
+                    .replace(".", ","))
+    if breite >= KLEIN["w"] + 0.05:
+        return dict(n=1, fit=0, w=KLEIN["w"], h=KLEIN["h"], wp_modul=KLEIN["wp"], wp=KLEIN["wp"],
+                    text=f"1 × kleines Modul ({KLEIN['w']:.2f} m breit, {KLEIN['wp']} Wp)".replace(".", ","))
+    return None
+
+
+def balkon_geometrie(f, b, P, baum):
+    res = f["img_res"]
+    L0 = np.array(f["img_left"], float)
+    t = np.array(f["img_t"], float)
+    n = np.array(f["n"], float)
+    x0, y0, x1, y1 = b["box"]
+    s0, s1 = x0 * res, x1 * res
+    zt = f["img_ztop"] - y0 * res
+    zb = f["img_ztop"] - y1 * res
+    c2 = L0 + t * (s0 + s1) / 2
+
+    # Lage der Geländer-Vorderkante aus dem Mesh schätzen
+    near = (np.abs(P[:, 0] - c2[0]) < 12) & (np.abs(P[:, 1] - c2[1]) < 12)
+    Q = P[near]
+    qb = baum[near]
+    u = (Q[:, :2] - L0) @ t
+    o = (Q[:, :2] - L0) @ n
+    s = (u > s0 + 0.2) & (u < s1 - 0.2) & (Q[:, 2] > zb) & (Q[:, 2] < zt) & (o > -0.5) & (o < 4.0) & ~qb
+    default = {"Balkon": 1.2, "Loggia": 0.1}.get(b.get("typ"), 0.5)
+    tiefe = float(np.percentile(o[s], 90)) if s.sum() >= 20 else default
+    tiefe = float(np.clip(tiefe, 0.05, 3.5))
+    off = tiefe + 0.05
+
+    mv = modul_vorschlag(b["breite_m"])
+    if mv is None:
+        return None
+    total = mv["n"] * mv["w"] + (mv["n"] - 1) * MODUL["gap"]
+    u0 = (s0 + s1) / 2 - total / 2
+    z_top = min(zt, zb + 1.25)
+    z_bot = z_top - mv["h"]
+    module = []
+    for i in range(mv["n"]):
+        ua = u0 + i * (mv["w"] + MODUL["gap"])
+        ub = ua + mv["w"]
+        pa = L0 + t * ua + n * off
+        pb = L0 + t * ub + n * off
+        ecken = [[pa[0], pa[1], z_bot], [pb[0], pb[1], z_bot], [pb[0], pb[1], z_top], [pa[0], pa[1], z_top]]
+        punkte = []
+        for fu in (1 / 6, 0.5, 5 / 6):
+            for fz in (0.25, 0.75):
+                pp = L0 + t * (ua + fu * mv["w"]) + n * off
+                punkte.append([pp[0], pp[1], z_bot + fz * mv["h"]])
+        module.append(dict(ecken=np.array(ecken), punkte=np.array(punkte)))
+    mitte = L0 + t * (s0 + s1) / 2 + n * off
+    return dict(module=module, vorschlag=mv, tiefe=tiefe, n=n, t=t,
+                mitte=np.array([mitte[0], mitte[1], (z_bot + z_top) / 2]), zb=zb, zt=zt)
+
+
+def horizont_vorfilter(geo, P, baum):
+    c = geo["mitte"]
+    d = P[:, :2] - c[:2]
+    s = (np.abs(d[:, 0]) < HORIZONT_RADIUS) & (np.abs(d[:, 1]) < HORIZONT_RADIUS) \
+        & (P[:, 2] > geo["zb"] - 0.5) & (d @ geo["n"] > 0.2)
+    return P[s], baum[s]
+
+
+def horizont(p, nrm, Q, qb, gn_true):
+    d = Q - p
+    dh = np.hypot(d[:, 0], d[:, 1])
+    front = d[:, :2] @ nrm
+    ok = (front > 0.4) & (np.hypot(dh, d[:, 2]) > 1.0) & (d[:, 2] > 0) & (dh < HORIZONT_RADIUS)
+    d, dh, bt = d[ok], dh[ok], qb[ok]
+    el = np.degrees(np.arctan2(d[:, 2], dh))
+    azt = (np.degrees(np.arctan2(d[:, 0], d[:, 1])) + gn_true) % 360
+    bi = (azt // AZ_STEP).astype(np.int64) % NB
+    hb = np.zeros(NB)
+    ht = np.zeros(NB)
+    np.maximum.at(hb, bi[~bt], el[~bt])
+    np.maximum.at(ht, bi[bt], el[bt])
+    return hb, ht
+
+
+def himmel_faktor(hb, ht, az_mod, tau):
+    """Anteil des für eine senkrechte Fläche sichtbaren Himmels (isotrop gewichtet)."""
+    c = np.clip(np.cos(np.radians(AZC - az_mod)), 0, None)
+    w = c[:, None] * (np.cos(np.radians(ELC)) ** 2)[None, :]
+    Bb = ELC[None, :] < hb[:, None]
+    Bt = (ELC[None, :] < ht[:, None]) & ~Bb
+    tot = w.sum()
+    return float((tot - (w * Bb).sum() - (w * Bt).sum() * (1 - tau)) / tot)
+
+
+# ------------------------------------------------------------------ Simulation
+class Sim:
+    def __init__(self, wetter, sp, mid):
+        self.w = wetter
+        self.sp = sp
+        self.mid = mid
+        self.el = (90 - sp["apparent_zenith"]).to_numpy()
+        self.az = sp["azimuth"].to_numpy()
+        self.bi = (self.az // AZ_STEP).astype(np.int64) % NB
+        self.month = mid.month.to_numpy()
+        self.belaubt = (self.month >= 5) & (self.month <= 10)
+        self.tau = np.where(self.belaubt, TAU_BELAUBT, TAU_KAHL)
+        self.dni_extra = pvlib.irradiance.get_extra_radiation(mid).to_numpy()
+
+    def einstrahlung(self, az_mod):
+        sp, w = self.sp, self.w
+        aoi = pvlib.irradiance.aoi(90, az_mod, sp["apparent_zenith"], sp["azimuth"]).to_numpy()
+        hd = pvlib.irradiance.haydavies(90, az_mod, w["dhi"], w["dni"], self.dni_extra,
+                                        sp["apparent_zenith"], sp["azimuth"], return_components=True)
+        iso = np.nan_to_num(np.asarray(hd["poa_isotropic"], float))
+        circ = np.nan_to_num(np.asarray(hd["poa_circumsolar"], float))
+        beam = np.where((aoi < 90) & (self.el > 0), w["dni"].to_numpy() * np.cos(np.radians(aoi)), 0.0)
+        beam = np.clip(beam, 0, None)
+        ground = w["ghi"].to_numpy() * ALBEDO * 0.5
+        iam = np.nan_to_num(pvlib.iam.ashrae(aoi, b=0.05))
+        return dict(aoi=aoi, iso=iso, circ=circ, beam=beam, ground=ground, iam=iam)
+
+    def leistung(self, E, modul_frac, modul_iso, wp_modul):
+        """modul_frac: Liste je Modul (8760,) Anteil direkte Sonne; modul_iso: (8760,) Himmelsfaktor."""
+        pdc = np.zeros(len(self.mid))
+        for frac, isof in zip(modul_frac, modul_iso):
+            direkt = (E["beam"] + E["circ"]) * frac
+            glob = direkt + E["iso"] * isof + E["ground"]
+            eff = direkt * E["iam"] + (E["iso"] * isof + E["ground"]) * 0.95
+            tc = pvlib.temperature.faiman(glob, self.w["temp_air"].to_numpy(), self.w["wind_speed"].to_numpy())
+            pdc += pvlib.pvsystem.pvwatts_dc(eff, tc, wp_modul, GAMMA) * (1 - VERLUSTE)
+        pac = pvlib.inverter.pvwatts(pdc, WR_AC / WR_ETA, WR_ETA)
+        return np.clip(np.nan_to_num(np.asarray(pac, float)), 0, WR_AC)
+
+    def referenz_dach(self):
+        """Plausibilitätscheck: 1 kWp, 35° Süd, unverschattet."""
+        sp, w = self.sp, self.w
+        poa = pvlib.irradiance.get_total_irradiance(35, 180, sp["apparent_zenith"], sp["azimuth"],
+                                                    w["dni"], w["ghi"], w["dhi"], dni_extra=self.dni_extra,
+                                                    model="haydavies", albedo=ALBEDO)
+        g = np.nan_to_num(poa["poa_global"].to_numpy())
+        tc = pvlib.temperature.faiman(g, w["temp_air"].to_numpy(), w["wind_speed"].to_numpy())
+        return float((pvlib.pvsystem.pvwatts_dc(g, tc, 1000, GAMMA) * 0.86).sum() / 1000)
+
+
+def simuliere_balkon(sim, geo, Q, qb, gn_true, az_mod):
+    E = sim.einstrahlung(az_mod)
+    nrm = geo["n"]
+    mv = geo["vorschlag"]
+    fracs, isos, horis = [], [], []
+    for m in geo["module"]:
+        fr = np.zeros(len(sim.mid))
+        iso_b = iso_k = 0.0
+        for p in m["punkte"]:
+            hb, ht = horizont(p, nrm, Q, qb, gn_true)
+            horis.append((hb, ht))
+            frei = sim.el > hb[sim.bi]
+            hinter_baum = sim.el <= ht[sim.bi]
+            fr += np.where(frei, np.where(hinter_baum, sim.tau, 1.0), 0.0)
+            iso_b += himmel_faktor(hb, ht, az_mod, TAU_BELAUBT)
+            iso_k += himmel_faktor(hb, ht, az_mod, TAU_KAHL)
+        k = len(m["punkte"])
+        fracs.append(fr / k)
+        isos.append(np.where(sim.belaubt, iso_b / k, iso_k / k))
+    pac = sim.leistung(E, fracs, isos, mv["wp_modul"])
+    one = np.ones(len(sim.mid))
+    pac_frei = sim.leistung(E, [one] * len(fracs), [one] * len(fracs), mv["wp_modul"])
+    hb_all = np.max([h[0] for h in horis], axis=0)
+    ht_all = np.max([h[1] for h in horis], axis=0)
+    # Sonnenstunden auf dem Modul (Mittel der Module, nur Stunden mit Sonne vor der Fassade)
+    vor = (sim.el > 0) & (E["aoi"] < 90)
+    sonne_frei = float(vor.sum())
+    sonne_mod = float((np.mean(fracs, axis=0) * vor).sum())
+    return dict(pac=pac, pac_frei=pac_frei, hb=hb_all, ht=ht_all,
+                frac=np.mean(fracs, axis=0), sonne_frei=sonne_frei, sonne_mod=sonne_mod,
+                himmel=float(np.mean([i.mean() for i in isos])))
+
+
+# ------------------------------------------------------------------ Export
+def exportiere_szene(out, P0, z0, V, F, VT, FT, mat, tri_baum):
+    c = V[F].mean(1)
+    sel = np.hypot(c[:, 0] - P0[0], c[:, 1] - P0[1]) < SZENE_RADIUS
+    tri = np.nonzero(sel)[0]
+    gruppe = mat[tri].astype(np.int64) * 2 + tri_baum[tri]     # sortiert nach Textur, dann Baum
+    tri = tri[np.argsort(gruppe, kind="stable")]
+    gruppe = mat[tri].astype(np.int64) * 2 + tri_baum[tri]
+    X = V[F[tri]].reshape(-1, 3)
+    pos = np.stack([X[:, 0] - P0[0], X[:, 2] - z0, -(X[:, 1] - P0[1])], axis=1).astype(np.float32)
+    uv = VT[FT[tri]].reshape(-1, 2).astype(np.float32)
+    with open(os.path.join(out, "scene.bin"), "wb") as fh:
+        fh.write(pos.tobytes())
+        fh.write(uv.tobytes())
+    groups = [dict(mat=int(g // 2), baum=bool(g % 2), count=int((gruppe == g).sum() * 3)) for g in np.unique(gruppe)]
+    return dict(file="scene.bin", vertices=int(len(pos)), groups=groups, radius=SZENE_RADIUS)
+
+
+def lokal(p, P0, z0):
+    return [round(float(p[0] - P0[0]), 3), round(float(p[2] - z0), 3), round(float(-(p[1] - P0[1])), 3)]
+
+
+# ------------------------------------------------------------------ Hauptprogramm
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("tile_dir")
+    ap.add_argument("webapp")
+    ap.add_argument("--szene", action="append", default=[], help="fassade:balkon, mehrfach möglich")
+    ap.add_argument("--wetter", help="PVGIS-TMY-Datei (JSON/CSV)")
+    ap.add_argument("--nur-szenen", action="store_true", help="nur die angegebenen Balkone rechnen")
+    a = ap.parse_args()
+
+    D, BK, V, F, VT, FT, mat, tex = lade_eingaben(a.tile_dir, a.webapp)
+    meta = D["meta"]
+    fac = {f["id"]: f for f in D["facades"]}
+    tri_baum = baum_dreiecke(F, VT, FT, mat, tex, os.path.join(a.webapp, "_cache", "baum_dreiecke.npy"))
+    P, baum = punktwolke(V, F, tri_baum, os.path.join(a.webapp, "_cache", "punkte.npz"))
+
+    xmin, ymin, xmax, ymax = meta["bounds"]
+    cx, cy = (xmin + xmax) / 2, (ymin + ymax) / 2
+    to_ll = Transformer.from_crs(meta["crs"], "EPSG:4326", always_xy=True)
+    lon0, lat0 = to_ll.transform(cx, cy)
+    lon1, lat1 = to_ll.transform(cx, cy + 100)
+    gn_true = Geod(ellps="WGS84").inv(lon0, lat0, lon1, lat1)[0]   # wahres Azimut der Gitter-Nordrichtung
+
+    idx, mid = zeitachse()
+    if a.wetter:
+        wetter, sp, wquelle = pvgis_wetter(a.wetter, lat0, lon0, mid)
+    else:
+        wetter, sp, wquelle = synth_wetter(lat0, lon0, mid)
+    sim = Sim(wetter, sp, mid)
+    ghi_y = wetter["ghi"].sum() / 1000
+    log(f"Wetter: {wquelle}; Globalstrahlung {ghi_y:.0f} kWh/m², "
+        f"Referenz Dach 35° Süd: {sim.referenz_dach():.0f} kWh/kWp")
+
+    szenen = set()
+    for s in a.szene:
+        fi, bi = s.split(":")
+        szenen.add((fi, int(bi)))
+
+    ergebnis = {}
+    jobs = []
+    for fid, entry in BK.items():
+        for bi, b in enumerate(entry.get("balkone", [])):
+            if a.nur_szenen and (fid, bi) not in szenen:
+                continue
+            jobs.append((fid, bi, b))
+    log(f"Simuliere {len(jobs)} Balkone")
+    t0 = time.time()
+    details = {}
+    for k, (fid, bi, b) in enumerate(jobs):
+        f = fac[int(fid)]
+        geo = balkon_geometrie(f, b, P, baum)
+        if geo is None:
+            ergebnis.setdefault(fid, {})[str(bi)] = dict(passt=False)
+            continue
+        Q, qb = horizont_vorfilter(geo, P, baum)
+        az_mod = (math.degrees(math.atan2(geo["n"][0], geo["n"][1])) + gn_true) % 360
+        r = simuliere_balkon(sim, geo, Q, qb, gn_true, az_mod)
+        kwh = r["pac"].sum() / 1000
+        kwh_frei = r["pac_frei"].sum() / 1000
+        mx, my = geo["mitte"][:2]
+        rand = min(mx - xmin, xmax - mx, my - ymin, ymax - my) < RAND_WARNUNG
+        ergebnis.setdefault(fid, {})[str(bi)] = dict(
+            passt=True, kwh=round(kwh), kwh_frei=round(kwh_frei),
+            verlust=round(1 - kwh / max(kwh_frei, 1e-6), 3), wp=geo["vorschlag"]["wp"],
+            n=geo["vorschlag"]["n"], az=round(az_mod, 1), rand=bool(rand),
+            sonne=round(r["sonne_mod"]), himmel=round(r["himmel"], 2))
+        details[(fid, bi)] = (geo, r, az_mod, rand)
+        if (k + 1) % 20 == 0:
+            log(f"  {k + 1}/{len(jobs)} ({time.time() - t0:.0f} s)")
+
+    # Kennzahlen für den Fassaden-Explorer
+    if not a.nur_szenen:
+        with open(os.path.join(a.webapp, "ertrag.js"), "w", encoding="utf-8") as fh:
+            fh.write("window.ERTRAG = ")
+            json.dump(dict(wetter=wquelle, erstellt=time.strftime("%Y-%m-%d %H:%M"), balkone=ergebnis),
+                      fh, ensure_ascii=False, separators=(",", ":"))
+            fh.write(";\n")
+        log(f"ertrag.js geschrieben ({sum(len(v) for v in ergebnis.values())} Balkone)")
+        rows = [(fid, bi, v) for fid, d in ergebnis.items() for bi, v in d.items() if v.get("passt")]
+        rows.sort(key=lambda r: -r[2]["kwh"])
+        print("\nfassade:balkon  typ       Wp   kWh/a  frei  Verlust  Rand")
+        for fid, bi, v in rows[:25]:
+            typ = BK[fid]["balkone"][int(bi)]["typ"]
+            print(f"{fid:>7}:{bi:<7} {typ:<8} {v['wp']:>4} {v['kwh']:>6} {v['kwh_frei']:>5}  "
+                  f"{v['verlust'] * 100:5.0f} %  {'ja' if v['rand'] else ''}")
+
+    if not szenen:
+        return
+
+    # Angebotsseiten
+    adir = os.path.join(a.webapp, "angebot")
+    os.makedirs(os.path.join(adir, "tex"), exist_ok=True)
+    tex_names = []
+    for p in tex:
+        dst = os.path.join(adir, "tex", os.path.basename(p))
+        if not os.path.exists(dst):
+            shutil.copyfile(p, dst)
+        tex_names.append("tex/" + os.path.basename(p))
+    lp = bdew.H25(idx)
+    lp = np.asarray(lp, float)
+    lp = lp / lp.sum()
+    with open(os.path.join(adir, "lastprofil.json"), "w") as fh:
+        json.dump(dict(name="BDEW H25 Haushalt (dynamisiert), stündlich, Summe = 1", jahr=JAHR,
+                       werte=[round(float(x), 8) for x in lp]), fh, separators=(",", ":"))
+    here = os.path.dirname(os.path.abspath(__file__))
+    src_html = os.path.join(here, "angebot.html")
+    if os.path.exists(src_html):
+        shutil.copyfile(src_html, os.path.join(adir, "index.html"))
+
+    liste = []
+    for fid, bi in sorted(szenen):
+        if (fid, bi) not in details:
+            log(f"Balkon {fid}:{bi} nicht gefunden oder zu schmal")
+            continue
+        geo, r, az_mod, rand = details[(fid, bi)]
+        f = fac[int(fid)]
+        b = BK[fid]["balkone"][bi]
+        key = f"{fid}_{bi}"
+        out = os.path.join(adir, key)
+        os.makedirs(out, exist_ok=True)
+        P0 = geo["mitte"]
+        z0 = f["ground"]
+        szene = exportiere_szene(out, P0, z0, V, F, VT, FT, mat, tri_baum)
+        szene["tex"] = tex_names
+        lon, lat = to_ll.transform(P0[0], P0[1])
+        pac = np.round(r["pac"]).astype(int)
+        frei = np.round(r["pac_frei"]).astype(int)
+        mon = pd.Series(pac, index=idx).groupby(idx.month).sum() / 1000
+        mon_f = pd.Series(frei, index=idx).groupby(idx.month).sum() / 1000
+        mv = geo["vorschlag"]
+        daten = dict(
+            id=key, fassade=int(fid), balkon=bi, typ=b["typ"], geschoss=b.get("geschoss"),
+            sicherheit=b.get("sicherheit"), breite_m=b["breite_m"], hoehe_m=b["hoehe_m"],
+            unterkante_m=b.get("unterkante_m"), lat=round(lat, 6), lon=round(lon, 6),
+            az=round(az_mod, 1), fassade_cls=f["cls"], gitter_nord=round(gn_true, 3),
+            tiefe_m=round(geo["tiefe"], 2), rand=bool(rand),
+            vorschlag=dict(n=mv["n"], wp=mv["wp"], wp_modul=mv["wp_modul"], text=mv["text"],
+                           w=mv["w"], h=mv["h"], fit=mv["fit"]),
+            module=[[lokal(e, P0, z0) for e in m["ecken"]] for m in geo["module"]],
+            normale=[round(float(geo["n"][0]), 4), 0.0, round(float(-geo["n"][1]), 4)],
+            fassade_linie=[lokal([*f["a"], z0], P0, z0), lokal([*f["b"], z0], P0, z0)],
+            hoehe_modul_m=round(float(P0[2] - z0), 1),
+            horizont=dict(schritt=AZ_STEP, gebaeude=[round(float(x), 1) for x in r["hb"]],
+                          baeume=[round(float(x), 1) for x in r["ht"]]),
+            jahr=dict(kwh=round(float(pac.sum()) / 1000, 1), kwh_frei=round(float(frei.sum()) / 1000, 1),
+                      kwh_kwp=round(float(pac.sum()) / mv["wp"], 0),
+                      sonnenstunden=round(r["sonne_mod"]), sonnenstunden_frei=round(r["sonne_frei"]),
+                      himmel=round(r["himmel"], 2)),
+            monat=dict(kwh=[round(float(x), 1) for x in mon], kwh_frei=[round(float(x), 1) for x in mon_f]),
+            stunde_wh=pac.tolist(),
+            stunde_frei_wh=frei.tolist(),
+            sonne_anteil=[round(float(x), 2) for x in r["frac"]],
+            jahr_basis=JAHR, wetter=wquelle, globalstrahlung=round(ghi_y),
+            annahmen=dict(verluste=VERLUSTE, gamma=GAMMA, wr_ac=WR_AC, wr_eta=WR_ETA, albedo=ALBEDO,
+                          tau_belaubt=TAU_BELAUBT, tau_kahl=TAU_KAHL),
+            szene=szene, quelle=meta.get("source"), erstellt=time.strftime("%Y-%m-%d %H:%M"),
+        )
+        with open(os.path.join(out, "daten.json"), "w", encoding="utf-8") as fh:
+            json.dump(daten, fh, ensure_ascii=False, separators=(",", ":"))
+        liste.append(dict(id=key, fassade=int(fid), balkon=bi, kwh=daten["jahr"]["kwh"]))
+        log(f"Angebot {key}: {daten['jahr']['kwh']:.0f} kWh/a (frei {daten['jahr']['kwh_frei']:.0f}), "
+            f"Szene {szene['vertices']:,} Punkte")
+
+    # Liste vorhandener Angebotsseiten (für Explorer und Auswahl)
+    lp_path = os.path.join(a.webapp, "angebote.js")
+    vorhanden = []
+    for name in sorted(os.listdir(adir)):
+        p = os.path.join(adir, name, "daten.json")
+        if os.path.exists(p):
+            d = json.load(open(p, encoding="utf-8"))
+            vorhanden.append(dict(id=name, fassade=d["fassade"], balkon=d["balkon"], typ=d["typ"],
+                                  geschoss=d.get("geschoss"), kwh=d["jahr"]["kwh"],
+                                  verlust=round(1 - d["jahr"]["kwh"] / max(d["jahr"]["kwh_frei"], 1e-6), 3)))
+    with open(lp_path, "w", encoding="utf-8") as fh:
+        fh.write("window.ANGEBOTE = " + json.dumps(vorhanden, ensure_ascii=False) + ";\n")
+
+
+if __name__ == "__main__":
+    main()

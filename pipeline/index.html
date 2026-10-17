@@ -155,6 +155,8 @@
   @media (prefers-reduced-motion: reduce) {
     #immCard.anim, #map { transition: none; }
   }
+  .btn-angebot { display: inline-block; margin-top: 6px; background: #eda100; color: #111; font-weight: 600; text-decoration: none; padding: 7px 12px; border-radius: 8px; }
+  .btn-angebot:hover { background: #ffb820; }
 </style>
 </head>
 <body>
@@ -280,6 +282,8 @@
 
 <script src="data.js"></script>
 <script src="balkone.js" onerror="window.BALKONE = window.BALKONE || {}"></script>
+<script src="ertrag.js" onerror="window.ERTRAG = null"></script>
+<script src="angebote.js" onerror="window.ANGEBOTE = []"></script>
 <script>
 (() => {
   const D = window.FASSADEN;
@@ -671,6 +675,9 @@
     document.querySelectorAll('#iSvg .bk').forEach(g => g.classList.toggle('sel', +g.dataset.i === i));
     const b = f._bk.balkone[i];
     const mv = modulVorschlag(b, f.az);
+    const sim = window.ERTRAG && ERTRAG.balkone[String(f.id)] && ERTRAG.balkone[String(f.id)][String(i)];
+    const simOk = sim && sim.passt ? sim : null;
+    const angebot = (window.ANGEBOTE || []).some(a => a.id === `${f.id}_${i}`) ? `${f.id}_${i}` : null;
     const mods = mv.n ? Array.from({length: mv.n}, () =>
       `<div class="mod" style="width:${Math.round((mv.wp / mv.n < 400 ? KLEIN.w : MODUL.w) / Math.max(b.breite_m, MODUL.w) * 100)}%"></div>`).join('') : '';
     $('iInfo').innerHTML =
@@ -685,12 +692,17 @@
       `<div class="module-box"><b>Modulvorschlag</b>` +
       (mv.n ? `<div class="mods" style="width:100%">${mods}</div><div>${mv.text}</div>` +
         `<dl class="kv"><dt>Leistung</dt><dd>${fmt(mv.wp)} Wp${mv.fit > MAX_MODULE ? ` (Platz für ${mv.fit})` : ''}</dd>` +
-        `<dt>Ertrag</dt><dd>≈ ${fmt(mv.kwh)} kWh/Jahr</dd>` +
-        `<dt>Ersparnis</dt><dd>≈ ${fmt(mv.eur)} €/Jahr</dd></dl>` :
+        (simOk ? `<dt>Ertrag</dt><dd>≈ ${fmt(simOk.kwh)} kWh/Jahr</dd>` +
+               `<dt>Verschattung</dt><dd>− ${fmt(simOk.verlust * 100)} % (frei: ${fmt(simOk.kwh_frei)} kWh)</dd>` +
+               `<dt>Ersparnis</dt><dd>≈ ${fmt(simOk.kwh * EIGENVERBRAUCH * STROMPREIS)} €/Jahr</dd></dl>`
+             : `<dt>Ertrag</dt><dd>≈ ${fmt(mv.kwh)} kWh/Jahr</dd>` +
+               `<dt>Ersparnis</dt><dd>≈ ${fmt(mv.eur)} €/Jahr</dd></dl>`) +
+        (angebot ? `<p><a class="btn-angebot" href="angebot/?id=${angebot}" target="_blank">Durchrechnung öffnen →</a></p>` : '') :
         `<p class="hint">${mv.text}.</p>`) +
       `</div>` +
-      `<p class="note">Annahmen: Module senkrecht am Geländer, keine Verschattung, ${fmt(EIGENVERBRAUCH * 100)} % Eigenverbrauch, ` +
-      `${fmt(STROMPREIS * 100)} ct/kWh, max. ${MAX_MODULE} Module (800-W-Wechselrichter). Verschattung durch Bäume und Nachbarhäuser ist noch nicht berücksichtigt.</p>` +
+      `<p class="note">Annahmen: Module senkrecht am Geländer, ${fmt(EIGENVERBRAUCH * 100)} % Eigenverbrauch, ` +
+      `${fmt(STROMPREIS * 100)} ct/kWh, max. ${MAX_MODULE} Module (800-W-Wechselrichter). ` +
+      (simOk ? `Ertrag stündlich simuliert mit Verschattung durch Gebäude und Bäume aus dem 3D-Modell${simOk.rand ? ' (Balkon nahe Kachelrand, Horizont unvollständig)' : ''}.` : 'Verschattung noch nicht berücksichtigt (pipeline/angebot.py ausführen).') + `</p>` +
       `<p><button id="iBack">← Fassade</button></p>`;
     $('iBack').addEventListener('click', () => {
       document.querySelectorAll('#iSvg .bk').forEach(g => g.classList.remove('sel'));
