@@ -1,0 +1,14 @@
+# Rohdaten aus dem Berlin 3D Downloadportal (groß, eigene Nutzungsbedingungen)
+data/
+*.obj
+*.mtl
+Mesh_*.jpg
+
+# Erzeugte Ausgaben
+webapp/
+_cache/
+_analyse/
+
+__pycache__/
+*.pyc
+.DS_Store
