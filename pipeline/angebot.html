@@ -215,7 +215,6 @@
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 const $ = id => document.getElementById(id);
 const NS = 'http://www.w3.org/2000/svg';
@@ -417,48 +416,144 @@ scene.add(sun, sun.target);
 
 const mid = new THREE.Vector3(0, D.hoehe_modul_m, 0);
 const nrm = new THREE.Vector3(...D.normale).normalize();
-const DIST = 50, LIFT = 15;
+const DIST = 50;
+let LIFT = 15, SWING_MITTE = 0.35, SWING_WEITE = 0.6;
 controls.target.copy(mid);
 const baseAz = Math.atan2(nrm.x, nrm.z);
-function camAt(angle) {
+function camPos(angle, lift = LIFT) {
   const a = baseAz + angle;
-  camera.position.set(mid.x + Math.sin(a) * DIST, mid.y + LIFT, mid.z + Math.cos(a) * DIST);
+  return new THREE.Vector3(mid.x + Math.sin(a) * DIST, mid.y + lift, mid.z + Math.cos(a) * DIST);
 }
-camAt(0.35);
+function camAt(angle) { camera.position.copy(camPos(angle)); }
+camAt(SWING_MITTE);
 
+
+// ---------------------------------------------------------------- freie Sicht auf die Module
+// Alles, was zwischen Kamera und Modulen steht (Häuser gegenüber, Bäume), wird durchsichtig. Schatten bleiben.
+let sichtFrei = null;
+const geistHaus = new THREE.MeshLambertMaterial({color: 0xf7f8f3, transparent: true, opacity: 0.16, depthWrite: false});
+const geistBaum = new THREE.MeshLambertMaterial({color: 0x9cc89a, flatShading: true, transparent: true, opacity: 0.18, depthWrite: false});
+const strahl = new THREE.Raycaster();
+let sichtTakt = 0;
+function sichtPruefen(dt) {
+  if (!sichtFrei || !sel) return;
+  sichtTakt += dt; if (sichtTakt < 0.12) return; sichtTakt = 0;
+  const ziele = [];
+  for (const q of sel.v.module) {
+    const c = q.map(v => new THREE.Vector3(...v));
+    ziele.push(c[0], c[1], c[2], c[3], c[0].clone().add(c[2]).multiplyScalar(0.5));
+  }
+  const objekte = [...sichtFrei.bloecke, ...sichtFrei.kronen];
+  const haeuser = new Set(), baeume = new Set(), einzeln = new Set();
+  for (const z of ziele) {
+    const d = z.clone().sub(camera.position); const dist = d.length();
+    strahl.set(camera.position, d.normalize()); strahl.far = dist - 0.4;
+    for (const hit of strahl.intersectObjects(objekte, false)) {
+      const u = hit.object.userData;
+      if (u.haus === undefined) baeume.add(hit.object);
+      else if (!sichtFrei.eigen.has(u.haus)) haeuser.add(u.haus);
+      else if (hit.point.clone().sub(z).dot(nrm) > 0.3) einzeln.add(hit.object);   // Teil des eigenen Hauses vor den Modulen: nur diese Stufe ausblenden
+    }
+  }
+  for (const [id, teile] of sichtFrei.haeuser) for (const t of teile) {
+    const m = (haeuser.has(id) || einzeln.has(t)) ? geistHaus : sichtFrei.hausMat;
+    if (t.material !== m) t.material = m;
+  }
+  for (const k of sichtFrei.kronen) { const m = baeume.has(k) ? geistBaum : sichtFrei.krone; if (k.material !== m) k.material = m; k.userData.stamm.visible = !baeume.has(k); }
+}
+// Prüfmodus (?pruefen=1): zählt Sichtstrahlen zu den Modulen, die trotz Ausblenden noch von etwas Undurchsichtigem verdeckt sind
+function sichtBericht() {
+  const ziele = sel.v.module.flatMap(q => q.map(v => new THREE.Vector3(...v)));
+  const objekte = [...sichtFrei.bloecke, ...sichtFrei.kronen].filter(o => !o.material.transparent || o.material.opacity > 0.5);
+  let verdeckt = 0; const grund = new Set();
+  for (const z of ziele) {
+    const d = z.clone().sub(camera.position), dist = d.length();
+    strahl.set(camera.position, d.normalize()); strahl.far = dist - 0.4;
+    const h = strahl.intersectObjects(objekte, false);
+    if (h.length) { verdeckt++; const o = h[0].object.userData; grund.add(o.haus === undefined ? 'baum' : (sichtFrei.eigen.has(o.haus) ? 'eigenes Haus' : 'Haus')); }
+  }
+  return `${verdeckt}/${ziele.length}${grund.size ? ' (' + [...grund].join(', ') + ')' : ''}`;
+}
+
+// Startansicht so wählen, dass das eigene Haus die Module nicht verdeckt (fremde Häuser/Bäume werden ohnehin ausgeblendet)
+function eigenVerdeckt(pos) {
+  const eigene = sichtFrei.bloecke.filter(m => sichtFrei.eigen.has(m.userData.haus));
+  for (const q of sel.v.module) for (const v of q) {
+    const z = new THREE.Vector3(...v), d = z.clone().sub(pos), dist = d.length();
+    strahl.set(pos, d.normalize()); strahl.far = dist - 0.4;
+    if (strahl.intersectObjects(eigene, false).length) return true;
+  }
+  return false;
+}
+function waehleKamera() {
+  for (const lift of [15, 24, 34]) {
+    const winkel = [];
+    for (let a = -0.9; a <= 0.901; a += 0.075) winkel.push([a, !eigenVerdeckt(camPos(a, lift))]);
+    // längsten freien Bereich suchen
+    let best = null, start = null;
+    for (let i = 0; i <= winkel.length; i++) {
+      const frei = i < winkel.length && winkel[i][1];
+      if (frei && start === null) start = i;
+      if (!frei && start !== null) { if (!best || i - start > best[1] - best[0]) best = [start, i]; start = null; }
+    }
+    if (best && best[1] - best[0] >= 3) {
+      const a0 = winkel[best[0]][0], a1 = winkel[best[1] - 1][0];
+      LIFT = lift; SWING_MITTE = (a0 + a1) / 2; SWING_WEITE = Math.min(0.6, (a1 - a0) / 2);
+      camAt(SWING_MITTE + SWING_WEITE * Math.sin(swingT));
+      return;
+    }
+  }
+}
 // Vereinfachtes Hausmodell (Standard) und Foto-Mesh (auf Wunsch)
 const modellGroup = new THREE.Group(); scene.add(modellGroup);
 async function loadModell() {
   const M = await fetch(`${id}/${D.modell.file}`).then(r => r.json());
   const ground = new THREE.Mesh(new THREE.CircleGeometry(M.radius * 1.15, 64), new THREE.MeshLambertMaterial({color: 0xdfe8d8}));
   ground.rotation.x = -Math.PI / 2; ground.position.y = -0.02; ground.receiveShadow = true; modellGroup.add(ground);
-  const geos = [], geosVorne = [];
-  const vorDerFassade = (x, y) => x * nrm.x - y * nrm.z;     // Abstand vor der eigenen Fassade (m)
+  // Gebäudeblöcke einzeln, damit Häuser zwischen Kamera und Modulen durchsichtig werden können
+  const hausMat = new THREE.MeshLambertMaterial({color: 0xf7f8f3});
+  const bloecke = [];
   for (const b of M.bloecke) {
     const shape = new THREE.Shape(b.outer.map(([x, y]) => new THREE.Vector2(x, y)));
     for (const h of b.holes) shape.holes.push(new THREE.Path(h.map(([x, y]) => new THREE.Vector2(x, y))));
     const g = new THREE.ExtrudeGeometry(shape, {depth: b.z1 - b.z0, bevelEnabled: false});
     g.rotateX(-Math.PI / 2); g.translate(0, b.z0, 0);
-    // Häuser gegenüber (zwischen Kamera und Balkon) durchsichtig, damit der Balkon sichtbar bleibt – ihr Schatten bleibt
-    (Math.min(...b.outer.map(([x, y]) => vorDerFassade(x, y))) > 2.5 ? geosVorne : geos).push(g);
+    g.computeBoundingBox();
+    const mesh = new THREE.Mesh(g, hausMat); mesh.castShadow = true; mesh.receiveShadow = true;
+    mesh.userData = {poly: b.outer, z0: b.z0, z1: b.z1, box: g.boundingBox};
+    modellGroup.add(mesh); bloecke.push(mesh);
   }
-  if (geos.length) {
-    const haus = new THREE.Mesh(mergeGeometries(geos), new THREE.MeshLambertMaterial({color: 0xf7f8f3}));
-    haus.castShadow = true; haus.receiveShadow = true; modellGroup.add(haus);
+  const imPoly = (poly, x, y) => { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [xi, yi] = poly[i], [xj, yj] = poly[j];
+    if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; };
+  // übereinanderliegende Blöcke zu Häusern zusammenfassen (Union-Find über überlappende Grundflächen)
+  const eltern = bloecke.map((_, i) => i);
+  const wurzel = i => (eltern[i] === i ? i : (eltern[i] = wurzel(eltern[i])));
+  for (let i = 0; i < bloecke.length; i++) for (let j = i + 1; j < bloecke.length; j++) {
+    const a = bloecke[i].userData, b = bloecke[j].userData;
+    if (Math.abs(a.z1 - b.z0) > 0.01 && Math.abs(b.z1 - a.z0) > 0.01) continue;
+    if (a.box.max.x < b.box.min.x || b.box.max.x < a.box.min.x || a.box.max.z < b.box.min.z || b.box.max.z < a.box.min.z) continue;
+    // echte Überlappung der Grundflächen (obere Stufe liegt in der unteren), nicht nur der Begrenzungsrechtecke
+    if (!a.poly.some(([x, y]) => imPoly(b.poly, x, y)) && !b.poly.some(([x, y]) => imPoly(a.poly, x, y))) continue;
+    eltern[wurzel(i)] = wurzel(j);
   }
-  if (geosVorne.length) {
-    const vorne = new THREE.Mesh(mergeGeometries(geosVorne), new THREE.MeshLambertMaterial({color: 0xf7f8f3, transparent: true, opacity: 0.2, depthWrite: false}));
-    vorne.castShadow = true; vorne.renderOrder = 5; modellGroup.add(vorne);
-  }
-  const krone = new THREE.MeshLambertMaterial({color: 0x9cc89a, flatShading: true, transparent: true, opacity: 0.82});
-  const kroneVorne = new THREE.MeshLambertMaterial({color: 0x9cc89a, flatShading: true, transparent: true, opacity: 0.3, depthWrite: false});
+  const haeuser = new Map();
+  bloecke.forEach((m, i) => { const r = wurzel(i); if (!haeuser.has(r)) haeuser.set(r, []); haeuser.get(r).push(m); m.userData.haus = r; });
+  // das eigene Haus (Punkt knapp hinter der Fassade) wird nie ausgeblendet
+  const innen = new THREE.Vector3().copy(nrm).multiplyScalar(-((D.tiefe_m || 1) + 1.5));
+  const eigen = new Set(bloecke.filter(m => imPoly(m.userData.poly, innen.x, -innen.z)).map(m => m.userData.haus));
+  const krone = new THREE.MeshLambertMaterial({color: 0x9cc89a, flatShading: true, transparent: true, opacity: 0.85});
   const stamm = new THREE.MeshLambertMaterial({color: 0x9b8f7a});
+  const kronen = [];
   for (const [x, y, h, r] of M.baeume) {
-    const c = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 1), vorDerFassade(x, y) > 2 ? kroneVorne : krone);
+    const c = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 1), krone);
     c.position.set(x, h - r * 0.85, -y); c.castShadow = true; c.receiveShadow = true; modellGroup.add(c);
     const st = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.25, Math.max(0.5, h - r * 1.4), 6), stamm);
     st.position.set(x, Math.max(0.5, h - r * 1.4) / 2, -y); st.castShadow = true; modellGroup.add(st);
+    c.userData.stamm = st; kronen.push(c);
   }
+  sichtFrei = {bloecke, haeuser, eigen, kronen, hausMat, krone, imPoly};
+  waehleKamera();
   const platte = new THREE.MeshLambertMaterial({color: 0xeceee8});
   const glas = new THREE.MeshLambertMaterial({color: 0xffffff, transparent: true, opacity: 0.55});
   for (const b of M.balkone) {
@@ -588,7 +683,7 @@ $('play').addEventListener('click', () => {
 
 // sanftes Hin- und Herschwenken um den Balkon, pausiert nach Benutzer-Interaktion
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-let idleSince = 0, swingT = 0.6, dragging = false, touched = false;
+let idleSince = 0, swingT = 0, dragging = false, touched = false;
 controls.addEventListener('start', () => { dragging = true; touched = true; });
 controls.addEventListener('end', () => { dragging = false; idleSince = performance.now(); });
 let last = performance.now(), playAcc = 0;
@@ -597,16 +692,21 @@ function loop(t) {
   const dt = Math.min(0.1, (t - last) / 1000); last = t;
   if (!reduce && !dragging && (!touched || t - idleSince > 8000)) {
     if (touched) { touched = false; swingT = 0; }
-    swingT += dt * 0.22; camAt(0.6 * Math.sin(swingT));
+    swingT += dt * 0.22; camAt(SWING_MITTE + SWING_WEITE * Math.sin(swingT));
   }
   if (playing) { playAcc += dt * 90; if (playAcc >= 5) { minutes += Math.floor(playAcc / 5) * 5; playAcc %= 5; if (minutes > 21 * 60 + 30) minutes = 5 * 60; setSun(); } }
   if (modAnim > 0) { modAnim = Math.max(0, modAnim - dt * 2.5); const k = (1 - modAnim); modGroup.position.copy(nrm).multiplyScalar(0.8 * (1 - k) * (1 - k)); }
+  sichtPruefen(dt);
   controls.update(); renderer.render(scene, camera);
 }
 
 renderOpts(); placeModules(); drawSunpath(); setSun();
 requestAnimationFrame(loop);
-loadModell().catch(e => { $('loading').textContent = 'Die 3D-Ansicht konnte nicht geladen werden.'; console.error(e); });
+loadModell().then(() => { if (new URLSearchParams(location.search).has('pruefen')) setTimeout(() => {
+  const r = [];
+  for (const k of [-1, 0, 1]) { camAt(SWING_MITTE + k * SWING_WEITE); camera.updateMatrixWorld(); sichtTakt = 1; sichtPruefen(1); r.push(sichtBericht()); }
+  document.title = 'SICHT ' + r.join(' | ') + ` lift=${LIFT}`;
+}, 300); }).catch(e => { $('loading').textContent = 'Die 3D-Ansicht konnte nicht geladen werden.'; console.error(e); });
 </script>
 </body>
 </html>
