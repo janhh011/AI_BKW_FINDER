@@ -406,7 +406,7 @@ MODELL_RES = 0.5         # m, Rasterweite
 MODELL_STUFE = 1.0       # m, Höhenstufen der Gebäudeblöcke
 
 
-def exportiere_modell(out, P0, z0, f, balkone, P, baum):
+def exportiere_modell(out, P0, z0, f, balkone, P, baum, aktiv_bi=None):
     """Vereinfachtes Modell für die Angebotsseite: Gebäude als Blöcke in 1-m-Stufen,
     Bäume als Kronen, Balkone der eigenen Fassade als Platten mit Brüstung."""
     import cv2
@@ -480,8 +480,10 @@ def exportiere_modell(out, P0, z0, f, balkone, P, baum):
 
     # Balkone der eigenen Fassade
     platten = []
-    for b in balkone:
-        if b.get("typ") == "Loggia" or b.get("sicherheit", 0) < 0.3:
+    RUECK = 0.6     # Platte reicht so weit in die Wand, damit sie nie frei schwebt
+    for i, b in enumerate(balkone):
+        aktiv = i == aktiv_bi
+        if not aktiv and (b.get("typ") == "Loggia" or b.get("sicherheit", 0) < 0.3):
             continue
         g = balkon_geometrie(f, b, P, baum)
         tiefe = g["tiefe"] if g else 1.2
@@ -491,9 +493,18 @@ def exportiere_modell(out, P0, z0, f, balkone, P, baum):
         x0, y0, x1, y1 = b["box"]
         s0, s1 = x0 * res_i, x1 * res_i
         zb = f["img_ztop"] - y1 * res_i - z0
-        c = L0 + ti * (s0 + s1) / 2 + nn * tiefe / 2
+        if aktiv and g:
+            # Platte direkt unter die Module legen (bei niedrigen Erkennungsboxen hängen die Module sonst darunter)
+            z_mod = float(min(e[2] for m in g["module"] for e in m["ecken"])) - z0
+            zb = min(zb, z_mod - 0.05)
+            breite_mod = float(np.linalg.norm(g["module"][-1]["ecken"][1][:2] - g["module"][0]["ecken"][0][:2]))
+            if breite_mod + 0.2 > s1 - s0:      # Platte mindestens so breit wie die Module
+                m = (s0 + s1) / 2
+                s0, s1 = m - breite_mod / 2 - 0.1, m + breite_mod / 2 + 0.1
+        gesamt = tiefe + RUECK
+        c = L0 + ti * (s0 + s1) / 2 + nn * (tiefe - RUECK) / 2
         platten.append(dict(c=[round(float(c[0]), 2), round(float(zb), 2), round(float(-c[1]), 2)],
-                            breite=round(float(s1 - s0), 2), tiefe=round(float(tiefe), 2)))
+                            breite=round(float(s1 - s0), 2), tiefe=round(float(gesamt), 2), aktiv=aktiv))
     modell = dict(radius=R, bloecke=bloecke, baeume=baeume, balkone=platten,
                   drehung=round(float(math.atan2(t[1], t[0])), 4))
     with open(os.path.join(out, "modell.json"), "w", encoding="utf-8") as fh:
@@ -648,7 +659,7 @@ def main():
         alt = os.path.join(out, "daten.json")
         if szene is None and os.path.exists(alt) and os.path.exists(os.path.join(out, "scene.bin")):
             szene = json.load(open(alt, encoding="utf-8")).get("szene")   # früher erzeugtes Foto-Mesh weiter nutzen
-        modell = exportiere_modell(out, P0, z0, f, BK[fid]["balkone"], P, baum)
+        modell = exportiere_modell(out, P0, z0, f, BK[fid]["balkone"], P, baum, aktiv_bi=bi)
         lon, lat = to_ll.transform(P0[0], P0[1])
         pac = np.round(r["pac"]).astype(int)
         frei = np.round(r["pac_frei"]).astype(int)
