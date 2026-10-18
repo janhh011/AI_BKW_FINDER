@@ -44,7 +44,7 @@
   .stage .loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--fern); font-size: 14px; }
   .sunbox { position: absolute; left: 16px; bottom: 16px; background: rgba(250, 252, 247, .9); backdrop-filter: blur(8px);
             border-radius: 18px; padding: 12px 14px 10px; display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; align-items: center;
-            max-width: calc(100% - 32px); box-shadow: 0 6px 24px rgba(28, 58, 41, .08); }
+            max-width: calc(100% - 128px); box-shadow: 0 6px 24px rgba(28, 58, 41, .08); }
   .sunbox svg { grid-row: span 2; width: 190px; height: 82px; display: block; }
   .sunbox .t { font-size: 14px; line-height: 1.35; }
   .sunbox .t b { font-weight: 600; }
@@ -52,16 +52,21 @@
   .chip { border: 1px solid var(--line); background: var(--paper); border-radius: 999px; padding: 3px 11px; font-size: 13px; cursor: pointer; color: var(--fern); }
   .chip[aria-pressed="true"] { background: var(--moss); border-color: var(--moss); color: #fff; }
   .look { position: absolute; right: 16px; top: 16px; }
-  .flow { position: absolute; left: 0; top: 0; pointer-events: none; transform: translate(-50%, -100%); white-space: nowrap;
-          background: rgba(250, 252, 247, .94); border-radius: 999px; padding: 5px 12px 5px 8px; display: flex; align-items: center; gap: 7px;
-          font-size: 13px; color: var(--moss); box-shadow: 0 4px 16px rgba(28, 58, 41, .14); transition: opacity .3s; }
-  .flow::after { content: ""; position: absolute; left: 50%; bottom: -5px; width: 10px; height: 10px; background: inherit; transform: translateX(-50%) rotate(45deg); }
-  .flow .bolt { width: 22px; height: 22px; border-radius: 50%; background: var(--sun); display: grid; place-items: center; }
-  .flow .bolt svg { width: 12px; height: 12px; }
-  .flow.on .bolt { animation: puls 1.4s ease-in-out infinite; }
-  .flow b { font-variant-numeric: tabular-nums; font-weight: 600; }
-  .flow.off .bolt { background: var(--line); }
-  @keyframes puls { 0%, 100% { box-shadow: 0 0 0 0 var(--sun-soft); } 50% { box-shadow: 0 0 0 7px rgba(227, 162, 26, 0); } }
+  .meter { position: absolute; right: 18px; top: 62px; bottom: 18px; width: 74px; display: flex; flex-direction: column; align-items: center; gap: 8px;
+           background: rgba(250, 252, 247, .9); backdrop-filter: blur(8px); border-radius: 18px; padding: 12px 8px; box-shadow: 0 6px 24px rgba(28, 58, 41, .08); }
+  .meter .val { text-align: center; line-height: 1.1; }
+  .meter .val b { display: block; font-family: "Bricolage Grotesque", Figtree, sans-serif; font-size: 24px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .meter .val span { font-size: 12px; color: var(--fern); }
+  .meter .track { position: relative; flex: 1; width: 22px; border-radius: 999px; background: var(--leaf-soft); overflow: hidden; min-height: 60px; }
+  .meter .fill { position: absolute; left: 0; right: 0; bottom: 0; height: 0; border-radius: 999px;
+                 background: linear-gradient(to top, var(--leaf) 0%, #8cc06a 55%, var(--sun) 100%); transition: height .6s ease-out; }
+  .meter .fill::after { content: ""; position: absolute; inset: 0; border-radius: inherit;
+                        background: repeating-linear-gradient(to top, rgba(255,255,255,.0) 0 10px, rgba(255,255,255,.35) 10px 12px);
+                        animation: steigen 1.2s linear infinite; }
+  .meter.off .fill::after { animation: none; }
+  @keyframes steigen { from { background-position: 0 0; } to { background-position: 0 -24px; } }
+  .meter .lbl { font-size: 11.5px; color: var(--fern); text-align: center; line-height: 1.25; }
+  .meter .max { font-size: 11px; color: #8a9a8e; }
   .play { width: 28px; height: 28px; border-radius: 50%; border: 0; background: var(--sun); cursor: pointer; display: grid; place-items: center; }
   .play svg { width: 12px; height: 12px; }
   .clock { font-size: 13px; color: var(--fern); font-variant-numeric: tabular-nums; min-width: 66px; }
@@ -156,7 +161,12 @@
     <section class="stage" id="stage" aria-label="3D-Ansicht Ihres Balkons">
       <div class="loading" id="loading">Ihr Balkon wird geladen …</div>
       <button class="chip look" id="look" aria-pressed="false">Foto-Ansicht</button>
-      <div class="flow" id="flow" aria-live="polite"><span class="bolt"><svg viewBox="0 0 12 12"><path d="M7 0 2 7h3.2L4.5 12 10 4.6H6.6z" fill="#1c3a29"/></svg></span><span id="flowText"></span></div>
+      <div class="meter off" id="meter" role="meter" aria-label="Strom, der gerade ins Haus fließt" aria-valuemin="0" aria-valuemax="800">
+        <div class="val"><b id="mW">0</b><span>Watt</span></div>
+        <span class="max">800</span>
+        <div class="track"><div class="fill" id="mFill"></div></div>
+        <div class="lbl" id="mLbl">ins Haus</div>
+      </div>
       <div class="sunbox">
         <svg id="sunpath" viewBox="0 0 190 82" role="img" aria-label="Sonnenbahn und Schatten am Balkon"></svg>
         <div class="t" id="sunText"></div>
@@ -591,19 +601,6 @@ function animiereStrom(dt) {
   punktMat.size = 0.45 + 0.3 * anteil;
   dose.scale.setScalar(1 + 0.25 * Math.sin(performance.now() / 220) * anteil);
 }
-const _v = new THREE.Vector3();
-function setzeFlowLabel() {
-  const f = $('flow');
-  if (!sel || !sel.v.module.length) return;
-  const top = sel.v.module.flatMap(q => q.map(v => new THREE.Vector3(...v)));
-  _v.set(0, 0, 0); for (const p of top) _v.add(p); _v.multiplyScalar(1 / top.length);
-  _v.y = Math.max(...top.map(p => p.y)) + 0.6;
-  _v.project(camera);
-  const vis = _v.z < 1 && Math.abs(_v.x) < 1.1 && Math.abs(_v.y) < 1.1;
-  f.style.opacity = vis ? 1 : 0;
-  f.style.left = ((_v.x + 1) / 2 * stage.clientWidth) + 'px';
-  f.style.top = ((1 - _v.y) / 2 * stage.clientHeight - 6) + 'px';
-}
 
 function setSun() {
   const s = sunPos(utcFor(doy, minutes / 60), D.lat, D.lon);
@@ -618,9 +615,12 @@ function setSun() {
   $('clock').textContent = `${Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, '0')} Uhr`;
   $('sunText').innerHTML = `<b>${sunState(s)}</b><br>${nf(D.jahr.sonnenstunden)} Sonnenstunden im Jahr`;
   watt = leistungJetzt(s);
-  const f = $('flow');
-  f.classList.toggle('on', watt > 5); f.classList.toggle('off', watt <= 5);
-  $('flowText').innerHTML = watt > 5 ? `<b>${nf(Math.round(watt / 10) * 10)} Watt</b> fließen in Ihre Wohnung` : (s.el > 0 ? 'Gerade kaum Sonnenstrom' : 'Nachts ruht die Anlage');
+  const m = $('meter');
+  m.classList.toggle('off', watt <= 5);
+  m.setAttribute('aria-valuenow', Math.round(watt));
+  $('mW').textContent = nf(Math.round(watt / 10) * 10);
+  $('mFill').style.height = (watt / 800 * 100).toFixed(1) + '%';
+  $('mLbl').textContent = watt > 5 ? 'fließen gerade ins Haus' : (s.el > 0 ? 'gerade Schatten' : 'Nacht');
   for (const c of document.querySelectorAll('.sunbox .chip')) c.setAttribute('aria-pressed', +c.dataset.doy === doy);
 }
 for (const c of document.querySelectorAll('.sunbox .chip')) c.addEventListener('click', () => { doy = +c.dataset.doy; updatePath(); setSun(); });
@@ -648,7 +648,6 @@ function loop(t) {
   if (modAnim > 0) { modAnim = Math.max(0, modAnim - dt * 2.5); const k = (1 - modAnim); modGroup.position.copy(nrm).multiplyScalar(0.8 * (1 - k) * (1 - k)); }
   animiereStrom(dt);
   controls.update(); renderer.render(scene, camera);
-  setzeFlowLabel();
 }
 
 renderOpts(); placeModules(); drawSunpath(); setSun();
