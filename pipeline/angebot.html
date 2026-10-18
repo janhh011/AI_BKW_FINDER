@@ -44,7 +44,7 @@
   .stage .loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--fern); font-size: 14px; }
   .sunbox { position: absolute; left: 16px; bottom: 16px; background: rgba(250, 252, 247, .9); backdrop-filter: blur(8px);
             border-radius: 18px; padding: 12px 14px 10px; display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; align-items: center;
-            max-width: calc(100% - 128px); box-shadow: 0 6px 24px rgba(28, 58, 41, .08); }
+            max-width: calc(100% - 32px); box-shadow: 0 6px 24px rgba(28, 58, 41, .08); }
   .sunbox svg { grid-row: span 2; width: 190px; height: 82px; display: block; }
   .sunbox .t { font-size: 14px; line-height: 1.35; }
   .sunbox .t b { font-weight: 600; }
@@ -52,12 +52,12 @@
   .chip { border: 1px solid var(--line); background: var(--paper); border-radius: 999px; padding: 3px 11px; font-size: 13px; cursor: pointer; color: var(--fern); }
   .chip[aria-pressed="true"] { background: var(--moss); border-color: var(--moss); color: #fff; }
   .look { position: absolute; right: 16px; top: 16px; }
-  .meter { position: absolute; right: 18px; top: 62px; bottom: 18px; width: 74px; display: flex; flex-direction: column; align-items: center; gap: 8px;
-           background: rgba(250, 252, 247, .9); backdrop-filter: blur(8px); border-radius: 18px; padding: 12px 8px; box-shadow: 0 6px 24px rgba(28, 58, 41, .08); }
+  .meter { position: absolute; right: 16px; top: 60px; height: min(42%, 260px); width: 56px; display: flex; flex-direction: column; align-items: center; gap: 5px;
+           background: rgba(250, 252, 247, .9); backdrop-filter: blur(8px); border-radius: 16px; padding: 9px 6px; box-shadow: 0 6px 24px rgba(28, 58, 41, .08); }
   .meter .val { text-align: center; line-height: 1.1; }
-  .meter .val b { display: block; font-family: "Bricolage Grotesque", Figtree, sans-serif; font-size: 24px; font-weight: 650; font-variant-numeric: tabular-nums; }
-  .meter .val span { font-size: 12px; color: var(--fern); }
-  .meter .track { position: relative; flex: 1; width: 22px; border-radius: 999px; background: var(--leaf-soft); overflow: hidden; min-height: 60px; }
+  .meter .val b { display: block; font-family: "Bricolage Grotesque", Figtree, sans-serif; font-size: 19px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .meter .val span { font-size: 11px; color: var(--fern); }
+  .meter .track { position: relative; flex: 1; width: 14px; border-radius: 999px; background: var(--leaf-soft); overflow: hidden; min-height: 60px; }
   .meter .fill { position: absolute; left: 0; right: 0; bottom: 0; height: 0; border-radius: 999px;
                  background: linear-gradient(to top, var(--leaf) 0%, #8cc06a 55%, var(--sun) 100%); transition: height .6s ease-out; }
   .meter .fill::after { content: ""; position: absolute; inset: 0; border-radius: inherit;
@@ -65,7 +65,7 @@
                         animation: steigen 1.2s linear infinite; }
   .meter.off .fill::after { animation: none; }
   @keyframes steigen { from { background-position: 0 0; } to { background-position: 0 -24px; } }
-  .meter .lbl { font-size: 11.5px; color: var(--fern); text-align: center; line-height: 1.25; }
+  .meter .lbl { font-size: 10.5px; color: var(--fern); text-align: center; line-height: 1.25; }
   .meter .max { font-size: 11px; color: #8a9a8e; }
   .play { width: 28px; height: 28px; border-radius: 50%; border: 0; background: var(--sun); cursor: pointer; display: grid; place-items: center; }
   .play svg { width: 12px; height: 12px; }
@@ -163,7 +163,6 @@
       <button class="chip look" id="look" aria-pressed="false">Foto-Ansicht</button>
       <div class="meter off" id="meter" role="meter" aria-label="Strom, der gerade ins Haus fließt" aria-valuemin="0" aria-valuemax="800">
         <div class="val"><b id="mW">0</b><span>Watt</span></div>
-        <span class="max">800</span>
         <div class="track"><div class="fill" id="mFill"></div></div>
         <div class="lbl" id="mLbl">ins Haus</div>
       </div>
@@ -527,13 +526,12 @@ function placeModules() {
     modGroup.add(box);
   }
   modAnim = 1;    // kurzes Einschweben der Module
-  baueStromweg();
 }
 
 function resize() { const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
 new ResizeObserver(resize).observe(stage); resize();
 
-// ---------------------------------------------------------------- Stromfluss: Momentanleistung bei klarem Himmel + Lichtpunkte ins Haus
+// ---------------------------------------------------------------- Leistungsanzeige: Momentanleistung bei klarem Himmel
 let watt = 0;
 function leistungJetzt(s) {
   if (s.el <= 0.5) return 0;
@@ -547,61 +545,6 @@ function leistungJetzt(s) {
   const poa = (cosAoi > 0 ? dni * cosAoi * sicht : 0) + dhi * 0.4 + ghi * 0.075;
   return Math.min(800, sel.v.wp * poa / 1000 * 0.86);
 }
-const wege = [];          // je Modul eine Linie: Modulunterkante -> Boden -> Steckdose an der Hauswand
-const PUNKTE = 14;
-const punktGeo = new THREE.BufferGeometry();
-punktGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(PUNKTE * 4 * 3), 3));
-const punktMat = new THREE.PointsMaterial({color: 0xffc23d, size: 0.32, transparent: true, opacity: 0.95, depthTest: false, sizeAttenuation: true});
-const punkte = new THREE.Points(punktGeo, punktMat); punkte.renderOrder = 20; scene.add(punkte);
-const kabelMat = new THREE.LineBasicMaterial({color: 0xe3a21a, transparent: true, opacity: 0.55, depthTest: false});
-const kabel = new THREE.Group(); kabel.renderOrder = 19; scene.add(kabel);
-const dose = new THREE.Mesh(new THREE.SphereGeometry(0.28, 16, 12), new THREE.MeshBasicMaterial({color: 0xffc23d, transparent: true, opacity: 0.9, depthTest: false}));
-dose.renderOrder = 21; scene.add(dose);
-let phase = 0;
-function baueStromweg() {
-  wege.length = 0;
-  const tiefe = Math.max(0.3, D.tiefe_m || 1.0);
-  for (const q of sel.v.module) {
-    const c = q.map(v => new THREE.Vector3(...v));
-    const a = c[0].clone().lerp(c[1], 0.5).addScaledVector(nrm, 0.06);
-    const b = a.clone(); b.y = Math.min(c[0].y, c[1].y) - 0.05;
-    const w = b.clone().addScaledVector(nrm, -tiefe); w.y = b.y + 0.35;
-    const seg = [a, b, w], len = [0];
-    for (let i = 1; i < seg.length; i++) len.push(len[i - 1] + seg[i].distanceTo(seg[i - 1]));
-    wege.push({seg, len, total: len[len.length - 1]});
-  }
-  kabel.clear();
-  for (const w of wege) { const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints(w.seg), kabelMat); l.renderOrder = 19; kabel.add(l); }
-  if (wege.length) dose.position.copy(wege[0].seg[2]);
-}
-function punktAuf(weg, t) {
-  const d = t * weg.total;
-  for (let i = 1; i < weg.seg.length; i++) if (d <= weg.len[i]) {
-    const k = (d - weg.len[i - 1]) / Math.max(1e-6, weg.len[i] - weg.len[i - 1]);
-    return weg.seg[i - 1].clone().lerp(weg.seg[i], k);
-  }
-  return weg.seg[weg.seg.length - 1].clone();
-}
-function animiereStrom(dt) {
-  const an = watt > 5 && !(fotoMesh && fotoMesh.visible);
-  punkte.visible = an; dose.visible = an; kabel.visible = an;
-  if (!an) return;
-  const anteil = watt / 800;
-  phase = (phase + dt * (0.25 + 0.75 * anteil)) % 1;
-  const pos = punktGeo.attributes.position.array;
-  const aktiv = Math.max(3, Math.round(PUNKTE * Math.min(1, 0.3 + anteil)));
-  let k = 0;
-  for (const w of wege) for (let i = 0; i < PUNKTE; i++) {
-    const p = i < aktiv ? punktAuf(w, (phase + i / aktiv) % 1) : new THREE.Vector3(0, -999, 0);
-    pos[k++] = p.x; pos[k++] = p.y; pos[k++] = p.z;
-  }
-  for (; k < pos.length; k++) pos[k] = -999;
-  punktGeo.attributes.position.needsUpdate = true;
-  punktGeo.setDrawRange(0, wege.length * PUNKTE);
-  punktMat.size = 0.45 + 0.3 * anteil;
-  dose.scale.setScalar(1 + 0.25 * Math.sin(performance.now() / 220) * anteil);
-}
-
 function setSun() {
   const s = sunPos(utcFor(doy, minutes / 60), D.lat, D.lon);
   const ag = (s.az - D.gitter_nord) * RAD, e = Math.max(s.el, -4) * RAD;
@@ -620,7 +563,7 @@ function setSun() {
   m.setAttribute('aria-valuenow', Math.round(watt));
   $('mW').textContent = nf(Math.round(watt / 10) * 10);
   $('mFill').style.height = (watt / 800 * 100).toFixed(1) + '%';
-  $('mLbl').textContent = watt > 5 ? 'fließen gerade ins Haus' : (s.el > 0 ? 'gerade Schatten' : 'Nacht');
+  $('mLbl').textContent = watt > 5 ? 'ins Haus' : (s.el > 0 ? 'Schatten' : 'Nacht');
   for (const c of document.querySelectorAll('.sunbox .chip')) c.setAttribute('aria-pressed', +c.dataset.doy === doy);
 }
 for (const c of document.querySelectorAll('.sunbox .chip')) c.addEventListener('click', () => { doy = +c.dataset.doy; updatePath(); setSun(); });
@@ -646,7 +589,6 @@ function loop(t) {
   }
   if (playing) { playAcc += dt * 90; if (playAcc >= 5) { minutes += Math.floor(playAcc / 5) * 5; playAcc %= 5; if (minutes > 21 * 60 + 30) minutes = 5 * 60; setSun(); } }
   if (modAnim > 0) { modAnim = Math.max(0, modAnim - dt * 2.5); const k = (1 - modAnim); modGroup.position.copy(nrm).multiplyScalar(0.8 * (1 - k) * (1 - k)); }
-  animiereStrom(dt);
   controls.update(); renderer.render(scene, camera);
 }
 
