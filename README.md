@@ -27,7 +27,10 @@ python3 pipeline/fassaden_pipeline.py data/<kachel> webapp
 python3 pipeline/balkone_claude.py submit --classes S
 python3 pipeline/balkone_claude.py collect
 
-# 3. Webseite starten
+# 3. Ertrag mit Verschattung simulieren und Angebotsseiten erzeugen
+python3 pipeline/angebot.py data/<kachel> webapp --alle-angebote
+
+# 4. Webseite starten
 webapp/start.command
 ```
 

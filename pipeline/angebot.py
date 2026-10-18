@@ -509,6 +509,8 @@ def main():
     ap.add_argument("--szene", action="append", default=[], help="fassade:balkon, mehrfach möglich")
     ap.add_argument("--wetter", help="PVGIS-TMY-Datei (JSON/CSV)")
     ap.add_argument("--nur-szenen", action="store_true", help="nur die angegebenen Balkone rechnen")
+    ap.add_argument("--alle-angebote", action="store_true",
+                    help="Angebotsseiten für alle passenden Balkone erzeugen (Foto-Mesh nur für --szene)")
     a = ap.parse_args()
 
     D, BK, V, F, VT, FT, mat, tex = lade_eingaben(a.tile_dir, a.webapp)
@@ -587,7 +589,7 @@ def main():
             print(f"{fid:>7}:{bi:<7} {typ:<8} {v['wp']:>4} {v['kwh']:>6} {v['kwh_frei']:>5}  "
                   f"{v['verlust'] * 100:5.0f} %  {'ja' if v['rand'] else ''}")
 
-    if not szenen:
+    if not szenen and not a.alle_angebote:
         return
 
     # Angebotsseiten
@@ -611,7 +613,9 @@ def main():
         shutil.copyfile(src_html, os.path.join(adir, "index.html"))
 
     liste = []
-    for fid, bi in sorted(szenen):
+    angebote = set(szenen) | (set(details) if a.alle_angebote else set())
+    log(f"Erzeuge {len(angebote)} Angebotsseiten")
+    for fid, bi in sorted(angebote, key=lambda k: (int(k[0]), k[1])):
         if (fid, bi) not in details:
             log(f"Balkon {fid}:{bi} nicht gefunden oder zu schmal")
             continue
@@ -637,9 +641,14 @@ def main():
         os.makedirs(out, exist_ok=True)
         P0 = geo["mitte"]
         z0 = f["ground"]
-        szene = exportiere_szene(out, P0, z0, V, F, VT, FT, mat, tri_baum)
+        szene = None
+        if (fid, bi) in szenen:      # Foto-Mesh (ca. 4 MB) nur für ausgewählte Balkone
+            szene = exportiere_szene(out, P0, z0, V, F, VT, FT, mat, tri_baum)
+            szene["tex"] = tex_names
+        alt = os.path.join(out, "daten.json")
+        if szene is None and os.path.exists(alt) and os.path.exists(os.path.join(out, "scene.bin")):
+            szene = json.load(open(alt, encoding="utf-8")).get("szene")   # früher erzeugtes Foto-Mesh weiter nutzen
         modell = exportiere_modell(out, P0, z0, f, BK[fid]["balkone"], P, baum)
-        szene["tex"] = tex_names
         lon, lat = to_ll.transform(P0[0], P0[1])
         pac = np.round(r["pac"]).astype(int)
         frei = np.round(r["pac_frei"]).astype(int)
@@ -677,8 +686,9 @@ def main():
         with open(os.path.join(out, "daten.json"), "w", encoding="utf-8") as fh:
             json.dump(daten, fh, ensure_ascii=False, separators=(",", ":"))
         liste.append(dict(id=key, fassade=int(fid), balkon=bi, kwh=daten["jahr"]["kwh"]))
-        log(f"Angebot {key}: {daten['jahr']['kwh']:.0f} kWh/a (frei {daten['jahr']['kwh_frei']:.0f}), "
-            f"Szene {szene['vertices']:,} Punkte")
+        if szene:
+            log(f"Angebot {key}: {daten['jahr']['kwh']:.0f} kWh/a (frei {daten['jahr']['kwh_frei']:.0f}), "
+                f"Foto-Szene {szene['vertices']:,} Punkte")
 
     # Liste vorhandener Angebotsseiten (für Explorer und Auswahl)
     lp_path = os.path.join(a.webapp, "angebote.js")
