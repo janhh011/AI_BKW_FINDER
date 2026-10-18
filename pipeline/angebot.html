@@ -3,166 +3,126 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Balkonkraftwerk-Durchrechnung</title>
+<title>Ihr Balkonkraftwerk</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,650;12..96,750&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
+    --sage: #e9efe5;        /* Seitengrund */
+    --paper: #fafcf7;       /* Flächen */
+    --moss: #1c3a29;        /* Text */
+    --leaf: #2f7d4f;        /* Aktion, Auswahl */
+    --leaf-soft: #d7e8da;
+    --fern: #5f7566;        /* Nebentext */
+    --line: #d3ddd0;
+    --sun: #e3a21a;
+    --sun-soft: rgba(227, 162, 26, .22);
+    --tree: #7fa77f;
+    --build: #a9b5a6;
     color-scheme: light;
-    --bg: #f5f4f0;
-    --surface: #fcfcfb;
-    --surface-2: #f0efec;
-    --line: #e2e0da;
-    --text: #0b0b0b;
-    --text-2: #52514e;
-    --text-3: #7a7974;
-    --accent: #1c5cab;
-    --sun: #eda100;
-    --sun-soft: rgba(237, 161, 0, .28);
-    --load: #2a78d6;
-    --build: #9a988f;
-    --tree: #008300;
-    --good: #0ca30c;
-    --serious: #ec835a;
-    --shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.05);
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      color-scheme: dark;
-      --bg: #121211; --surface: #1a1a19; --surface-2: #232321; --line: #33332f;
-      --text: #f0efec; --text-2: #c3c2b7; --text-3: #8f8e86; --accent: #6da7ec;
-      --sun: #c98500; --sun-soft: rgba(201, 133, 0, .32); --load: #3987e5;
-      --build: #6b6a64; --tree: #2f9a2f;
-      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
-    }
-  }
-  :root[data-theme="dark"] {
-    color-scheme: dark;
-    --bg: #121211; --surface: #1a1a19; --surface-2: #232321; --line: #33332f;
-    --text: #f0efec; --text-2: #c3c2b7; --text-3: #8f8e86; --accent: #6da7ec;
-    --sun: #c98500; --sun-soft: rgba(201, 133, 0, .32); --load: #3987e5;
-    --build: #6b6a64; --tree: #2f9a2f;
-    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
   }
   * { box-sizing: border-box; }
-  html, body { margin: 0; }
-  body { background: var(--bg); color: var(--text); font: 15px/1.5 Inter, system-ui, -apple-system, sans-serif;
-         font-feature-settings: "tnum" 1; -webkit-font-smoothing: antialiased; }
-  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px; }
-  header.top { padding: 22px 0 8px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
-  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; letter-spacing: -.01em; }
-  .brand .dot { width: 22px; height: 22px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ffd76a, var(--sun)); box-shadow: 0 0 0 4px var(--sun-soft); }
-  .brand small { color: var(--text-3); font-weight: 500; margin-left: 4px; }
-  select { font: inherit; font-size: 13px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--text); }
-  h1 { font-size: clamp(26px, 3.4vw, 38px); line-height: 1.15; letter-spacing: -.025em; margin: 18px 0 6px; font-weight: 700; }
-  .sub { color: var(--text-2); margin: 0 0 22px; font-size: 16px; }
-  .sub b { color: var(--text); font-weight: 600; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--sage); color: var(--moss); font: 16px/1.5 Figtree, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  h1, h2, .price, .brand { font-family: "Bricolage Grotesque", Figtree, sans-serif; }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 3px solid var(--leaf); outline-offset: 2px; }
 
-  .hero { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; align-items: stretch; }
-  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); }
-  .viewer { position: relative; overflow: hidden; min-height: 540px; border-radius: 16px; background: #0d1520; }
-  .viewer canvas { display: block; width: 100%; height: 100%; position: absolute; inset: 0; }
-  .viewer .loading { position: absolute; inset: 0; display: grid; place-items: center; color: #c9d3df; font-size: 14px; }
-  .chip { position: absolute; left: 14px; top: 14px; margin-right: 170px; background: rgba(12, 16, 22, .72); color: #f3f1ea; backdrop-filter: blur(8px);
-          border-radius: 10px; padding: 8px 12px; font-size: 13px; line-height: 1.35; max-width: calc(100% - 200px); }
-  .chip b { font-weight: 600; }
-  .chip .state { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
-  .chip .state i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
-  .controls { position: absolute; left: 12px; right: 12px; bottom: 12px; background: rgba(12, 16, 22, .74); backdrop-filter: blur(10px);
-              color: #f3f1ea; border-radius: 12px; padding: 10px 14px 12px; display: grid; gap: 6px; font-size: 13px; }
-  .controls .row { display: grid; grid-template-columns: auto 1fr 92px; align-items: center; gap: 12px; }
-  .controls .lbl { color: #b9c2cc; font-size: 12px; width: 52px; }
-  .controls .val { text-align: right; font-weight: 600; }
-  .controls .quick { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-  .controls .drag { margin-left: auto; color: #8f9aa6; font-size: 12px; }
-  .controls button { font: inherit; font-size: 12px; color: #f3f1ea; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.14);
-                     border-radius: 7px; padding: 3px 9px; cursor: pointer; }
-  .controls button:hover { background: rgba(255,255,255,.2); }
-  .controls button.on { background: var(--sun); border-color: var(--sun); color: #111; }
-  .controls .play { width: 30px; height: 30px; padding: 0; border-radius: 50%; display: grid; place-items: center; font-size: 13px; }
-  input[type=range] { width: 100%; accent-color: var(--sun); }
-  .hint3d { position: absolute; right: 14px; top: 14px; color: #b9c2cc; font-size: 12px; display: flex; gap: 8px; align-items: center; }
-  .hint3d span { background: rgba(12,16,22,.6); padding: 4px 9px; border-radius: 8px; }
-  .hint3d button { font: inherit; font-size: 12px; color: #f3f1ea; background: rgba(12,16,22,.72); border: 1px solid rgba(255,255,255,.2); border-radius: 8px; padding: 4px 9px; cursor: pointer; }
-  .hint3d button.on { background: #2f7d32; border-color: #2f7d32; }
+  .page { height: 100vh; min-height: 640px; display: grid; grid-template-rows: auto 1fr; grid-template-columns: minmax(0, 1fr); padding: 18px 28px 22px; gap: 14px; }
+  header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px; }
+  .brand { display: flex; align-items: center; gap: 9px; font-weight: 650; font-size: 19px; letter-spacing: -.01em; }
+  .brand svg { width: 26px; height: 26px; }
+  .who { color: var(--fern); font-size: 14px; }
+  .who select { font: inherit; border: 0; background: transparent; color: var(--fern); cursor: pointer; }
 
-  .facts { padding: 22px; display: flex; flex-direction: column; gap: 16px; }
-  .facts .k { color: var(--text-2); font-size: 13px; }
-  .facts .v { font-size: 30px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
-  .facts .v small { font-size: 15px; font-weight: 500; color: var(--text-2); margin-left: 3px; }
-  .facts .note { font-size: 12px; color: var(--text-3); margin-top: 2px; }
-  .facts hr { border: 0; border-top: 1px solid var(--line); margin: 2px 0; }
-  .pack { display: flex; gap: 12px; align-items: center; }
-  .pack .ico { width: 46px; height: 32px; border-radius: 4px; background: linear-gradient(135deg, #22355c, #142140); position: relative; flex: none;
-               box-shadow: inset 0 0 0 1px rgba(255,255,255,.25); }
-  .pack .ico::after { content: ""; position: absolute; inset: 3px; background-image: linear-gradient(rgba(255,255,255,.18) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.18) 1px, transparent 1px); background-size: 6px 7px; }
-  .pack .t { font-weight: 600; font-size: 14px; }
-  .pack .s { font-size: 12px; color: var(--text-2); }
-  .warn { font-size: 12px; color: var(--text-2); background: var(--surface-2); border-radius: 10px; padding: 8px 10px; }
+  main { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(380px, .88fr); gap: 34px; min-height: 0; }
 
-  section { margin: 34px 0; }
-  section > h2 { font-size: 21px; letter-spacing: -.015em; margin: 0 0 4px; }
-  section > p.lead { color: var(--text-2); margin: 0 0 16px; max-width: 760px; }
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-  .pad { padding: 18px 20px; }
-  .ctitle { font-weight: 600; font-size: 14px; margin: 0 0 2px; }
-  .csub { color: var(--text-3); font-size: 12px; margin: 0 0 10px; }
-  .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--text-2); margin: 0 0 8px; }
-  .legend span { display: inline-flex; align-items: center; gap: 6px; }
-  .legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
-  .legend i.line { height: 3px; border-radius: 2px; }
-  svg.chart { width: 100%; height: auto; display: block; overflow: visible; }
-  svg.chart text { fill: var(--text-3); font-size: 11px; }
-  svg.chart .grid line { stroke: var(--line); }
-  svg.chart .axis { stroke: var(--text-3); }
-  .tip { position: fixed; pointer-events: none; background: var(--surface); color: var(--text); border: 1px solid var(--line);
-         box-shadow: var(--shadow); border-radius: 8px; padding: 7px 10px; font-size: 12px; line-height: 1.45; z-index: 50; display: none; min-width: 120px; }
-  .tip b { font-weight: 600; }
-  .tip .sw { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; }
-  .monthpick { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
-  .monthpick button { font: inherit; font-size: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text-2);
-                      border-radius: 6px; padding: 2px 7px; cursor: pointer; }
-  .monthpick button.on { background: var(--text); color: var(--surface); border-color: var(--text); }
+  /* Bild */
+  .stage { position: relative; border-radius: 28px; overflow: hidden; background: radial-gradient(120% 90% at 50% 30%, #f3f7ef 0%, var(--sage) 70%); min-height: 0; }
+  .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .stage .loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--fern); font-size: 14px; }
+  .sunbox { position: absolute; left: 16px; bottom: 16px; background: rgba(250, 252, 247, .9); backdrop-filter: blur(8px);
+            border-radius: 18px; padding: 12px 14px 10px; display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; align-items: center;
+            max-width: calc(100% - 32px); box-shadow: 0 6px 24px rgba(28, 58, 41, .08); }
+  .sunbox svg { grid-row: span 2; width: 190px; height: 82px; display: block; }
+  .sunbox .t { font-size: 14px; line-height: 1.35; }
+  .sunbox .t b { font-weight: 600; }
+  .sunbox .ctl { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .chip { border: 1px solid var(--line); background: var(--paper); border-radius: 999px; padding: 3px 11px; font-size: 13px; cursor: pointer; color: var(--fern); }
+  .chip[aria-pressed="true"] { background: var(--moss); border-color: var(--moss); color: #fff; }
+  .look { position: absolute; right: 16px; top: 16px; }
+  .play { width: 28px; height: 28px; border-radius: 50%; border: 0; background: var(--sun); cursor: pointer; display: grid; place-items: center; }
+  .play svg { width: 12px; height: 12px; }
+  .clock { font-size: 13px; color: var(--fern); font-variant-numeric: tabular-nums; min-width: 66px; }
 
-  .eco { display: grid; grid-template-columns: 330px 1fr; gap: 18px; }
-  .inputs { display: grid; gap: 16px; }
-  .inp label { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-2); margin-bottom: 4px; }
-  .inp label b { color: var(--text); font-weight: 600; }
-  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 14px; }
-  .tile { background: var(--surface-2); border-radius: 12px; padding: 12px 14px; }
-  .tile .k { font-size: 12px; color: var(--text-2); }
-  .tile .v { font-size: 24px; font-weight: 700; letter-spacing: -.02em; }
-  .flow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; font-size: 13px; color: var(--text-2); margin-bottom: 8px; }
-  .flow b { color: var(--text); font-size: 15px; display: block; }
-  .bar100 { height: 10px; border-radius: 6px; overflow: hidden; display: flex; gap: 2px; background: var(--surface); margin: 6px 0 14px; }
-  .bar100 div { height: 100%; }
+  /* Angebot */
+  .offer { display: flex; flex-direction: column; min-height: 0; padding-top: 4px; }
+  h1 { font-size: clamp(30px, 4.1vh, 44px); line-height: 1.08; font-weight: 750; letter-spacing: -.025em; margin: 0 0 10px; }
+  .lead { color: var(--fern); margin: 0 0 18px; font-size: 16px; max-width: 46ch; }
+  .opts { display: grid; gap: 8px; margin-bottom: 14px; }
+  .opt { position: relative; display: grid; grid-template-columns: 22px 1fr auto; gap: 2px 14px; align-items: center; text-align: left;
+         background: var(--paper); border: 1.5px solid transparent; border-radius: 16px; padding: 12px 16px; cursor: pointer; }
+  .opt:hover { border-color: var(--line); }
+  .opt[aria-checked="true"] { border-color: var(--leaf); background: #fff; box-shadow: 0 4px 18px rgba(47, 125, 79, .12); }
+  .opt .dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--line); grid-row: span 3; }
+  .opt[aria-checked="true"] .dot { border: 5px solid var(--leaf); }
+  .opt .name { font-weight: 600; font-size: 16px; display: flex; gap: 8px; align-items: center; }
+  .opt .tag { font-size: 12px; font-weight: 600; color: var(--leaf); background: var(--leaf-soft); border-radius: 999px; padding: 1px 8px; }
+  .opt .sub { font-size: 14px; color: var(--fern); grid-column: 2; }
+  .opt .tech { grid-column: 2; font-size: 12.5px; color: #8a9a8e; }
+  .opt .price { grid-row: 1 / span 3; grid-column: 3; text-align: right; font-size: 24px; font-weight: 650; letter-spacing: -.01em; line-height: 1.1; }
+  .opt .price small { display: block; font-family: Figtree, sans-serif; font-size: 13px; font-weight: 500; color: var(--leaf); letter-spacing: 0; }
 
-  table.offer { width: 100%; border-collapse: collapse; font-size: 14px; }
-  table.offer td { padding: 10px 4px; border-bottom: 1px solid var(--line); vertical-align: top; }
-  table.offer td:last-child { text-align: right; white-space: nowrap; }
-  table.offer tr.sum td { font-weight: 700; border-bottom: 0; font-size: 16px; }
-  table.offer .d { color: var(--text-3); font-size: 12px; }
-  .steps { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .step { background: var(--surface-2); border-radius: 12px; padding: 12px 14px; font-size: 13px; color: var(--text-2); }
-  .step b { display: block; color: var(--text); font-size: 14px; margin-bottom: 2px; }
-  .step .n { color: var(--sun); font-weight: 700; }
-  ul.ann { margin: 0; padding-left: 18px; color: var(--text-2); font-size: 13px; columns: 2; column-gap: 32px; }
-  ul.ann li { margin-bottom: 6px; break-inside: avoid; }
-  footer { color: var(--text-3); font-size: 12px; padding: 18px 0 40px; border-top: 1px solid var(--line); margin-top: 40px; }
+  .house { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; color: var(--fern); margin-bottom: 18px; }
 
-  @media (max-width: 980px) {
-    .hero, .eco, .grid2 { grid-template-columns: 1fr; }
-    .viewer { min-height: 460px; }
-    ul.ann { columns: 1; }
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: auto 0 16px; padding-top: 4px; }
+  .step { font-size: 13.5px; color: var(--fern); line-height: 1.35; }
+  .step b { display: flex; align-items: center; gap: 8px; color: var(--moss); font-size: 15px; font-weight: 600; margin-bottom: 3px; }
+  .step b span { width: 24px; height: 24px; flex: none; border-radius: 50%; background: var(--leaf-soft); color: var(--leaf); display: grid; place-items: center; font-size: 13px; }
+  .cta { display: flex; align-items: center; gap: 18px; }
+  .btn { background: var(--leaf); color: #fff; border: 0; border-radius: 14px; padding: 14px 24px; font-weight: 600; font-size: 16px; cursor: pointer; }
+  .btn:hover { background: #276b43; }
+  .link { background: none; border: 0; padding: 0; color: var(--fern); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; font-size: 14px; }
+  .fine { font-size: 12px; color: #8a9a8e; margin-top: 10px; }
+
+  dialog { border: 0; border-radius: 22px; padding: 26px 28px; max-width: 560px; width: calc(100% - 32px); color: var(--moss); background: var(--paper); }
+  dialog::backdrop { background: rgba(28, 58, 41, .35); }
+  dialog h2 { margin: 0 0 12px; font-size: 22px; }
+  dialog dl { display: grid; grid-template-columns: 1fr auto; gap: 6px 18px; margin: 0 0 14px; font-size: 14px; }
+  dialog dt { color: var(--fern); }
+  dialog dd { margin: 0; text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+  dialog p { font-size: 13px; color: var(--fern); margin: 0 0 8px; }
+  dialog input { width: 70px; font: inherit; padding: 2px 6px; border: 1px solid var(--line); border-radius: 8px; text-align: right; }
+
+  @media (max-height: 820px) {
+    .page { padding: 12px 24px 14px; gap: 10px; }
+    h1 { margin-bottom: 6px; }
+    .lead { margin-bottom: 12px; font-size: 15px; }
+    .opts { gap: 6px; margin-bottom: 10px; }
+    .opt { padding: 8px 14px; }
+    .house { margin-bottom: 10px; }
+    .steps { margin-bottom: 10px; }
+    .btn { padding: 11px 20px; }
+    .fine { margin-top: 6px; }
+  }
+  @media (max-width: 1000px), (max-height: 600px) {
+    .page { height: auto; }
+    main { grid-template-columns: minmax(0, 1fr); }
+    .stage { height: 58vh; min-height: 360px; }
   }
   @media (max-width: 560px) {
-    .wrap { padding: 0 16px; }
-    .tiles, .flow { grid-template-columns: 1fr; }
+    .page { padding: 14px 16px 22px; }
+    .sunbox { left: 10px; bottom: 10px; padding: 8px 10px; gap: 2px 10px; }
+    .sunbox svg { width: 104px; height: 46px; }
+    .sunbox .t { font-size: 12.5px; }
+    .chip { padding: 2px 9px; font-size: 12px; }
+    .clock { display: none; }
+    .opt { grid-template-columns: 20px 1fr auto; gap: 2px 10px; }
     .steps { grid-template-columns: 1fr; }
-    .controls .row { grid-template-columns: auto 1fr 74px; gap: 8px; }
-    .controls .lbl { display: none; }
-    .controls .drag { display: none; }
+    .opt .price { font-size: 20px; }
   }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 </style>
 <script type="importmap">
 { "imports": {
@@ -173,620 +133,427 @@
 <script src="../angebote.js" onerror="window.ANGEBOTE=[]"></script>
 </head>
 <body>
-<div class="wrap">
-  <header class="top">
-    <div class="brand"><span class="dot"></span>Balkonkraftwerk-Check <small>Durchrechnung · Prototyp</small></div>
-    <select id="pick" aria-label="Beispiel wählen"></select>
+<div class="page">
+  <header>
+    <div class="brand">
+      <svg viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="13" fill="#2f7d4f"/><path d="M7 16.5c3.5-.2 8.6-2.4 11.5-9 .9 6.6-2.4 11.6-8.3 11.6-1.3 0-2.4-.9-3.2-2.6Z" fill="#e9efe5"/><circle cx="18.6" cy="7.4" r="2.2" fill="#e3a21a"/></svg>
+      Sonnenbalkon
+    </div>
+    <div class="who"><select id="pick" aria-label="Beispiel wählen"></select></div>
   </header>
 
-  <h1 id="title">Ihr Balkon als Kraftwerk</h1>
-  <p class="sub" id="subtitle">Lade Daten …</p>
-
-  <div class="hero">
-    <div class="viewer card" id="viewer">
-      <div class="loading" id="loading">3D-Modell wird geladen …</div>
-      <div class="chip" id="chip"></div>
-      <div class="hint3d"><button id="trees" class="on">Bäume durchsichtig</button></div>
-      <div class="controls">
-        <div class="row">
-          <span class="lbl">Datum</span>
-          <input type="range" id="doy" min="1" max="365" step="1">
-          <span class="val" id="doyVal"></span>
-        </div>
-        <div class="row">
-          <button class="play" id="play" title="Tag abspielen" aria-label="Tag abspielen">▶</button>
-          <input type="range" id="hour" min="240" max="1320" step="5">
-          <span class="val" id="hourVal"></span>
-        </div>
-        <div class="quick" id="quick">
-          <button data-doy="355">21. Dez</button><button data-doy="80">20. Mär</button>
-          <button data-doy="172">21. Jun</button><button data-doy="266">23. Sep</button><button data-doy="today">Heute</button>
-          <span class="drag">Ziehen zum Drehen · Scrollen zum Zoomen</span>
+  <main>
+    <section class="stage" id="stage" aria-label="3D-Ansicht Ihres Balkons">
+      <div class="loading" id="loading">Ihr Balkon wird geladen …</div>
+      <button class="chip look" id="look" aria-pressed="false">Foto-Ansicht</button>
+      <div class="sunbox">
+        <svg id="sunpath" viewBox="0 0 190 82" role="img" aria-label="Sonnenbahn und Schatten am Balkon"></svg>
+        <div class="t" id="sunText"></div>
+        <div class="ctl">
+          <button class="play" id="play" aria-label="Tagesverlauf abspielen"><svg viewBox="0 0 12 12"><path id="playIcon" d="M3 1.5v9l7-4.5z" fill="#1c3a29"/></svg></button>
+          <button class="chip" data-doy="172">Sommer</button>
+          <button class="chip" data-doy="80">Frühling</button>
+          <button class="chip" data-doy="355">Winter</button>
+          <span class="clock" id="clock"></span>
         </div>
       </div>
-    </div>
+    </section>
 
-    <aside class="card facts" id="facts"></aside>
-  </div>
-
-  <section>
-    <h2>Sonne und Schatten an Ihrem Balkon</h2>
-    <p class="lead" id="shadeLead"></p>
-    <div class="grid2">
-      <div class="card pad">
-        <p class="ctitle">Sonnenbahnen und Horizont vom Balkon aus</p>
-        <p class="csub">Blick nach außen. Alles unterhalb der Kontur verdeckt die Sonne.</p>
-        <div class="legend">
-          <span><i style="background:var(--build)"></i>Gebäude</span>
-          <span><i style="background:var(--tree)"></i>Bäume (lassen etwas Licht durch)</span>
-          <span><i class="line" style="background:var(--sun)"></i>Sonnenbahn</span>
-        </div>
-        <svg class="chart" id="sunpath" viewBox="0 0 560 300" role="img" aria-label="Sonnenbahndiagramm mit Horizont"></svg>
+    <section class="offer">
+      <h1 id="headline">Ihr Balkon kann Strom machen.</h1>
+      <p class="lead" id="lead"></p>
+      <div class="opts" id="opts" role="radiogroup" aria-label="Ausstattung wählen"></div>
+      <div class="house" role="group" aria-label="Personen im Haushalt">
+        Personen im Haushalt
+        <button class="chip" data-kwh="1500">1</button><button class="chip" data-kwh="2500">2</button>
+        <button class="chip" data-kwh="3200">3</button><button class="chip" data-kwh="4000">4+</button>
       </div>
-      <div class="card pad">
-        <p class="ctitle">Stromertrag pro Monat</p>
-        <p class="csub">kWh je Monat, mit und ohne Verschattung</p>
-        <div class="legend">
-          <span><i style="background:var(--sun)"></i>Ihr Ertrag</span>
-          <span><i style="background:transparent;box-shadow:inset 0 0 0 1.5px var(--text-3)"></i>ohne Verschattung</span>
-        </div>
-        <svg class="chart" id="months" viewBox="0 0 560 300" role="img" aria-label="Monatlicher Ertrag"></svg>
+      <div class="steps">
+        <div class="step"><b><span>1</span>Bestellen</b>Wir liefern alles passend für Ihr Geländer.</div>
+        <div class="step"><b><span>2</span>Einhängen</b>Module ans Geländer, Stecker in die Steckdose.</div>
+        <div class="step"><b><span>3</span>Online anmelden</b>Ein kurzes Formular – wir füllen es mit Ihnen aus.</div>
       </div>
-    </div>
-  </section>
-
-  <section>
-    <h2>Ein typischer Tag: Erzeugung und Verbrauch</h2>
-    <p class="lead">Strom vom Balkon wird zuerst in der Wohnung verbraucht – vom Kühlschrank, Router, Rechner. Was gerade nicht gebraucht wird, fließt unvergütet ins Netz. Entscheidend ist deshalb die Überschneidung.</p>
-    <div class="card pad">
-      <div class="monthpick" id="monthpick"></div>
-      <div class="legend">
-        <span><i class="line" style="background:var(--sun)"></i>Erzeugung Balkonkraftwerk</span>
-        <span><i class="line" style="background:var(--load)"></i>Verbrauch Haushalt</span>
-        <span><i style="background:var(--sun-soft)"></i>selbst genutzt</span>
+      <div class="cta">
+        <button class="btn" id="order">Angebot anfordern</button>
+        <button class="link" id="howBtn">So haben wir gerechnet</button>
       </div>
-      <svg class="chart" id="day" viewBox="0 0 1100 300" role="img" aria-label="Tagesverlauf"></svg>
-    </div>
-  </section>
-
-  <section>
-    <h2>Wirtschaftlichkeit</h2>
-    <p class="lead">Passen Sie Verbrauch und Strompreis an Ihre Rechnung an – alle Werte rechnen sofort neu.</p>
-    <div class="eco">
-      <div class="card pad inputs">
-        <div class="inp"><label>Jahresverbrauch Haushalt <b id="vVal"></b></label><input type="range" id="verbrauch" min="800" max="6000" step="100" value="2500"></div>
-        <div class="inp"><label>Strompreis <b id="pVal"></b></label><input type="range" id="preis" min="20" max="50" step="0.5" value="37"></div>
-        <div class="inp"><label>Anschaffung (Paketpreis) <b id="kVal"></b></label><input type="range" id="kosten" min="150" max="1500" step="10"></div>
-        <div class="inp"><label>Strompreis-Steigerung pro Jahr <b id="gVal"></b></label><input type="range" id="steig" min="0" max="5" step="0.5" value="2"></div>
-        <p class="csub" style="margin:0">Verbrauch: 1 Person ≈ 1.500 kWh, 2 Personen ≈ 2.500 kWh, 4 Personen ≈ 4.000 kWh.</p>
-      </div>
-      <div class="card pad">
-        <div class="tiles">
-          <div class="tile"><div class="k">Ersparnis im 1. Jahr</div><div class="v" id="tSave"></div></div>
-          <div class="tile"><div class="k">Hat sich bezahlt gemacht nach</div><div class="v" id="tPay"></div></div>
-          <div class="tile"><div class="k">Ersparnis über 20 Jahre</div><div class="v" id="t20"></div></div>
-        </div>
-        <div class="flow">
-          <div><b id="fGen"></b>Erzeugung pro Jahr</div>
-          <div><b id="fSelf"></b>davon selbst genutzt</div>
-          <div><b id="fGrid"></b>ins Netz (unvergütet)</div>
-        </div>
-        <div class="bar100" id="bar100"></div>
-        <p class="ctitle">Kumulierte Ersparnis nach Abzug der Anschaffung</p>
-        <svg class="chart" id="cash" viewBox="0 0 700 220" role="img" aria-label="Kumulierte Ersparnis über 20 Jahre"></svg>
-      </div>
-    </div>
-  </section>
-
-  <section>
-    <h2>Unser Vorschlag für Ihren Balkon</h2>
-    <p class="lead" id="offerLead"></p>
-    <div class="grid2">
-      <div class="card pad">
-        <table class="offer" id="offer"></table>
-        <p class="csub" style="margin:10px 0 0">Beispielpreise inkl. 0 % MwSt. für Photovoltaik. Endgültiges Angebot nach Foto vom Geländer.</p>
-      </div>
-      <div class="card pad">
-        <p class="ctitle" style="margin-bottom:10px">So geht es weiter</p>
-        <div class="steps">
-          <div class="step"><span class="n">1</span><b>Foto senden</b>Geländer und Steckdose fotografieren – wir prüfen Befestigung und Maße.</div>
-          <div class="step"><span class="n">2</span><b>Lieferung</b>Module, Wechselrichter und passende Halterung kommen vormontiert.</div>
-          <div class="step"><span class="n">3</span><b>Einstecken</b>Montage am Geländer, Stecker in die Außensteckdose.</div>
-          <div class="step"><span class="n">4</span><b>Anmelden</b>Eintrag im Marktstammdatenregister – wir füllen ihn mit Ihnen aus.</div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section>
-    <h2>So haben wir gerechnet</h2>
-    <div class="card pad"><ul class="ann" id="ann"></ul></div>
-  </section>
-
-  <footer id="foot"></footer>
+      <div class="fine" id="fine"></div>
+    </section>
+  </main>
 </div>
-<div class="tip" id="tip"></div>
+
+<dialog id="how">
+  <h2>So haben wir gerechnet</h2>
+  <dl id="howList"></dl>
+  <p>Strompreis <input id="preis" type="number" min="15" max="70" step="0.5" value="37"> ct pro kWh</p>
+  <p id="howText"></p>
+  <p><button class="btn" id="howClose" style="padding:9px 18px;font-size:14px">Schließen</button></p>
+</dialog>
 
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 const $ = id => document.getElementById(id);
 const NS = 'http://www.w3.org/2000/svg';
 const nf = (x, d = 0) => Number(x).toLocaleString('de-DE', {minimumFractionDigits: d, maximumFractionDigits: d});
 const eur = x => nf(Math.round(x)) + ' €';
-const MONATE = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
-const MONATE_LANG = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
 const RAD = Math.PI / 180;
-const GLEICHZEITIG = 0.85;     // stündliche Rechnung überschätzt den Eigenverbrauch
-const DEGRADATION = 0.005;
-const JAHRE = 20;
-const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const el = (tag, attrs = {}, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
 
-// ---------------------------------------------------------------- Auswahl
+// Annahmen für die Wirtschaftlichkeit (Beispielpreise)
+const PREIS_BASIS = 150;        // Wechselrichter 800 W, Kabel, Anmeldehilfe
+const PREIS_MODUL = 150;        // je Modul inkl. Geländerhalterung
+const SPEICHER = {kwh: 1.6, preis: 550, standby_w: 6, eta: 0.92};
+const GLEICHZEITIG = 0.85;      // stündliche Rechnung überschätzt den direkten Eigenverbrauch
+
+// ---------------------------------------------------------------- Daten
 const LIST = window.ANGEBOTE || [];
-const params = new URLSearchParams(location.search);
-const id = params.get('id') || (LIST[0] && LIST[0].id);
-const pick = $('pick');
+const id = new URLSearchParams(location.search).get('id') || (LIST[0] && LIST[0].id);
 for (const a of LIST) {
-  const o = document.createElement('option');
-  o.value = a.id;
-  o.textContent = `${a.geschoss === 0 ? 'EG' : (a.geschoss ?? '?') + '. OG'} · Fassade ${a.fassade} · ${nf(a.kwh)} kWh/Jahr`;
-  if (a.id === id) o.selected = true;
-  pick.appendChild(o);
+  const o = document.createElement('option'); o.value = a.id;
+  o.textContent = `Beispiel: ${a.geschoss === 0 ? 'Erdgeschoss' : a.geschoss + '. Stock'}, Haus ${a.fassade}`;
+  o.selected = a.id === id; $('pick').appendChild(o);
 }
-pick.addEventListener('change', () => { location.search = '?id=' + pick.value; });
-if (!id) { $('subtitle').textContent = 'Keine Durchrechnung gefunden. Bitte pipeline/angebot.py mit --szene ausführen.'; throw new Error('keine Daten'); }
-
-const [D, LP] = await Promise.all([
-  fetch(`${id}/daten.json`).then(r => r.json()),
-  fetch('lastprofil.json').then(r => r.json()),
-]);
+$('pick').addEventListener('change', e => { location.search = '?id=' + e.target.value; });
+const [D, LP] = await Promise.all([fetch(`${id}/daten.json`).then(r => r.json()), fetch('lastprofil.json').then(r => r.json())]);
 const N = D.stunde_wh.length;
-const PV = Float64Array.from(D.stunde_wh);
 const LPV = Float64Array.from(LP.werte);
+const VARS = (D.varianten && D.varianten.length ? D.varianten : [{n: D.vorschlag.n, wp: D.vorschlag.wp, kwh: D.jahr.kwh, kwh_frei: D.jahr.kwh_frei, module: D.module, stunde_wh: D.stunde_wh}])
+  .map(v => ({...v, pv: Float64Array.from(v.stunde_wh)}));
 
-// ---------------------------------------------------------------- Zeit (Europe/Berlin, Basisjahr)
-const Y = D.jahr_basis;
-const BASE = Date.UTC(Y, 0, 1, 0) - 3600e3;                 // 1. Jan 00:00 MEZ
-const DST_A = Date.UTC(Y, 2, 31 - ((5 * Y / 4 + 4) | 0) % 7, 1);
-const DST_B = Date.UTC(Y, 9, 31 - ((5 * Y / 4 + 1) | 0) % 7, 1);
-const offH = utc => (utc >= DST_A && utc < DST_B) ? 2 : 1;
-const LM = new Int8Array(N), LH = new Int8Array(N);
-for (let i = 0; i < N; i++) {
-  const u = BASE + i * 3600e3; const d = new Date(u + offH(u) * 3600e3);
-  LM[i] = d.getUTCMonth(); LH[i] = d.getUTCHours();
-}
-function utcFor(doy, hour) {
-  let u = Date.UTC(Y, 0, doy, 0) + hour * 3600e3 - 3600e3;
-  if (offH(u) === 2) u -= 3600e3;
-  return u;
-}
-const idxFor = u => Math.max(0, Math.min(N - 1, Math.floor((u - BASE) / 3600e3)));
-const dateLabel = doy => { const d = new Date(Date.UTC(Y, 0, doy)); return `${d.getUTCDate()}. ${MONATE_LANG[d.getUTCMonth()]}`; };
-const monthOfDoy = doy => new Date(Date.UTC(Y, 0, doy)).getUTCMonth();
+// Pakete aus den Varianten
+const vMax = VARS[VARS.length - 1], v1 = VARS[0], v2 = VARS.find(v => v.n === 2) || vMax;
+const PAKETE = [];
+PAKETE.push({key: 'einstieg', name: 'Einstieg', v: v1, speicher: false});
+if (v2.n > v1.n) PAKETE.push({key: 'standard', name: 'Standard', v: v2, speicher: false});
+PAKETE.push({key: 'montage', name: 'Rundum-sorglos', v: v2, speicher: false, montage: true});
+const SPEICHER_PAKET = {key: 'speicher', name: 'Mit Speicher', v: v2, speicher: true};
+if (vMax.n > 2) PAKETE.push({key: 'maximal', name: 'Maximal', v: vMax, speicher: false});
+const MONTAGE = 149;
+const preisVon = p => PREIS_BASIS + PREIS_MODUL * p.v.n + (p.speicher ? SPEICHER.preis : 0) + (p.montage ? MONTAGE : 0);
+for (const p of PAKETE) p.preis = preisVon(p);
+SPEICHER_PAKET.preis = preisVon(SPEICHER_PAKET);
 
-function sunPos(ms, lat, lon) {
-  const jd = ms / 86400000 + 2440587.5, T = (jd - 2451545) / 36525;
-  const L0 = (280.46646 + T * (36000.76983 + T * 0.0003032)) % 360;
-  const M = 357.52911 + T * (35999.05029 - 0.0001537 * T);
-  const e = 0.016708634 - T * (0.000042037 + 0.0000001267 * T);
-  const C = Math.sin(M * RAD) * (1.914602 - T * (0.004817 + 0.000014 * T)) + Math.sin(2 * M * RAD) * (0.019993 - 0.000101 * T) + Math.sin(3 * M * RAD) * 0.000289;
-  const om = 125.04 - 1934.136 * T, lam = L0 + C - 0.00569 - 0.00478 * Math.sin(om * RAD);
-  const eps0 = 23 + (26 + (21.448 - T * (46.815 + T * (0.00059 - T * 0.001813))) / 60) / 60, eps = eps0 + 0.00256 * Math.cos(om * RAD);
-  const decl = Math.asin(Math.sin(eps * RAD) * Math.sin(lam * RAD));
-  const y = Math.tan(eps * RAD / 2) ** 2;
-  const eqt = 4 / RAD * (y * Math.sin(2 * L0 * RAD) - 2 * e * Math.sin(M * RAD) + 4 * e * y * Math.sin(M * RAD) * Math.cos(2 * L0 * RAD)
-              - 0.5 * y * y * Math.sin(4 * L0 * RAD) - 1.25 * e * e * Math.sin(2 * M * RAD));
-  const dd = new Date(ms), min = dd.getUTCHours() * 60 + dd.getUTCMinutes() + dd.getUTCSeconds() / 60;
-  let tst = (min + eqt + 4 * lon) % 1440; if (tst < 0) tst += 1440;
-  const ha = (tst / 4 - 180) * RAD, la = lat * RAD;
-  const cz = Math.sin(la) * Math.sin(decl) + Math.cos(la) * Math.cos(decl) * Math.cos(ha);
-  const zen = Math.acos(Math.max(-1, Math.min(1, cz)));
-  const az = Math.atan2(Math.sin(ha), Math.cos(ha) * Math.sin(la) - Math.tan(decl) * Math.cos(la)) / RAD + 180;
-  let elev = 90 - zen / RAD;
-  if (elev > -0.6) elev += 1.02 / Math.tan((elev + 10.3 / (elev + 5.11)) * RAD) / 60;   // Refraktion
-  return {az: (az + 360) % 360, el: elev};
+let verbrauch = 2500, preis = 0.37;
+
+function eigenverbrauch(pv, speicher) {
+  let direkt = 0, ausSpeicher = 0, soc = 0;
+  const cap = SPEICHER.kwh * 1000;
+  for (let i = 0; i < N; i++) {
+    const last = LPV[i] * verbrauch * 1000, p = pv[i];
+    direkt += Math.min(p, last);
+    if (!speicher) continue;
+    if (p > last) soc = Math.min(cap, soc + Math.min(p - last, 800) * SPEICHER.eta);
+    else { const d = Math.min(last - p, soc, 800); soc -= d; ausSpeicher += d; }
+  }
+  let kwh = direkt / 1000 * GLEICHZEITIG + ausSpeicher / 1000;
+  if (speicher) kwh -= SPEICHER.standby_w * 8.76;
+  return Math.max(0, kwh);
+}
+function rechne() {
+  // Speicher nur anbieten, wenn er spürbar mehr spart (sonst ist er hier nicht sinnvoll)
+  const ohne = eigenverbrauch(v2.pv, false), mit = eigenverbrauch(v2.pv, true);
+  const i = PAKETE.indexOf(SPEICHER_PAKET);
+  if ((mit - ohne) * preis >= 40 && i < 0) PAKETE.splice(PAKETE.length - (vMax.n > 2 ? 1 : 0), 0, SPEICHER_PAKET);
+  if ((mit - ohne) * preis < 40 && i >= 0) { PAKETE.splice(i, 1); if (sel === SPEICHER_PAKET) sel = null; }
+  for (const p of PAKETE) {
+    p.selbst = eigenverbrauch(p.v.pv, p.speicher);
+    p.spart = p.selbst * preis;
+    p.jahre = p.preis / Math.max(p.spart, 1);
+    p.netto20 = p.spart * 20 * 0.95 - p.preis;
+  }
+  const best = PAKETE.reduce((a, b) => (b.netto20 > a.netto20 ? b : a));
+  for (const p of PAKETE) p.empfehlung = p === best;
 }
 
 // ---------------------------------------------------------------- Texte
-const HIMMEL = ['Norden', 'Nordnordost', 'Nordost', 'Ostnordost', 'Osten', 'Ostsüdost', 'Südost', 'Südsüdost', 'Süden', 'Südsüdwest', 'Südwest', 'Westsüdwest', 'Westen', 'Westnordwest', 'Nordwest', 'Nordnordwest'];
-const richtung = az => HIMMEL[Math.round(az / 22.5) % 16];
-const og = D.geschoss === 0 ? 'Erdgeschoss' : (D.geschoss != null ? `${D.geschoss}. Obergeschoss` : 'Obergeschoss');
-const verlust = 1 - D.jahr.kwh / D.jahr.kwh_frei;
-document.title = `Durchrechnung · ${og} · Fassade ${D.fassade}`;
-$('title').textContent = `Ihr ${D.typ === 'Loggia' ? 'Loggia' : 'Balkon'} im ${og} – ${nf(D.jahr.kwh)} kWh Sonnenstrom im Jahr`;
-$('subtitle').innerHTML = `Fassade nach <b>${richtung(D.az)}</b> (${nf(D.az)}°), Geländer ca. <b>${nf(D.breite_m, 1)} m</b> breit, ` +
-  `Module ca. ${nf(D.hoehe_modul_m, 1)} m über dem Boden · ${nf(D.lat, 4)}° N, ${nf(D.lon, 4)}° O`;
-const sh = D.jahr.sonnenstunden, shf = D.jahr.sonnenstunden_frei;
-$('shadeLead').innerHTML = `Wir haben die Umgebung Ihres Balkons aus dem 3D-Stadtmodell vermessen – Nachbarhäuser, Bäume, Vorsprünge. ` +
-  `Ihre Module bekommen rund <b>${nf(sh)} Stunden</b> direkte Sonne im Jahr, von ${nf(shf)} möglichen Stunden, in denen die Sonne vor Ihrer Fassade steht. ` +
-  `Die Verschattung kostet <b>${nf(verlust * 100)} %</b> des Ertrags, den derselbe Balkon frei stehend hätte.`;
+const HIMMEL = ['Norden', 'Nordosten', 'Osten', 'Südosten', 'Süden', 'Südwesten', 'Westen', 'Nordwesten'];
+const seite = HIMMEL[Math.round(D.az / 45) % 8];
+const stock = D.geschoss === 0 ? 'im Erdgeschoss' : `im ${D.geschoss}. Stock`;
+const sonnig = 1 - D.jahr.kwh / D.jahr.kwh_frei;
+const lage = sonnig < 0.15 ? 'bekommt viel Sonne' : sonnig < 0.35 ? 'bekommt gut Sonne, zeitweise etwas Schatten' : 'liegt öfter im Schatten – lohnt sich trotzdem';
+$('lead').textContent = `Wir haben Ihren Balkon ${stock} vermessen: ${nf(D.breite_m, 1)} Meter Geländer nach ${seite}. Er ${lage}. ` +
+  `Platz für ${vMax.n === 1 ? 'ein Solarmodul' : (vMax.n === 2 ? 'zwei Solarmodule' : vMax.n + ' Solarmodule')}.`;
+let sel = null;
 
-// ---------------------------------------------------------------- Kennzahlen + Wirtschaftlichkeit
-const V = D.vorschlag;
-const defaultKosten = V.n >= 2 ? 520 : (V.wp_modul >= 400 ? 340 : 290);
-$('kosten').value = defaultKosten;
-
-function rechne() {
-  const verbrauch = +$('verbrauch').value, preis = +$('preis').value / 100, kosten = +$('kosten').value, g = +$('steig').value / 100;
-  let selbst = 0;
-  for (let i = 0; i < N; i++) selbst += Math.min(PV[i], LPV[i] * verbrauch * 1000);
-  selbst = selbst / 1000 * GLEICHZEITIG;
-  const gen = D.jahr.kwh;
-  const save1 = selbst * preis;
-  let cum = -kosten, pay = null; const series = [{y: 0, v: cum}];
-  for (let y = 1; y <= JAHRE; y++) {
-    const s = selbst * (1 - DEGRADATION) ** (y - 1) * preis * (1 + g) ** (y - 1);
-    const prev = cum; cum += s;
-    if (pay === null && cum >= 0) pay = y - 1 + (-prev) / s;
-    series.push({y, v: cum});
+function renderOpts() {
+  rechne();
+  if (!sel) sel = PAKETE.find(p => p.empfehlung);
+  const box = $('opts'); box.innerHTML = '';
+  for (const p of PAKETE) {
+    const b = document.createElement('button');
+    b.className = 'opt'; b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', p === sel);
+    const mod = p.v.n === 1 ? '1 Solarmodul' : `${p.v.n} Solarmodule`;
+    b.innerHTML = `<span class="dot"></span>
+      <span class="name">${p.name}${p.empfehlung ? '<span class="tag">lohnt sich am meisten</span>' : ''}</span>
+      <span class="price">${eur(p.preis)}<small>spart ${eur(p.spart)} im Jahr</small></span>
+      <span class="sub">${mod}${p.speicher ? ' + Speicher' : ''}${p.montage ? ', wir montieren und melden an' : ''}, rechnet sich nach ${nf(Math.round(p.jahre * 2) / 2, 1).replace(',0', '')} Jahren</span>
+      <span class="tech">${nf(p.v.wp)} Watt · ${nf(p.v.kwh)} kWh Strom im Jahr${p.speicher ? ` · Speicher ${nf(SPEICHER.kwh, 1)} kWh` : ''}</span>`;
+    b.addEventListener('click', () => { sel = p; renderOpts(); placeModules(); });
+    box.appendChild(b);
   }
-  return {verbrauch, preis, kosten, g, selbst, gen, save1, pay, total: cum, series};
+  $('headline').textContent = `Ihr Balkon spart ${eur(sel.spart)} Strom im Jahr.`;
+  $('fine').textContent = `Beispielpreise inkl. Lieferung, 0 % MwSt. Berechnet mit ${nf(preis * 100, 1)} ct pro kWh und ${nf(verbrauch)} kWh Jahresverbrauch. Unverbindlich – endgültig nach einem Foto Ihres Geländers.`;
+  for (const c of document.querySelectorAll('.house .chip')) c.setAttribute('aria-pressed', +c.dataset.kwh === verbrauch);
+  renderHow();
 }
+for (const c of document.querySelectorAll('.house .chip')) c.addEventListener('click', () => { verbrauch = +c.dataset.kwh; renderOpts(); });
 
-function renderFacts(R) {
-  $('facts').innerHTML = `
-    <div><div class="k">Stromertrag pro Jahr</div><div class="v">${nf(D.jahr.kwh)}<small>kWh</small></div>
-      <div class="note">${nf(D.jahr.kwh_kwp)} kWh je kWp · ohne Verschattung ${nf(D.jahr.kwh_frei)} kWh</div></div>
-    <div><div class="k">Ersparnis pro Jahr</div><div class="v">${eur(R.save1)}</div>
-      <div class="note">bei ${nf(R.verbrauch)} kWh Verbrauch und ${nf(R.preis * 100, 1)} ct/kWh</div></div>
-    <div><div class="k">Hat sich bezahlt gemacht nach</div><div class="v">${R.pay === null ? '> 20' : nf(R.pay, 1)}<small>Jahren</small></div>
-      <div class="note">bei ${eur(R.kosten)} Anschaffung</div></div>
-    <hr>
-    <div class="pack"><span class="ico"></span><div><div class="t">${V.text}</div>
-      <div class="s">${nf(V.wp)} Wp · 800-W-Wechselrichter · Geländerhalterung</div></div></div>
-    ${D.rand ? '<div class="warn">Hinweis: Balkon liegt nahe am Rand des 3D-Modells – Verschattung von außerhalb ist nicht vollständig erfasst.</div>' : ''}
-    ${(D.sicherheit ?? 1) < 0.5 ? '<div class="warn">Hinweis: Balkon automatisch erkannt, aber unsicher – bitte per Foto bestätigen.</div>' : ''}`;
+function renderHow() {
+  const p = sel;
+  $('howList').innerHTML = [
+    ['Ausrichtung', `${seite} (${nf(D.az)}°)`], ['Geländerbreite', `${nf(D.breite_m, 1)} m`],
+    ['Leistung', `${nf(p.v.wp)} Watt`], ['Stromertrag pro Jahr', `${nf(p.v.kwh)} kWh`],
+    ['davon selbst genutzt', `${nf(p.selbst)} kWh (${nf(p.selbst / p.v.kwh * 100)} %)`],
+    ['Sonnenstunden auf den Modulen', `${nf(D.jahr.sonnenstunden)} von ${nf(D.jahr.sonnenstunden_frei)}`],
+    ['Ertragsverlust durch Schatten', `${nf((1 - p.v.kwh / p.v.kwh_frei) * 100)} %`],
+  ].map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join('');
+  $('howText').textContent = `Wir haben Nachbarhäuser und Bäume aus dem 3D-Stadtmodell Berlin vermessen und den Ertrag für jede Stunde eines Jahres simuliert (${D.wetter}). ` +
+    `Ihren Verbrauch schätzen wir mit dem Standard-Haushaltsprofil. Strom, den Sie gerade nicht brauchen, geht ohne Vergütung ins Netz` +
+    `${p.speicher ? `, außer der Speicher (${nf(SPEICHER.kwh, 1)} kWh) nimmt ihn auf` : ''}. Genauigkeit etwa ±15 %.`;
 }
+$('howBtn').addEventListener('click', () => $('how').showModal());
+$('howClose').addEventListener('click', () => $('how').close());
+$('preis').addEventListener('input', e => { preis = (+e.target.value || 37) / 100; renderOpts(); });
+$('order').addEventListener('click', () => { $('order').textContent = 'Danke – wir melden uns'; $('order').disabled = true; });
 
-function renderEco(R) {
-  $('vVal').textContent = nf(R.verbrauch) + ' kWh';
-  $('pVal').textContent = nf(R.preis * 100, 1) + ' ct/kWh';
-  $('kVal').textContent = eur(R.kosten);
-  $('gVal').textContent = nf(R.g * 100, 1) + ' %';
-  $('tSave').textContent = eur(R.save1);
-  $('tPay').textContent = R.pay === null ? '> 20 Jahren' : nf(R.pay, 1) + ' Jahren';
-  $('t20').textContent = eur(R.total);
-  $('fGen').textContent = nf(R.gen) + ' kWh';
-  $('fSelf').textContent = `${nf(R.selbst)} kWh (${nf(R.selbst / R.gen * 100)} %)`;
-  $('fGrid').textContent = nf(R.gen - R.selbst) + ' kWh';
-  const b = $('bar100'); b.innerHTML = '';
-  const a = R.selbst / R.gen;
-  b.insertAdjacentHTML('beforeend', `<div style="width:${a * 100}%;background:var(--sun)"></div><div style="flex:1;background:var(--line)"></div>`);
-  drawCash(R);
+// ---------------------------------------------------------------- Zeit und Sonne
+const Y = D.jahr_basis;
+const DST_A = Date.UTC(Y, 2, 31 - ((5 * Y / 4 + 4) | 0) % 7, 1), DST_B = Date.UTC(Y, 9, 31 - ((5 * Y / 4 + 1) | 0) % 7, 1);
+const offH = u => (u >= DST_A && u < DST_B) ? 2 : 1;
+function utcFor(doy, hour) { let u = Date.UTC(Y, 0, doy, 0) + hour * 3600e3 - 3600e3; if (offH(u) === 2) u -= 3600e3; return u; }
+function sunPos(ms, lat, lon) {
+  const jd = ms / 86400000 + 2440587.5, T = (jd - 2451545) / 36525;
+  const L0 = (280.46646 + T * (36000.76983 + T * 0.0003032)) % 360, M = 357.52911 + T * (35999.05029 - 0.0001537 * T);
+  const e = 0.016708634 - T * (0.000042037 + 0.0000001267 * T);
+  const C = Math.sin(M * RAD) * (1.914602 - T * (0.004817 + 0.000014 * T)) + Math.sin(2 * M * RAD) * (0.019993 - 0.000101 * T) + Math.sin(3 * M * RAD) * 0.000289;
+  const om = 125.04 - 1934.136 * T, lam = L0 + C - 0.00569 - 0.00478 * Math.sin(om * RAD);
+  const eps = 23 + (26 + (21.448 - T * (46.815 + T * (0.00059 - T * 0.001813))) / 60) / 60 + 0.00256 * Math.cos(om * RAD);
+  const decl = Math.asin(Math.sin(eps * RAD) * Math.sin(lam * RAD)), y = Math.tan(eps * RAD / 2) ** 2;
+  const eqt = 4 / RAD * (y * Math.sin(2 * L0 * RAD) - 2 * e * Math.sin(M * RAD) + 4 * e * y * Math.sin(M * RAD) * Math.cos(2 * L0 * RAD) - 0.5 * y * y * Math.sin(4 * L0 * RAD) - 1.25 * e * e * Math.sin(2 * M * RAD));
+  const dd = new Date(ms), min = dd.getUTCHours() * 60 + dd.getUTCMinutes() + dd.getUTCSeconds() / 60;
+  let tst = (min + eqt + 4 * lon) % 1440; if (tst < 0) tst += 1440;
+  const ha = (tst / 4 - 180) * RAD, la = lat * RAD;
+  const zen = Math.acos(Math.max(-1, Math.min(1, Math.sin(la) * Math.sin(decl) + Math.cos(la) * Math.cos(decl) * Math.cos(ha))));
+  const az = Math.atan2(Math.sin(ha), Math.cos(ha) * Math.sin(la) - Math.tan(decl) * Math.cos(la)) / RAD + 180;
+  return {az: (az + 360) % 360, el: 90 - zen / RAD};
 }
-
-// ---------------------------------------------------------------- Tooltip
-const tip = $('tip');
-function showTip(evt, html) { tip.innerHTML = html; tip.style.display = 'block';
-  const w = tip.offsetWidth, h = tip.offsetHeight;
-  let x = evt.clientX + 14, y = evt.clientY + 14;
-  if (x + w > innerWidth - 8) x = evt.clientX - w - 14;
-  if (y + h > innerHeight - 8) y = evt.clientY - h - 14;
-  tip.style.left = x + 'px'; tip.style.top = y + 'px'; }
-const hideTip = () => { tip.style.display = 'none'; };
-
-// ---------------------------------------------------------------- Diagramm: Kumulierte Ersparnis
-function drawCash(R) {
-  const svg = $('cash'); svg.innerHTML = '';
-  const W = 700, H = 220, L = 54, Rr = 12, T = 12, B = 28;
-  const vs = R.series.map(p => p.v);
-  let lo = Math.min(0, ...vs), hi = Math.max(0, ...vs);
-  const step = niceStep((hi - lo) / 4); lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
-  const x = y => L + y / JAHRE * (W - L - Rr), yv = v => T + (hi - v) / (hi - lo) * (H - T - B);
-  const g = el('g', {class: 'grid'}, svg);
-  for (let v = lo; v <= hi + 1e-6; v += step) {
-    el('line', {x1: L, x2: W - Rr, y1: yv(v), y2: yv(v), 'stroke-width': v === 0 ? 1.2 : 1, stroke: v === 0 ? css('--text-3') : ''}, g);
-    el('text', {x: L - 8, y: yv(v) + 4, 'text-anchor': 'end'}, svg).textContent = nf(v) + ' €';
-  }
-  for (let y = 0; y <= JAHRE; y += 5) el('text', {x: x(y), y: H - 8, 'text-anchor': 'middle'}, svg).textContent = y === 0 ? 'heute' : `${y} J.`;
-  const d = R.series.map((p, i) => `${i ? 'L' : 'M'}${x(p.y).toFixed(1)},${yv(p.v).toFixed(1)}`).join('');
-  el('path', {d: d + `L${x(JAHRE)},${yv(0)}L${x(0)},${yv(0)}Z`, fill: css('--sun-soft'), stroke: 'none', opacity: .7}, svg);
-  el('path', {d, fill: 'none', stroke: css('--sun'), 'stroke-width': 2.2, 'stroke-linejoin': 'round'}, svg);
-  if (R.pay !== null) {
-    const px = x(R.pay);
-    el('circle', {cx: px, cy: yv(0), r: 5, fill: css('--surface'), stroke: css('--text'), 'stroke-width': 2}, svg);
-    el('text', {x: px + 9, y: yv(0) - 9, fill: css('--text'), style: 'fill:var(--text);font-weight:600'}, svg).textContent = `bezahlt nach ${nf(R.pay, 1)} Jahren`;
-  }
-  const hit = el('rect', {x: L, y: T, width: W - L - Rr, height: H - T - B, fill: 'transparent'}, svg);
-  const cross = el('line', {y1: T, y2: H - B, stroke: css('--text-3'), 'stroke-dasharray': '3 3', visibility: 'hidden'}, svg);
-  hit.addEventListener('mousemove', e => {
-    const pt = svgPoint(svg, e); const y = Math.max(0, Math.min(JAHRE, Math.round((pt.x - L) / (W - L - Rr) * JAHRE)));
-    cross.setAttribute('x1', x(y)); cross.setAttribute('x2', x(y)); cross.setAttribute('visibility', 'visible');
-    showTip(e, `<b>${y === 0 ? 'Kauf' : 'nach ' + y + ' Jahren'}</b><br>${R.series[y].v >= 0 ? 'Plus' : 'Noch offen'}: ${eur(Math.abs(R.series[y].v))}`);
-  });
-  hit.addEventListener('mouseleave', () => { cross.setAttribute('visibility', 'hidden'); hideTip(); });
-}
-function niceStep(raw) { const p = 10 ** Math.floor(Math.log10(Math.max(raw, 1e-9))); const f = raw / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p; }
-function svgPoint(svg, e) { const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); }
-
-// ---------------------------------------------------------------- Diagramm: Monate
-function drawMonths() {
-  const svg = $('months'); svg.innerHTML = '';
-  const W = 560, H = 300, L = 40, Rr = 8, T = 14, B = 26;
-  const hi0 = Math.max(...D.monat.kwh_frei); const step = niceStep(hi0 / 4); const hi = Math.ceil(hi0 / step) * step;
-  const yv = v => T + (hi - v) / hi * (H - T - B);
-  const g = el('g', {class: 'grid'}, svg);
-  for (let v = 0; v <= hi + 1e-6; v += step) {
-    el('line', {x1: L, x2: W - Rr, y1: yv(v), y2: yv(v)}, g);
-    el('text', {x: L - 8, y: yv(v) + 4, 'text-anchor': 'end'}, svg).textContent = nf(v);
-  }
-  const bw = (W - L - Rr) / 12, w = Math.min(26, bw * 0.62);
-  D.monat.kwh.forEach((v, m) => {
-    const cx = L + bw * (m + 0.5), vf = D.monat.kwh_frei[m];
-    el('rect', {x: cx - w / 2 - 1, y: yv(vf), width: w + 2, height: Math.max(0, yv(0) - yv(vf)), rx: 4, fill: 'none', stroke: css('--text-3'), 'stroke-width': 1.2, 'stroke-dasharray': '3 2'}, svg);
-    el('path', {d: barPath(cx - w / 2, yv(v), w, yv(0) - yv(v), 4), fill: css('--sun')}, svg);
-    el('text', {x: cx, y: H - 8, 'text-anchor': 'middle'}, svg).textContent = MONATE[m];
-    const hit = el('rect', {x: cx - bw / 2, y: T, width: bw, height: H - T - B, fill: 'transparent'}, svg);
-    hit.addEventListener('mousemove', e => showTip(e, `<b>${MONATE_LANG[m]}</b><br><span class="sw" style="background:var(--sun)"></span>Ihr Ertrag: ${nf(v)} kWh<br><span class="sw" style="box-shadow:inset 0 0 0 1.5px var(--text-3)"></span>ohne Verschattung: ${nf(vf)} kWh`));
-    hit.addEventListener('mouseleave', hideTip);
-  });
-}
-function barPath(x, y, w, h, r) { r = Math.min(r, h, w / 2); if (h <= 0) return ''; return `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`; }
-
-// ---------------------------------------------------------------- Diagramm: Tag
-let dayMonth = monthOfDoy(new Date().getMonth() * 30 + 15);
-function drawDay() {
-  const R = rechne();
-  const pv = new Float64Array(24), ld = new Float64Array(24), cnt = new Float64Array(24);
-  for (let i = 0; i < N; i++) if (LM[i] === dayMonth) { pv[LH[i]] += PV[i]; ld[LH[i]] += LPV[i] * R.verbrauch * 1000; cnt[LH[i]]++; }
-  for (let h = 0; h < 24; h++) { pv[h] /= cnt[h] || 1; ld[h] /= cnt[h] || 1; }
-  const svg = $('day'); svg.innerHTML = '';
-  const W = 1100, H = 300, L = 48, Rr = 10, T = 14, B = 26;
-  const hi0 = Math.max(...pv, ...ld, 100); const step = niceStep(hi0 / 4); const hi = Math.ceil(hi0 / step) * step;
-  const x = h => L + h / 24 * (W - L - Rr), yv = v => T + (hi - v) / hi * (H - T - B);
-  const g = el('g', {class: 'grid'}, svg);
-  for (let v = 0; v <= hi + 1e-6; v += step) {
-    el('line', {x1: L, x2: W - Rr, y1: yv(v), y2: yv(v)}, g);
-    el('text', {x: L - 8, y: yv(v) + 4, 'text-anchor': 'end'}, svg).textContent = nf(v) + ' W';
-  }
-  for (let h = 0; h <= 24; h += 3) el('text', {x: x(h), y: H - 8, 'text-anchor': 'middle'}, svg).textContent = `${h}:00`;
-  const pts = (arr) => Array.from(arr, (v, h) => [x(h + 0.5), yv(v)]);
-  const line = p => p.map((q, i) => `${i ? 'L' : 'M'}${q[0].toFixed(1)},${q[1].toFixed(1)}`).join('');
-  const mn = Array.from(pv, (v, h) => Math.min(v, ld[h]));
-  const pm = pts(mn);
-  el('path', {d: line(pm) + `L${pm[23][0]},${yv(0)}L${pm[0][0]},${yv(0)}Z`, fill: css('--sun-soft')}, svg);
-  el('path', {d: line(pts(ld)), fill: 'none', stroke: css('--load'), 'stroke-width': 2, 'stroke-linejoin': 'round'}, svg);
-  el('path', {d: line(pts(pv)), fill: 'none', stroke: css('--sun'), 'stroke-width': 2.4, 'stroke-linejoin': 'round'}, svg);
-  const daySum = pv.reduce((a, b) => a + b, 0) / 1000, selfSum = mn.reduce((a, b) => a + b, 0) / 1000;
-  el('text', {x: W - Rr, y: T + 4, 'text-anchor': 'end', style: 'fill:var(--text-2);font-size:12px'}, svg).textContent =
-    `Durchschnittlicher ${MONATE_LANG[dayMonth]}-Tag: ${nf(daySum, 2)} kWh erzeugt, ${nf(selfSum * GLEICHZEITIG, 2)} kWh selbst genutzt`;
-  const cross = el('line', {y1: T, y2: H - B, stroke: css('--text-3'), 'stroke-dasharray': '3 3', visibility: 'hidden'}, svg);
-  const d1 = el('circle', {r: 4.5, fill: css('--sun'), stroke: css('--surface'), 'stroke-width': 2, visibility: 'hidden'}, svg);
-  const d2 = el('circle', {r: 4.5, fill: css('--load'), stroke: css('--surface'), 'stroke-width': 2, visibility: 'hidden'}, svg);
-  const hit = el('rect', {x: L, y: T, width: W - L - Rr, height: H - T - B, fill: 'transparent'}, svg);
-  hit.addEventListener('mousemove', e => {
-    const p = svgPoint(svg, e); const h = Math.max(0, Math.min(23, Math.floor((p.x - L) / (W - L - Rr) * 24)));
-    for (const [c, v] of [[d1, pv[h]], [d2, ld[h]]]) { c.setAttribute('cx', x(h + .5)); c.setAttribute('cy', yv(v)); c.setAttribute('visibility', 'visible'); }
-    cross.setAttribute('x1', x(h + .5)); cross.setAttribute('x2', x(h + .5)); cross.setAttribute('visibility', 'visible');
-    showTip(e, `<b>${h}:00–${h + 1}:00 Uhr</b><br><span class="sw" style="background:var(--sun)"></span>Erzeugung: ${nf(pv[h])} W<br><span class="sw" style="background:var(--load)"></span>Verbrauch: ${nf(ld[h])} W`);
-  });
-  hit.addEventListener('mouseleave', () => { for (const c of [cross, d1, d2]) c.setAttribute('visibility', 'hidden'); hideTip(); });
-  for (const b of $('monthpick').children) b.classList.toggle('on', +b.dataset.m === dayMonth);
-}
-MONATE.forEach((m, i) => { const b = document.createElement('button'); b.textContent = m; b.dataset.m = i; b.onclick = () => { dayMonth = i; drawDay(); }; $('monthpick').appendChild(b); });
-
-// ---------------------------------------------------------------- Diagramm: Sonnenbahnen
 const HB = D.horizont.gebaeude, HT = D.horizont.baeume, STEP = D.horizont.schritt;
 const horAt = (arr, az) => arr[Math.floor(((az % 360) + 360) % 360 / STEP) % arr.length];
-let sunDot = null;
+const rel = az => ((az - D.az + 540) % 360) - 180;
+
+let doy = 172, minutes = 13 * 60;
+const sp = $('sunpath'); const SW = 190, SH = 82, EMAX = 65;
+const sx = az => 4 + (rel(az) + 90) / 180 * (SW - 8), sy = e => 4 + (EMAX - Math.min(e, EMAX)) / EMAX * (SH - 10);
+let sunDot, pathEl;
 function drawSunpath() {
-  const svg = $('sunpath'); svg.innerHTML = '';
-  const W = 560, H = 300, L = 34, Rr = 10, T = 12, B = 30, EMAX = 70;
-  const a0 = D.az - 100, a1 = D.az + 100;
-  const x = az => { let d = ((az - D.az + 540) % 360) - 180; return L + (d + 100) / 200 * (W - L - Rr); };
-  const yv = e => T + (EMAX - e) / EMAX * (H - T - B);
-  const g = el('g', {class: 'grid'}, svg);
-  for (let e = 0; e <= EMAX; e += 10) { el('line', {x1: L, x2: W - Rr, y1: yv(e), y2: yv(e)}, g); el('text', {x: L - 6, y: yv(e) + 4, 'text-anchor': 'end'}, svg).textContent = e + '°'; }
-  const names = {0: 'N', 45: 'NO', 90: 'O', 135: 'SO', 180: 'S', 225: 'SW', 270: 'W', 315: 'NW'};
-  for (const az in names) { const d = ((az - D.az + 540) % 360) - 180; if (Math.abs(d) <= 100) {
-    el('line', {x1: x(+az), x2: x(+az), y1: T, y2: H - B}, g);
-    el('text', {x: x(+az), y: H - 10, 'text-anchor': 'middle', style: 'fill:var(--text-2);font-weight:600'}, svg).textContent = names[az]; } }
-  // hinter der Fassade
-  for (const [s, e] of [[-100, -90], [90, 100]]) el('rect', {x: x(D.az + s), y: T, width: x(D.az + e) - x(D.az + s), height: H - T - B, fill: css('--surface-2')}, svg);
-  // Horizont
-  const poly = (arr) => { let d = `M${x(a0)},${yv(0)}`; for (let a = a0; a <= a1; a += 1) d += `L${x(a).toFixed(1)},${yv(Math.min(EMAX, horAt(arr, a))).toFixed(1)}`; return d + `L${x(a1)},${yv(0)}Z`; };
-  const treeTop = HT.map((t, i) => Math.max(t, HB[i]));
-  el('path', {d: poly(treeTop), fill: css('--tree'), opacity: .55}, svg);
-  el('path', {d: poly(HB), fill: css('--build'), opacity: .9}, svg);
-  // Sonnenbahnen
-  const days = [[172, '21. Juni'], [80, '20. März / 23. Sep'], [355, '21. Dez']];
-  for (const [doy, name] of days) {
-    let d = '', on = false, last = null;
-    for (let h = 3; h <= 22; h += 1 / 6) {
-      const s = sunPos(utcFor(doy, h), D.lat, D.lon); const dd = ((s.az - D.az + 540) % 360) - 180;
-      if (s.el > 0 && Math.abs(dd) <= 100) { d += `${on ? 'L' : 'M'}${x(s.az).toFixed(1)},${yv(s.el).toFixed(1)}`; on = true; last = s; } else on = false;
-    }
-    el('path', {d, fill: 'none', stroke: css('--sun'), 'stroke-width': 2, 'stroke-linecap': 'round'}, svg);
-    for (let h = 6; h <= 20; h += 2) { const s = sunPos(utcFor(doy, h), D.lat, D.lon); const dd = ((s.az - D.az + 540) % 360) - 180;
-      if (s.el > 1 && Math.abs(dd) <= 100) { el('circle', {cx: x(s.az), cy: yv(s.el), r: 2.6, fill: css('--surface'), stroke: css('--sun'), 'stroke-width': 1.5}, svg);
-        if (doy === 172) el('text', {x: x(s.az), y: yv(s.el) - 7, 'text-anchor': 'middle'}, svg).textContent = h + ' h'; } }
-    const s12 = sunPos(utcFor(doy, 13.2), D.lat, D.lon);
-    el('text', {x: x(s12.az) + 6, y: yv(s12.el) + 14, style: 'fill:var(--text-2);font-size:11px'}, svg).textContent = name;
+  sp.innerHTML = '';
+  const poly = arr => { let d = `M${sx(D.az - 90)},${sy(0)}`; for (let a = -90; a <= 90; a += 2) d += `L${sx(D.az + a).toFixed(1)},${sy(horAt(arr, D.az + a)).toFixed(1)}`; return d + `L${sx(D.az + 90)},${sy(0)}Z`; };
+  el('path', {d: poly(HT.map((t, i) => Math.max(t, HB[i]))), fill: 'var(--tree)', opacity: .7}, sp);
+  el('path', {d: poly(HB), fill: 'var(--build)'}, sp);
+  el('line', {x1: 2, x2: SW - 2, y1: sy(0), y2: sy(0), stroke: 'var(--moss)', 'stroke-opacity': .25}, sp);
+  pathEl = el('path', {fill: 'none', stroke: 'var(--sun)', 'stroke-width': 2, 'stroke-dasharray': '1 4', 'stroke-linecap': 'round'}, sp);
+  sunDot = el('g', {}, sp);
+  el('circle', {r: 8, fill: 'var(--sun-soft)'}, sunDot); el('circle', {r: 4.5, fill: 'var(--sun)'}, sunDot);
+  updatePath();
+}
+function updatePath() {
+  let d = '', on = false;
+  for (let h = 3; h <= 22; h += 0.25) {
+    const s = sunPos(utcFor(doy, h), D.lat, D.lon);
+    if (s.el > 0 && Math.abs(rel(s.az)) <= 90) { d += `${on ? 'L' : 'M'}${sx(s.az).toFixed(1)},${sy(s.el).toFixed(1)}`; on = true; } else on = false;
   }
-  sunDot = el('g', {}, svg);
-  el('circle', {r: 9, fill: css('--sun-soft')}, sunDot); el('circle', {r: 5, fill: css('--sun'), stroke: css('--surface'), 'stroke-width': 2}, sunDot);
-  sunDot._x = x; sunDot._y = yv;
+  pathEl.setAttribute('d', d);
+}
+function sunState(s) {
+  if (s.el <= 0) return 'Nacht';
+  if (Math.cos((s.az - D.az) * RAD) <= 0.02) return 'Sonne auf der anderen Hausseite';
+  if (s.el <= horAt(HB, s.az)) return 'Balkon im Schatten';
+  if (s.el <= horAt(HT, s.az)) return 'Sonne durch die Bäume';
+  return 'Volle Sonne auf den Modulen';
 }
 
-// ---------------------------------------------------------------- 3D-Szene
-const viewer = $('viewer');
-const renderer = new THREE.WebGLRenderer({antialias: true});
+// ---------------------------------------------------------------- 3D
+const stage = $('stage');
+const renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
-viewer.prepend(renderer.domElement);
+stage.prepend(renderer.domElement);
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(45, 1, 0.5, 2000);
+scene.fog = new THREE.Fog(0xe9efe5, 60, 125);
+const camera = new THREE.PerspectiveCamera(30, 1, 0.5, 600);
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true; controls.maxPolarAngle = Math.PI * 0.49; controls.minDistance = 4; controls.maxDistance = 170;
-const hemi = new THREE.HemisphereLight(0xdfe8f5, 0x5a5348, 2.0); scene.add(hemi);
-const sun = new THREE.DirectionalLight(0xfff3dc, 2.2); sun.castShadow = true;
-const R0 = D.szene.radius;
-Object.assign(sun.shadow.camera, {left: -R0, right: R0, top: R0, bottom: -R0, near: 1, far: 600});
-sun.shadow.mapSize.set(4096, 4096); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.06;
-scene.add(sun); scene.add(sun.target);
-scene.fog = new THREE.Fog(0xcfdbe8, R0 * 0.9, R0 * 2.4);
-const sunBall = new THREE.Mesh(new THREE.SphereGeometry(4, 24, 16), new THREE.MeshBasicMaterial({color: 0xffd36b, fog: false}));
-scene.add(sunBall);
+controls.enableDamping = true; controls.enablePan = false; controls.minDistance = 12; controls.maxDistance = 90; controls.maxPolarAngle = Math.PI * 0.5;
+const hemi = new THREE.HemisphereLight(0xffffff, 0xc4cfbe, 1.6); scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xfff1d6, 2.6); sun.castShadow = true;
+Object.assign(sun.shadow.camera, {left: -62, right: 62, top: 62, bottom: -62, near: 1, far: 500});
+sun.shadow.mapSize.set(4096, 4096); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.05;
+scene.add(sun, sun.target);
 
 const mid = new THREE.Vector3(0, D.hoehe_modul_m, 0);
 const nrm = new THREE.Vector3(...D.normale).normalize();
-const side = new THREE.Vector3().crossVectors(new THREE.Vector3(0, 1, 0), nrm).normalize();
-camera.position.copy(mid).addScaledVector(nrm, 32).addScaledVector(side, 12).add(new THREE.Vector3(0, Math.max(7, 22 - mid.y), 0));
+const DIST = 50, LIFT = 15;
 controls.target.copy(mid);
+const baseAz = Math.atan2(nrm.x, nrm.z);
+function camAt(angle) {
+  const a = baseAz + angle;
+  camera.position.set(mid.x + Math.sin(a) * DIST, mid.y + LIFT, mid.z + Math.cos(a) * DIST);
+}
+camAt(0.35);
 
-const TREE_OPACITY = 0.3; const treeMats = [];
-async function loadScene() {
-  const buf = await fetch(`${id}/${D.szene.file}`).then(r => r.arrayBuffer());
-  const nv = D.szene.vertices;
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(buf, 0, nv * 3), 3));
-  geo.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(buf, nv * 12, nv * 2), 2));
-  geo.computeVertexNormals();
-  const loader = new THREE.TextureLoader();
-  const mats = [];
-  for (const _ of D.szene.tex) {
-    mats.push(new THREE.MeshLambertMaterial({color: 0xffffff, side: THREE.DoubleSide}));
-    const tm = new THREE.MeshLambertMaterial({color: 0xffffff, side: THREE.DoubleSide, transparent: true, opacity: TREE_OPACITY, depthWrite: false});
-    treeMats.push(tm); mats.push(tm);
+// Vereinfachtes Hausmodell (Standard) und Foto-Mesh (auf Wunsch)
+const modellGroup = new THREE.Group(); scene.add(modellGroup);
+async function loadModell() {
+  const M = await fetch(`${id}/${D.modell.file}`).then(r => r.json());
+  const ground = new THREE.Mesh(new THREE.CircleGeometry(M.radius * 1.15, 64), new THREE.MeshLambertMaterial({color: 0xdfe8d8}));
+  ground.rotation.x = -Math.PI / 2; ground.position.y = -0.02; ground.receiveShadow = true; modellGroup.add(ground);
+  const geos = [];
+  for (const b of M.bloecke) {
+    const shape = new THREE.Shape(b.outer.map(([x, y]) => new THREE.Vector2(x, y)));
+    for (const h of b.holes) shape.holes.push(new THREE.Path(h.map(([x, y]) => new THREE.Vector2(x, y))));
+    const g = new THREE.ExtrudeGeometry(shape, {depth: b.z1 - b.z0, bevelEnabled: false});
+    g.rotateX(-Math.PI / 2); g.translate(0, b.z0, 0);
+    geos.push(g);
   }
-  let start = 0;
-  for (const gr of D.szene.groups) { geo.addGroup(start, gr.count, gr.mat * 2 + (gr.baum ? 1 : 0)); start += gr.count; }
-  const mesh = new THREE.Mesh(geo, mats); mesh.castShadow = true; mesh.receiveShadow = true; scene.add(mesh);
-  await Promise.all(D.szene.tex.map((t, k) => new Promise(res => loader.load(t, tx => {
-    tx.colorSpace = THREE.SRGBColorSpace; tx.anisotropy = renderer.capabilities.getMaxAnisotropy();
-    for (const m of [mats[2 * k], mats[2 * k + 1]]) { m.map = tx; m.needsUpdate = true; } res(); }, undefined, res))));
+  const haus = new THREE.Mesh(mergeGeometries(geos), new THREE.MeshLambertMaterial({color: 0xf7f8f3}));
+  haus.castShadow = true; haus.receiveShadow = true; modellGroup.add(haus);
+  const krone = new THREE.MeshLambertMaterial({color: 0x9cc89a, flatShading: true, transparent: true, opacity: 0.82});
+  const stamm = new THREE.MeshLambertMaterial({color: 0x9b8f7a});
+  for (const [x, y, h, r] of M.baeume) {
+    const c = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 1), krone);
+    c.position.set(x, h - r * 0.85, -y); c.castShadow = true; c.receiveShadow = true; modellGroup.add(c);
+    const st = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.25, Math.max(0.5, h - r * 1.4), 6), stamm);
+    st.position.set(x, Math.max(0.5, h - r * 1.4) / 2, -y); st.castShadow = true; modellGroup.add(st);
+  }
+  const platte = new THREE.MeshLambertMaterial({color: 0xeceee8});
+  const glas = new THREE.MeshLambertMaterial({color: 0xffffff, transparent: true, opacity: 0.55});
+  for (const b of M.balkone) {
+    const grp = new THREE.Group(); grp.position.set(b.c[0], b.c[1], b.c[2]); grp.rotation.y = M.drehung;
+    const sl = new THREE.Mesh(new THREE.BoxGeometry(b.breite, 0.18, b.tiefe), platte); sl.position.y = 0.09;
+    sl.castShadow = true; sl.receiveShadow = true; grp.add(sl);
+    for (const sgn of [1, -1]) {
+      const rl = new THREE.Mesh(new THREE.BoxGeometry(b.breite, 1.0, 0.04), glas);
+      rl.position.set(0, 0.68, sgn * (b.tiefe / 2 - 0.02)); rl.userData.sgn = sgn; grp.add(rl);
+    }
+    // nur die Brüstung auf der Außenseite behalten
+    const aussen = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), M.drehung);
+    const keep = aussen.dot(nrm) > 0 ? 1 : -1;
+    grp.children.filter(c => c.userData.sgn && c.userData.sgn !== keep).forEach(c => grp.remove(c));
+    modellGroup.add(grp);
+  }
   $('loading').remove();
 }
 
-// Module
-const cellTex = (() => { const c = document.createElement('canvas'); c.width = 512; c.height = 340; const g = c.getContext('2d');
-  g.fillStyle = '#16233f'; g.fillRect(0, 0, 512, 340);
-  g.strokeStyle = 'rgba(160,185,230,.35)'; g.lineWidth = 2;
-  for (let i = 1; i < 16; i++) { g.beginPath(); g.moveTo(i * 32, 0); g.lineTo(i * 32, 340); g.stroke(); }
-  for (let j = 1; j < 6; j++) { g.beginPath(); g.moveTo(0, j * 340 / 6); g.lineTo(512, j * 340 / 6); g.stroke(); }
-  g.strokeStyle = '#c9ced6'; g.lineWidth = 10; g.strokeRect(0, 0, 512, 340);
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
-const modMat = new THREE.MeshStandardMaterial({map: cellTex, roughness: 0.32, metalness: 0.15, side: THREE.DoubleSide});
-const outlineMat = new THREE.LineBasicMaterial({color: 0xffb21a, fog: false, depthTest: false, transparent: true, opacity: 0.9});
-for (const q of D.module) {
-  const p = q.map(v => new THREE.Vector3(...v).addScaledVector(nrm, 0.04));
-  const g = new THREE.BufferGeometry().setFromPoints([p[0], p[1], p[2], p[0], p[2], p[3]]);
-  g.setAttribute('uv', new THREE.Float32BufferAttribute([0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1], 2));
-  g.computeVertexNormals();
-  const m = new THREE.Mesh(g, modMat); m.receiveShadow = true; m.castShadow = false; scene.add(m);
-  const ol = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(p.map(v => v.clone().addScaledVector(nrm, 0.02))), outlineMat);
-  ol.renderOrder = 10; scene.add(ol);
+let fotoMesh = null, fotoLoading = false;
+async function loadFoto() {
+  const buf = await fetch(`${id}/${D.szene.file}`).then(r => r.arrayBuffer());
+  const nv = D.szene.vertices, geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(buf, 0, nv * 3), 3));
+  geo.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(buf, nv * 12, nv * 2), 2));
+  geo.computeVertexNormals();
+  const mats = [];
+  for (const _ of D.szene.tex) {
+    mats.push(new THREE.MeshLambertMaterial({side: THREE.DoubleSide}));
+    mats.push(new THREE.MeshLambertMaterial({side: THREE.DoubleSide, transparent: true, opacity: 0.28, depthWrite: false}));
+  }
+  let start = 0;
+  for (const g of D.szene.groups) { geo.addGroup(start, g.count, g.mat * 2 + (g.baum ? 1 : 0)); start += g.count; }
+  const loader = new THREE.TextureLoader();
+  await Promise.all(D.szene.tex.map((t, k) => new Promise(res => loader.load(t, tx => {
+    tx.colorSpace = THREE.SRGBColorSpace; tx.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    for (const m of [mats[2 * k], mats[2 * k + 1]]) { m.map = tx; m.needsUpdate = true; }
+    res(); }, undefined, res))));
+  fotoMesh = new THREE.Mesh(geo, mats); fotoMesh.castShadow = true; fotoMesh.receiveShadow = true;
+  scene.add(fotoMesh);
 }
-
-function resize() { const w = viewer.clientWidth, h = viewer.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
-new ResizeObserver(resize).observe(viewer); resize();
-
-const SUN_I = 2.4, HEMI_I = 1.8;
-const skyDay = new THREE.Color(0xcfe0f2), skyLow = new THREE.Color(0xf2c9a0), skyNight = new THREE.Color(0x0e1a2b);
-function setSun(az, elv) {
-  const ag = (az - D.gitter_nord) * RAD, e = Math.max(elv, -5) * RAD;
-  const dir = new THREE.Vector3(Math.sin(ag) * Math.cos(e), Math.sin(e), -Math.cos(ag) * Math.cos(e));
-  sun.position.copy(dir).multiplyScalar(300); sun.target.position.set(0, 0, 0);
-  sunBall.position.copy(dir).multiplyScalar(170);
-  sunBall.visible = elv > -1;
-  const day = Math.max(0, Math.min(1, (elv + 4) / 12));
-  sun.intensity = elv > 0 ? SUN_I * Math.min(1, elv / 10 + 0.25) : 0;
-  hemi.intensity = HEMI_I * (0.3 + 0.7 * day);
-  const sky = skyNight.clone().lerp(elv < 12 ? skyLow : skyDay, day);
-  if (elv > 12) sky.copy(skyDay);
-  scene.background = sky; scene.fog.color.copy(sky);
-}
-
-$('trees').addEventListener('click', e => {
-  const on = e.currentTarget.classList.toggle('on');
-  for (const m of treeMats) { m.opacity = on ? TREE_OPACITY : 1; m.transparent = on; m.depthWrite = !on; m.needsUpdate = true; }
+$('look').addEventListener('click', async e => {
+  const btn = e.currentTarget, foto = btn.getAttribute('aria-pressed') !== 'true';
+  btn.setAttribute('aria-pressed', foto);
+  if (foto && !fotoMesh && !fotoLoading) { fotoLoading = true; btn.textContent = 'Lädt …'; await loadFoto(); btn.textContent = 'Foto-Ansicht'; }
+  if (fotoMesh) fotoMesh.visible = foto;
+  modellGroup.visible = !foto;
 });
 
-// ---------------------------------------------------------------- Zeitsteuerung
-const doyIn = $('doy'), hourIn = $('hour');
-const now = new Date();
-const todayDoy = Math.min(365, Math.floor((Date.UTC(Y, now.getMonth(), now.getDate()) - Date.UTC(Y, 0, 0)) / 864e5));
-doyIn.value = todayDoy; hourIn.value = 13 * 60;
-function stateText(s) {
-  if (s.el <= 0) return ['Nacht – die Sonne ist untergegangen', '#5b6573'];
-  const d = Math.cos((s.az - D.az) * RAD);
-  if (d <= 0.02) return ['Sonne steht hinter dem Haus', '#5b6573'];
-  if (s.el <= horAt(HB, s.az)) return ['Module im Schatten eines Gebäudes', '#8b8f96'];
-  if (s.el <= horAt(HT, s.az)) return ['Sonne durch Baumkrone gefiltert', '#2f9a2f'];
-  return ['Module in voller Sonne', '#eda100'];
-}
-function update() {
-  const doy = +doyIn.value, mins = +hourIn.value, h = mins / 60;
-  const u = utcFor(doy, h); const s = sunPos(u, D.lat, D.lon);
-  $('doyVal').textContent = dateLabel(doy);
-  $('hourVal').textContent = `${Math.floor(mins / 60)}:${String(mins % 60).padStart(2, '0')} Uhr`;
-  setSun(s.az, s.el);
-  const [txt, col] = stateText(s);
-  const i = idxFor(u);
-  const ant = D.sonne_anteil[i];
-  $('chip').innerHTML = `<span class="state"><i style="background:${col}"></i>${txt}</span><br>` +
-    (s.el > 0 ? `Sonne ${nf(s.el)}° hoch, aus ${richtung(s.az)}` + (Math.cos((s.az - D.az) * RAD) > 0.02 ? ` · direkte Sonne auf den Modulen: ${nf(ant * 100)} %` : '') : '&nbsp;');
-  for (const b of $('quick').children) b.classList.toggle('on', (b.dataset.doy === 'today' ? todayDoy : +b.dataset.doy) === doy);
-  if (sunDot) {
-    const dd = ((s.az - D.az + 540) % 360) - 180;
-    const vis = s.el > 0 && Math.abs(dd) <= 100;
-    sunDot.setAttribute('visibility', vis ? 'visible' : 'hidden');
-    if (vis) sunDot.setAttribute('transform', `translate(${sunDot._x(s.az)},${sunDot._y(Math.min(70, s.el))})`);
+// Module und Speicher
+const cellTex = (() => { const c = document.createElement('canvas'); c.width = 512; c.height = 340; const g = c.getContext('2d');
+  g.fillStyle = '#17284a'; g.fillRect(0, 0, 512, 340); g.strokeStyle = 'rgba(170,195,235,.35)'; g.lineWidth = 2;
+  for (let i = 1; i < 16; i++) { g.beginPath(); g.moveTo(i * 32, 0); g.lineTo(i * 32, 340); g.stroke(); }
+  for (let j = 1; j < 6; j++) { g.beginPath(); g.moveTo(0, j * 340 / 6); g.lineTo(512, j * 340 / 6); g.stroke(); }
+  g.strokeStyle = '#d5dad2'; g.lineWidth = 12; g.strokeRect(0, 0, 512, 340);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
+const modMat = new THREE.MeshStandardMaterial({map: cellTex, roughness: 0.3, metalness: 0.2, side: THREE.DoubleSide});
+const modGroup = new THREE.Group(); scene.add(modGroup);
+let modAnim = 0;
+function placeModules() {
+  modGroup.clear();
+  for (const q of sel.v.module) {
+    const p = q.map(v => new THREE.Vector3(...v).addScaledVector(nrm, 0.05));
+    const g = new THREE.BufferGeometry().setFromPoints([p[0], p[1], p[2], p[0], p[2], p[3]]);
+    g.setAttribute('uv', new THREE.Float32BufferAttribute([0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1], 2));
+    g.computeVertexNormals();
+    const m = new THREE.Mesh(g, modMat); m.receiveShadow = true; modGroup.add(m);
   }
-  const m = monthOfDoy(doy); if (m !== dayMonth) { dayMonth = m; drawDay(); }
+  if (sel.speicher) {
+    const q = sel.v.module[0].map(v => new THREE.Vector3(...v));
+    const box = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.32, 0.3), new THREE.MeshStandardMaterial({color: 0xf4f6f2, roughness: 0.5}));
+    const base = q[0].clone().lerp(q[1], 0.15).addScaledVector(nrm, -0.45); base.y = Math.min(q[0].y, q[1].y) + 0.16;
+    box.position.copy(base); box.lookAt(base.clone().add(nrm)); box.castShadow = true;
+    const led = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.025, 0.01), new THREE.MeshBasicMaterial({color: 0x2f7d4f}));
+    led.position.set(0, 0.07, 0.151); box.add(led);
+    modGroup.add(box);
+  }
+  modAnim = 1;    // kurzes Einschweben der Module
 }
-doyIn.addEventListener('input', update); hourIn.addEventListener('input', () => { playMin = null; update(); });
-for (const b of $('quick').children) b.addEventListener('click', () => { doyIn.value = b.dataset.doy === 'today' ? todayDoy : b.dataset.doy; update(); });
-let playing = false, lastT = 0, playMin = null;
-$('play').addEventListener('click', () => { playing = !playing; $('play').textContent = playing ? '❚❚' : '▶'; playMin = null; if (playing && +hourIn.value >= 1315) hourIn.value = 240; });
 
+function resize() { const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+new ResizeObserver(resize).observe(stage); resize();
+
+function setSun() {
+  const s = sunPos(utcFor(doy, minutes / 60), D.lat, D.lon);
+  const ag = (s.az - D.gitter_nord) * RAD, e = Math.max(s.el, -4) * RAD;
+  const dir = new THREE.Vector3(Math.sin(ag) * Math.cos(e), Math.sin(e), -Math.cos(ag) * Math.cos(e));
+  sun.position.copy(mid).addScaledVector(dir, 200); sun.target.position.copy(mid);
+  sun.intensity = s.el > 0 ? 2.6 * Math.min(1, s.el / 8 + 0.2) : 0;
+  hemi.intensity = 1.6 * (s.el > 0 ? 1 : 0.6);
+  const vis = s.el > 0 && Math.abs(rel(s.az)) <= 90;
+  sunDot.setAttribute('visibility', vis ? 'visible' : 'hidden');
+  if (vis) sunDot.setAttribute('transform', `translate(${sx(s.az)},${sy(s.el)})`);
+  $('clock').textContent = `${Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, '0')} Uhr`;
+  $('sunText').innerHTML = `<b>${sunState(s)}</b><br>${nf(D.jahr.sonnenstunden)} Sonnenstunden im Jahr`;
+  for (const c of document.querySelectorAll('.sunbox .chip')) c.setAttribute('aria-pressed', +c.dataset.doy === doy);
+}
+for (const c of document.querySelectorAll('.sunbox .chip')) c.addEventListener('click', () => { doy = +c.dataset.doy; updatePath(); setSun(); });
+let playing = false;
+$('play').addEventListener('click', () => {
+  playing = !playing;
+  $('playIcon').setAttribute('d', playing ? 'M2.5 1.5h2.5v9H2.5zM7 1.5h2.5v9H7z' : 'M3 1.5v9l7-4.5z');
+  if (playing && minutes >= 21 * 60) minutes = 5 * 60;
+});
+
+// sanftes Hin- und Herschwenken um den Balkon, pausiert nach Benutzer-Interaktion
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let idleSince = 0, swingT = 0.6, dragging = false, touched = false;
+controls.addEventListener('start', () => { dragging = true; touched = true; });
+controls.addEventListener('end', () => { dragging = false; idleSince = performance.now(); });
+let last = performance.now(), playAcc = 0;
 function loop(t) {
   requestAnimationFrame(loop);
-  if (playing) { const dt = Math.min(0.1, (t - lastT) / 1000); playMin = (playMin ?? +hourIn.value) + dt * 96; if (playMin > 1320) playMin = 240; hourIn.value = Math.round(playMin / 5) * 5; update(); }
-  lastT = t;
+  const dt = Math.min(0.1, (t - last) / 1000); last = t;
+  if (!reduce && !dragging && (!touched || t - idleSince > 8000)) {
+    if (touched) { touched = false; swingT = 0; }
+    swingT += dt * 0.22; camAt(0.6 * Math.sin(swingT));
+  }
+  if (playing) { playAcc += dt * 90; if (playAcc >= 5) { minutes += Math.floor(playAcc / 5) * 5; playAcc %= 5; if (minutes > 21 * 60 + 30) minutes = 5 * 60; setSun(); } }
+  if (modAnim > 0) { modAnim = Math.max(0, modAnim - dt * 2.5); const k = (1 - modAnim); modGroup.position.copy(nrm).multiplyScalar(0.8 * (1 - k) * (1 - k)); }
   controls.update(); renderer.render(scene, camera);
 }
 
-// ---------------------------------------------------------------- Angebot + Annahmen
-function renderOffer(R) {
-  const preisModul = V.wp_modul >= 400 ? 125 : 95;
-  const halter = 45 * V.n;
-  const wr = 160;
-  const rest = Math.max(0, R.kosten - preisModul * V.n - halter - wr);
-  $('offerLead').innerHTML = `Auf Ihr Geländer passen ${V.fit > V.n ? `bis zu ${V.fit} Module – sinnvoll sind ${V.n}, weil der Wechselrichter auf 800 W begrenzt ist` : `${V.n} ${V.n > 1 ? 'Module' : 'Modul'}`}. ` +
-    `Die Module hängen senkrecht außen am Geländer, sind sturmsicher verschraubt und brauchen keine Bohrung in die Fassade.`;
-  $('offer').innerHTML = `
-    <tr><td>${V.n} × Solarmodul ${V.wp_modul} Wp<div class="d">${nf(V.w, 2)} × ${nf(V.h, 2)} m, Glas-Glas, schwarzer Rahmen</div></td><td>${eur(preisModul * V.n)}</td></tr>
-    <tr><td>Mikro-Wechselrichter 800 W<div class="d">mit WLAN-Überwachung, Schuko- oder Wieland-Anschluss</div></td><td>${eur(wr)}</td></tr>
-    <tr><td>${V.n} × Geländerhalterung<div class="d">für Stab- oder Plattengeländer, Neigung verstellbar</div></td><td>${eur(halter)}</td></tr>
-    <tr><td>Lieferung, Kabel, Anmeldung<div class="d">inkl. Hilfe beim Marktstammdatenregister</div></td><td>${eur(rest)}</td></tr>
-    <tr class="sum"><td>Gesamt</td><td>${eur(R.kosten)}</td></tr>`;
-}
-const A = D.annahmen;
-$('ann').innerHTML = [
-  `<b>Wetter:</b> ${D.wetter}, Globalstrahlung ${nf(D.globalstrahlung)} kWh/m² im Jahr.`,
-  `<b>Umgebung:</b> 3D-Stadtmodell Berlin (Befliegung 2025). Horizont in ${D.horizont.schritt}°-Schritten für ${D.module.length * 6} Punkte auf den Modulen vermessen.`,
-  `<b>Bäume:</b> lassen belaubt (Mai–Okt) ${nf(A.tau_belaubt * 100)} %, unbelaubt ${nf(A.tau_kahl * 100)} % des direkten Lichts durch.`,
-  `<b>Module:</b> senkrecht am Geländer, Ausrichtung ${nf(D.az)}°. Temperaturverlust ${nf(-A.gamma * 100, 2)} %/K, weitere Verluste ${nf(A.verluste * 100)} %.`,
-  `<b>Wechselrichter:</b> ${nf(A.wr_ac)} W Einspeisegrenze, Wirkungsgrad ${nf(A.wr_eta * 100)} %.`,
-  `<b>Verbrauch:</b> ${LP.name.split(',')[0]}, skaliert auf Ihren Jahresverbrauch. Stündlich gerechnet, mit ${nf((1 - GLEICHZEITIG) * 100)} % Abschlag für kurze Lastspitzen.`,
-  `<b>Wirtschaftlichkeit:</b> Einspeisung ohne Vergütung, Moduldegradation ${nf(DEGRADATION * 100, 1)} % pro Jahr, Betrachtung über ${JAHRE} Jahre.`,
-  `<b>Genauigkeit:</b> Balkonmaße ±0,3–0,5 m aus Luftbild-Modell, Jahresertrag etwa ±15 %. Verbindlich nach Foto-Prüfung.`,
-].map(s => `<li>${s}</li>`).join('');
-$('foot').innerHTML = `Unverbindliche Durchrechnung · Prototyp, erstellt ${D.erstellt} · Datengrundlage: ${D.quelle}. ` +
-  `Die Meshdaten sind nicht frei lizenziert – nur für interne Tests.`;
-
-function all() { const R = rechne(); renderFacts(R); renderEco(R); renderOffer(R); }
-for (const k of ['verbrauch', 'preis', 'kosten', 'steig']) $(k).addEventListener('input', () => { all(); drawDay(); });
-all(); drawMonths(); drawSunpath(); dayMonth = monthOfDoy(todayDoy); drawDay(); update();
-matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { all(); drawMonths(); drawSunpath(); drawDay(); update(); });
+renderOpts(); placeModules(); drawSunpath(); setSun();
 requestAnimationFrame(loop);
-loadScene().catch(e => { $('loading').textContent = '3D-Modell konnte nicht geladen werden: ' + e.message; });
+loadModell().catch(e => { $('loading').textContent = 'Die 3D-Ansicht konnte nicht geladen werden.'; console.error(e); });
 </script>
 </body>
 </html>

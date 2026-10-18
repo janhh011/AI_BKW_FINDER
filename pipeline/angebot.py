@@ -210,7 +210,7 @@ def modul_vorschlag(breite):
     return None
 
 
-def balkon_geometrie(f, b, P, baum):
+def balkon_geometrie(f, b, P, baum, n_module=None):
     res = f["img_res"]
     L0 = np.array(f["img_left"], float)
     t = np.array(f["img_t"], float)
@@ -236,6 +236,10 @@ def balkon_geometrie(f, b, P, baum):
     mv = modul_vorschlag(b["breite_m"])
     if mv is None:
         return None
+    if n_module is not None and mv["fit"] >= n_module:
+        mv = dict(mv, n=n_module, wp=n_module * MODUL["wp"],
+                  text=f"{n_module} × Standardmodul ({MODUL['w']:.2f} × {MODUL['h']:.2f} m, je {MODUL['wp']} Wp)"
+                  .replace(".", ","))
     total = mv["n"] * mv["w"] + (mv["n"] - 1) * MODUL["gap"]
     u0 = (s0 + s1) / 2 - total / 2
     z_top = min(zt, zb + 1.25)
@@ -397,6 +401,106 @@ def lokal(p, P0, z0):
     return [round(float(p[0] - P0[0]), 3), round(float(p[2] - z0), 3), round(float(-(p[1] - P0[1])), 3)]
 
 
+MODELL_RADIUS = 55.0     # m, Ausschnitt des vereinfachten Hausmodells
+MODELL_RES = 0.5         # m, Rasterweite
+MODELL_STUFE = 1.0       # m, Höhenstufen der Gebäudeblöcke
+
+
+def exportiere_modell(out, P0, z0, f, balkone, P, baum):
+    """Vereinfachtes Modell für die Angebotsseite: Gebäude als Blöcke in 1-m-Stufen,
+    Bäume als Kronen, Balkone der eigenen Fassade als Platten mit Brüstung."""
+    import cv2
+    from scipy.ndimage import maximum_filter, grey_closing
+
+    R, res = MODELL_RADIUS, MODELL_RES
+    n = int(2 * R / res)
+    d = P[:, :2] - P0[:2]
+    s = (np.abs(d[:, 0]) < R) & (np.abs(d[:, 1]) < R)
+    ix = ((d[s, 0] + R) / res).astype(np.int64).clip(0, n - 1)
+    iy = ((d[s, 1] + R) / res).astype(np.int64).clip(0, n - 1)
+    h = P[s, 2] - z0
+    bt = baum[s]
+    hb = np.full((n, n), -5.0)
+    ht = np.full((n, n), -5.0)
+    np.maximum.at(hb, (iy[~bt], ix[~bt]), h[~bt])
+    np.maximum.at(ht, (iy[bt], ix[bt]), h[bt])
+    hb = grey_closing(hb, size=3)
+
+    # Bereich vor der eigenen Fassade freiräumen – dort kommen die erkannten Balkone hin
+    A = np.array(f["a"], float) - P0[:2]
+    B = np.array(f["b"], float) - P0[:2]
+    L = float(np.linalg.norm(B - A))
+    t = (B - A) / max(L, 1e-6)
+    nn = np.array(f["n"], float)
+    gx = (np.arange(n) + 0.5) * res - R
+    GX, GY = np.meshgrid(gx, gx)
+    u = (GX - A[0]) * t[0] + (GY - A[1]) * t[1]
+    o = (GX - A[0]) * nn[0] + (GY - A[1]) * nn[1]
+    hb[(o > 0.15) & (o < 4.0) & (u > -0.3) & (u < L + 0.3)] = -5.0
+
+    bau = (hb > 2.5).astype(np.uint8)
+    bau = cv2.morphologyEx(bau, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
+    hmax = float(hb[bau > 0].max()) if bau.any() else 0
+    bloecke = []
+    unten = 0.0
+    for oben in np.arange(MODELL_STUFE * 3, hmax + MODELL_STUFE, MODELL_STUFE):
+        m = ((hb >= oben - MODELL_STUFE / 2) & (bau > 0)).astype(np.uint8)
+        m = cv2.morphologyEx(m, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
+        if not m.any():
+            break
+        cs, hier = cv2.findContours(m, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+        if hier is None:
+            continue
+        hier = hier[0]
+        def poly(c):
+            c = cv2.approxPolyDP(c, 1.3, True)[:, 0, :].astype(float)
+            return [[round((x + 0.5) * res - R, 2), round((y + 0.5) * res - R, 2)] for x, y in c]
+        for i, c in enumerate(cs):
+            if hier[i][3] != -1 or cv2.contourArea(c) * res * res < 4:
+                continue
+            holes = []
+            j = hier[i][2]
+            while j != -1:
+                if cv2.contourArea(cs[j]) * res * res > 3:
+                    holes.append(poly(cs[j]))
+                j = hier[j][0]
+            outer = poly(c)
+            if len(outer) >= 3:
+                bloecke.append(dict(z0=round(unten, 2), z1=round(float(oben), 2), outer=outer, holes=holes))
+        unten = float(oben)
+
+    # Baumkronen: lokale Maxima der Baumhöhe
+    ht_s = np.where(ht > 3.5, ht, 0)
+    peaks = (ht_s == maximum_filter(ht_s, size=int(5 / res))) & (ht_s > 4)
+    baeume = []
+    for y, x in zip(*np.nonzero(peaks)):
+        hh = float(ht_s[y, x])
+        r = float(np.clip(hh * 0.28, 2.0, 5.0))
+        baeume.append([round((x + 0.5) * res - R, 2), round((y + 0.5) * res - R, 2), round(hh, 1), round(r, 1)])
+
+    # Balkone der eigenen Fassade
+    platten = []
+    for b in balkone:
+        if b.get("typ") == "Loggia" or b.get("sicherheit", 0) < 0.3:
+            continue
+        g = balkon_geometrie(f, b, P, baum)
+        tiefe = g["tiefe"] if g else 1.2
+        res_i = f["img_res"]
+        L0 = np.array(f["img_left"], float) - P0[:2]
+        ti = np.array(f["img_t"], float)
+        x0, y0, x1, y1 = b["box"]
+        s0, s1 = x0 * res_i, x1 * res_i
+        zb = f["img_ztop"] - y1 * res_i - z0
+        c = L0 + ti * (s0 + s1) / 2 + nn * tiefe / 2
+        platten.append(dict(c=[round(float(c[0]), 2), round(float(zb), 2), round(float(-c[1]), 2)],
+                            breite=round(float(s1 - s0), 2), tiefe=round(float(tiefe), 2)))
+    modell = dict(radius=R, bloecke=bloecke, baeume=baeume, balkone=platten,
+                  drehung=round(float(math.atan2(t[1], t[0])), 4))
+    with open(os.path.join(out, "modell.json"), "w", encoding="utf-8") as fh:
+        json.dump(modell, fh, separators=(",", ":"))
+    return dict(file="modell.json", bloecke=len(bloecke), baeume=len(baeume), balkone=len(platten))
+
+
 # ------------------------------------------------------------------ Hauptprogramm
 def main():
     ap = argparse.ArgumentParser()
@@ -512,6 +616,20 @@ def main():
             log(f"Balkon {fid}:{bi} nicht gefunden oder zu schmal")
             continue
         geo, r, az_mod, rand = details[(fid, bi)]
+        # Varianten mit 1 bis 4 Modulen, soweit sie auf das Geländer passen
+        varianten = []
+        fit = geo["vorschlag"]["fit"]
+        for nm in (range(1, min(fit, 4) + 1) if fit >= 1 else [1]):
+            g2 = balkon_geometrie(fac[int(fid)], BK[fid]["balkone"][bi], P, baum, n_module=nm if fit >= 1 else None)
+            Q2, qb2 = horizont_vorfilter(g2, P, baum)
+            r2 = simuliere_balkon(sim, g2, Q2, qb2, gn_true, az_mod)
+            pac2 = np.round(r2["pac"]).astype(int)
+            varianten.append(dict(n=g2["vorschlag"]["n"], wp=g2["vorschlag"]["wp"], wp_modul=g2["vorschlag"]["wp_modul"],
+                                  kwh=round(float(pac2.sum()) / 1000, 1),
+                                  kwh_frei=round(float(r2["pac_frei"].sum()) / 1000, 1),
+                                  module=[[lokal(e, geo["mitte"], fac[int(fid)]["ground"]) for e in m["ecken"]]
+                                          for m in g2["module"]],
+                                  stunde_wh=pac2.tolist()))
         f = fac[int(fid)]
         b = BK[fid]["balkone"][bi]
         key = f"{fid}_{bi}"
@@ -520,6 +638,7 @@ def main():
         P0 = geo["mitte"]
         z0 = f["ground"]
         szene = exportiere_szene(out, P0, z0, V, F, VT, FT, mat, tri_baum)
+        modell = exportiere_modell(out, P0, z0, f, BK[fid]["balkone"], P, baum)
         szene["tex"] = tex_names
         lon, lat = to_ll.transform(P0[0], P0[1])
         pac = np.round(r["pac"]).astype(int)
@@ -548,11 +667,12 @@ def main():
             monat=dict(kwh=[round(float(x), 1) for x in mon], kwh_frei=[round(float(x), 1) for x in mon_f]),
             stunde_wh=pac.tolist(),
             stunde_frei_wh=frei.tolist(),
+            varianten=varianten,
             sonne_anteil=[round(float(x), 2) for x in r["frac"]],
             jahr_basis=JAHR, wetter=wquelle, globalstrahlung=round(ghi_y),
             annahmen=dict(verluste=VERLUSTE, gamma=GAMMA, wr_ac=WR_AC, wr_eta=WR_ETA, albedo=ALBEDO,
                           tau_belaubt=TAU_BELAUBT, tau_kahl=TAU_KAHL),
-            szene=szene, quelle=meta.get("source"), erstellt=time.strftime("%Y-%m-%d %H:%M"),
+            szene=szene, modell=modell, quelle=meta.get("source"), erstellt=time.strftime("%Y-%m-%d %H:%M"),
         )
         with open(os.path.join(out, "daten.json"), "w", encoding="utf-8") as fh:
             json.dump(daten, fh, ensure_ascii=False, separators=(",", ":"))
