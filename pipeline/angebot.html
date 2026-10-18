@@ -52,6 +52,16 @@
   .chip { border: 1px solid var(--line); background: var(--paper); border-radius: 999px; padding: 3px 11px; font-size: 13px; cursor: pointer; color: var(--fern); }
   .chip[aria-pressed="true"] { background: var(--moss); border-color: var(--moss); color: #fff; }
   .look { position: absolute; right: 16px; top: 16px; }
+  .flow { position: absolute; left: 0; top: 0; pointer-events: none; transform: translate(-50%, -100%); white-space: nowrap;
+          background: rgba(250, 252, 247, .94); border-radius: 999px; padding: 5px 12px 5px 8px; display: flex; align-items: center; gap: 7px;
+          font-size: 13px; color: var(--moss); box-shadow: 0 4px 16px rgba(28, 58, 41, .14); transition: opacity .3s; }
+  .flow::after { content: ""; position: absolute; left: 50%; bottom: -5px; width: 10px; height: 10px; background: inherit; transform: translateX(-50%) rotate(45deg); }
+  .flow .bolt { width: 22px; height: 22px; border-radius: 50%; background: var(--sun); display: grid; place-items: center; }
+  .flow .bolt svg { width: 12px; height: 12px; }
+  .flow.on .bolt { animation: puls 1.4s ease-in-out infinite; }
+  .flow b { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .flow.off .bolt { background: var(--line); }
+  @keyframes puls { 0%, 100% { box-shadow: 0 0 0 0 var(--sun-soft); } 50% { box-shadow: 0 0 0 7px rgba(227, 162, 26, 0); } }
   .play { width: 28px; height: 28px; border-radius: 50%; border: 0; background: var(--sun); cursor: pointer; display: grid; place-items: center; }
   .play svg { width: 12px; height: 12px; }
   .clock { font-size: 13px; color: var(--fern); font-variant-numeric: tabular-nums; min-width: 66px; }
@@ -146,6 +156,7 @@
     <section class="stage" id="stage" aria-label="3D-Ansicht Ihres Balkons">
       <div class="loading" id="loading">Ihr Balkon wird geladen …</div>
       <button class="chip look" id="look" aria-pressed="false">Foto-Ansicht</button>
+      <div class="flow" id="flow" aria-live="polite"><span class="bolt"><svg viewBox="0 0 12 12"><path d="M7 0 2 7h3.2L4.5 12 10 4.6H6.6z" fill="#1c3a29"/></svg></span><span id="flowText"></span></div>
       <div class="sunbox">
         <svg id="sunpath" viewBox="0 0 190 82" role="img" aria-label="Sonnenbahn und Schatten am Balkon"></svg>
         <div class="t" id="sunText"></div>
@@ -291,7 +302,7 @@ function renderOpts() {
       <span class="price">${eur(p.preis)}<small>spart ${eur(p.spart)} im Jahr</small></span>
       <span class="sub">${mod}${p.speicher ? ' + Speicher' : ''}${p.montage ? ', wir montieren und melden an' : ''}, rechnet sich nach ${nf(Math.round(p.jahre * 2) / 2, 1).replace(',0', '')} Jahren</span>
       <span class="tech">${nf(p.v.wp)} Watt · ${nf(p.v.kwh)} kWh Strom im Jahr${p.speicher ? ` · Speicher ${nf(SPEICHER.kwh, 1)} kWh` : ''}</span>`;
-    b.addEventListener('click', () => { sel = p; renderOpts(); placeModules(); });
+    b.addEventListener('click', () => { sel = p; renderOpts(); placeModules(); setSun(); });
     box.appendChild(b);
   }
   $('headline').textContent = `Ihr Balkon spart ${eur(sel.spart)} Strom im Jahr.`;
@@ -506,10 +517,93 @@ function placeModules() {
     modGroup.add(box);
   }
   modAnim = 1;    // kurzes Einschweben der Module
+  baueStromweg();
 }
 
 function resize() { const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
 new ResizeObserver(resize).observe(stage); resize();
+
+// ---------------------------------------------------------------- Stromfluss: Momentanleistung bei klarem Himmel + Lichtpunkte ins Haus
+let watt = 0;
+function leistungJetzt(s) {
+  if (s.el <= 0.5) return 0;
+  const zen = 90 - s.el;
+  const am = 1 / (Math.cos(zen * RAD) + 0.50572 * (96.07995 - zen) ** -1.6364);
+  const dni = 1353 * 0.7 ** (am ** 0.678), dhi = 0.12 * dni, ghi = dni * Math.sin(s.el * RAD) + dhi;
+  const cosAoi = Math.cos(s.el * RAD) * Math.cos((s.az - D.az) * RAD);
+  let sicht = 1;
+  if (s.el <= horAt(HB, s.az)) sicht = 0;
+  else if (s.el <= horAt(HT, s.az)) sicht = (doy > 120 && doy < 305) ? 0.2 : 0.55;
+  const poa = (cosAoi > 0 ? dni * cosAoi * sicht : 0) + dhi * 0.4 + ghi * 0.075;
+  return Math.min(800, sel.v.wp * poa / 1000 * 0.86);
+}
+const wege = [];          // je Modul eine Linie: Modulunterkante -> Boden -> Steckdose an der Hauswand
+const PUNKTE = 14;
+const punktGeo = new THREE.BufferGeometry();
+punktGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(PUNKTE * 4 * 3), 3));
+const punktMat = new THREE.PointsMaterial({color: 0xffc23d, size: 0.32, transparent: true, opacity: 0.95, depthTest: false, sizeAttenuation: true});
+const punkte = new THREE.Points(punktGeo, punktMat); punkte.renderOrder = 20; scene.add(punkte);
+const kabelMat = new THREE.LineBasicMaterial({color: 0xe3a21a, transparent: true, opacity: 0.55, depthTest: false});
+const kabel = new THREE.Group(); kabel.renderOrder = 19; scene.add(kabel);
+const dose = new THREE.Mesh(new THREE.SphereGeometry(0.28, 16, 12), new THREE.MeshBasicMaterial({color: 0xffc23d, transparent: true, opacity: 0.9, depthTest: false}));
+dose.renderOrder = 21; scene.add(dose);
+let phase = 0;
+function baueStromweg() {
+  wege.length = 0;
+  const tiefe = Math.max(0.3, D.tiefe_m || 1.0);
+  for (const q of sel.v.module) {
+    const c = q.map(v => new THREE.Vector3(...v));
+    const a = c[0].clone().lerp(c[1], 0.5).addScaledVector(nrm, 0.06);
+    const b = a.clone(); b.y = Math.min(c[0].y, c[1].y) - 0.05;
+    const w = b.clone().addScaledVector(nrm, -tiefe); w.y = b.y + 0.35;
+    const seg = [a, b, w], len = [0];
+    for (let i = 1; i < seg.length; i++) len.push(len[i - 1] + seg[i].distanceTo(seg[i - 1]));
+    wege.push({seg, len, total: len[len.length - 1]});
+  }
+  kabel.clear();
+  for (const w of wege) { const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints(w.seg), kabelMat); l.renderOrder = 19; kabel.add(l); }
+  if (wege.length) dose.position.copy(wege[0].seg[2]);
+}
+function punktAuf(weg, t) {
+  const d = t * weg.total;
+  for (let i = 1; i < weg.seg.length; i++) if (d <= weg.len[i]) {
+    const k = (d - weg.len[i - 1]) / Math.max(1e-6, weg.len[i] - weg.len[i - 1]);
+    return weg.seg[i - 1].clone().lerp(weg.seg[i], k);
+  }
+  return weg.seg[weg.seg.length - 1].clone();
+}
+function animiereStrom(dt) {
+  const an = watt > 5 && !(fotoMesh && fotoMesh.visible);
+  punkte.visible = an; dose.visible = an; kabel.visible = an;
+  if (!an) return;
+  const anteil = watt / 800;
+  phase = (phase + dt * (0.25 + 0.75 * anteil)) % 1;
+  const pos = punktGeo.attributes.position.array;
+  const aktiv = Math.max(3, Math.round(PUNKTE * Math.min(1, 0.3 + anteil)));
+  let k = 0;
+  for (const w of wege) for (let i = 0; i < PUNKTE; i++) {
+    const p = i < aktiv ? punktAuf(w, (phase + i / aktiv) % 1) : new THREE.Vector3(0, -999, 0);
+    pos[k++] = p.x; pos[k++] = p.y; pos[k++] = p.z;
+  }
+  for (; k < pos.length; k++) pos[k] = -999;
+  punktGeo.attributes.position.needsUpdate = true;
+  punktGeo.setDrawRange(0, wege.length * PUNKTE);
+  punktMat.size = 0.45 + 0.3 * anteil;
+  dose.scale.setScalar(1 + 0.25 * Math.sin(performance.now() / 220) * anteil);
+}
+const _v = new THREE.Vector3();
+function setzeFlowLabel() {
+  const f = $('flow');
+  if (!sel || !sel.v.module.length) return;
+  const top = sel.v.module.flatMap(q => q.map(v => new THREE.Vector3(...v)));
+  _v.set(0, 0, 0); for (const p of top) _v.add(p); _v.multiplyScalar(1 / top.length);
+  _v.y = Math.max(...top.map(p => p.y)) + 0.6;
+  _v.project(camera);
+  const vis = _v.z < 1 && Math.abs(_v.x) < 1.1 && Math.abs(_v.y) < 1.1;
+  f.style.opacity = vis ? 1 : 0;
+  f.style.left = ((_v.x + 1) / 2 * stage.clientWidth) + 'px';
+  f.style.top = ((1 - _v.y) / 2 * stage.clientHeight - 6) + 'px';
+}
 
 function setSun() {
   const s = sunPos(utcFor(doy, minutes / 60), D.lat, D.lon);
@@ -523,6 +617,10 @@ function setSun() {
   if (vis) sunDot.setAttribute('transform', `translate(${sx(s.az)},${sy(s.el)})`);
   $('clock').textContent = `${Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, '0')} Uhr`;
   $('sunText').innerHTML = `<b>${sunState(s)}</b><br>${nf(D.jahr.sonnenstunden)} Sonnenstunden im Jahr`;
+  watt = leistungJetzt(s);
+  const f = $('flow');
+  f.classList.toggle('on', watt > 5); f.classList.toggle('off', watt <= 5);
+  $('flowText').innerHTML = watt > 5 ? `<b>${nf(Math.round(watt / 10) * 10)} Watt</b> fließen in Ihre Wohnung` : (s.el > 0 ? 'Gerade kaum Sonnenstrom' : 'Nachts ruht die Anlage');
   for (const c of document.querySelectorAll('.sunbox .chip')) c.setAttribute('aria-pressed', +c.dataset.doy === doy);
 }
 for (const c of document.querySelectorAll('.sunbox .chip')) c.addEventListener('click', () => { doy = +c.dataset.doy; updatePath(); setSun(); });
@@ -548,7 +646,9 @@ function loop(t) {
   }
   if (playing) { playAcc += dt * 90; if (playAcc >= 5) { minutes += Math.floor(playAcc / 5) * 5; playAcc %= 5; if (minutes > 21 * 60 + 30) minutes = 5 * 60; setSun(); } }
   if (modAnim > 0) { modAnim = Math.max(0, modAnim - dt * 2.5); const k = (1 - modAnim); modGroup.position.copy(nrm).multiplyScalar(0.8 * (1 - k) * (1 - k)); }
+  animiereStrom(dt);
   controls.update(); renderer.render(scene, camera);
+  setzeFlowLabel();
 }
 
 renderOpts(); placeModules(); drawSunpath(); setSun();
