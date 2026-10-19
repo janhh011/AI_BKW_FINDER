@@ -26,6 +26,7 @@ import hashlib
 import json
 import mimetypes
 import os
+import re
 import sys
 import threading
 import time
@@ -215,6 +216,49 @@ class App:
         self.angebote.add(key)
         return key
 
+    def balkon_zu(self, basis):
+        """Angebots-Kennung (z. B. 376_0 oder 376_u1a2b…) -> (Fassade, Balkonliste, Index)."""
+        m = BASIS.match(basis)
+        if not m:
+            raise ValueError("Unbekanntes Angebot.")
+        fid, teil = int(m.group(1)), m.group(2)
+        f = self.R.fac.get(fid)
+        if f is None:
+            raise ValueError("Unbekanntes Angebot.")
+        alle = list((self.R.BK.get(str(fid)) or {}).get("balkone", []))
+        if teil.startswith("u"):
+            n = self.nutzer.get(basis)
+            if not n:
+                raise ValueError("Unbekanntes Angebot.")
+            alle.append(A.balkon_aus_eingabe(f, n["box"], gelaender=GELAENDER.get(n["gelaender"])))
+            return fid, alle, len(alle) - 1
+        bi = int(teil)
+        if not 0 <= bi < len(alle):
+            raise ValueError("Unbekanntes Angebot.")
+        return fid, alle, bi
+
+    def angebot_ohne_baeume(self, basis, kronen):
+        """Neu rechnen, nachdem der Nutzer Bäume entfernt hat, die es nicht (mehr) gibt."""
+        fid, alle, bi = self.balkon_zu(basis)
+        kronen = sorted({(round(x, 1), round(y, 1), round(r, 1)) for x, y, r in kronen})
+        if not kronen:
+            return basis
+        h = hashlib.sha1(json.dumps([basis, kronen]).encode()).hexdigest()[:10]
+        key = f"{basis}_b{h}"
+        if os.path.exists(os.path.join(self.R.adir, key, "daten.json")):
+            return key
+        with self.rechnen:
+            geo = A.balkon_geometrie(self.R.fac[fid], alle[bi], self.R.P, self.R.baum)
+            if geo is None:
+                raise ValueError("Dieser Balkon lässt sich nicht neu berechnen.")
+            P, baum, n = self.R.ohne_baeume(geo["mitte"], kronen)
+            d = self.R.angebot(fid, bi, alle, key=key, P=P, baum=baum,
+                               extra=dict(basis=basis, ohne_baeume=[list(k) for k in kronen]))
+        if d is None:
+            raise ValueError("Dieser Balkon lässt sich nicht neu berechnen.")
+        log(f"Angebot {key}: {len(kronen)} Bäume entfernt ({n} Punkte)")
+        return key
+
     def angebot_selbst(self, fid, box, gelaender):
         f = self.R.fac.get(fid)
         if f is None or not f.get("img_res") or not f.get("img"):
@@ -241,6 +285,9 @@ class App:
         self.nutzer[key] = dict(fassade=fid, box=b["box"], gelaender=gelaender, datum=time.strftime("%Y-%m-%d"))
         self._speichere(self.nutzer_path, self.nutzer)
         return key
+
+
+BASIS = re.compile(r"^(\d{1,6})_(\d{1,3}|u[0-9a-f]{10})$")
 
 
 def handler_fuer(app, begrenzer, vertraue_proxy):
@@ -354,6 +401,15 @@ def handler_fuer(app, begrenzer, vertraue_proxy):
                 if teile == ["api", "angebot"]:
                     if not begrenzer.erlaubt(self.ip(), "angebot"):
                         return self.fehler(429, "Zu viele Anfragen. Bitte später noch einmal.")
+                    if "basis" in daten:
+                        basis, kr = daten.get("basis"), daten.get("ohne_baeume")
+                        if not isinstance(basis, str) or not isinstance(kr, list) or not 1 <= len(kr) <= 30:
+                            raise ValueError("Ungültige Anfrage.")
+                        ok = all(isinstance(k, list) and len(k) == 3 and all(isinstance(v, (int, float)) and not isinstance(v, bool)
+                                 and abs(v) <= A.MODELL_RADIUS + 10 for v in k) and 0 < k[2] <= 15 for k in kr)
+                        if not ok:
+                            raise ValueError("Ungültige Anfrage.")
+                        return self.json(200, {"id": app.angebot_ohne_baeume(basis, [[float(v) for v in k] for k in kr])})
                     fid = daten.get("fassade")
                     if not isinstance(fid, int) or isinstance(fid, bool):
                         raise ValueError("Unbekannte Hauswand.")

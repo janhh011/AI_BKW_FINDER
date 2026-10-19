@@ -76,10 +76,17 @@
   nav.top a:hover { color: var(--moss); }
 
   /* ---------- Hero ---------- */
-  .hero { padding: 18px 0 22px; max-width: 760px; }
-  .hero h1 { font-size: clamp(32px, 4.2vw, 52px); line-height: 1.04; font-weight: 750; margin: 0 0 12px; }
+  .haupt { display: grid; grid-template-columns: minmax(360px, .82fr) minmax(0, 1.35fr); grid-template-rows: auto minmax(0, 1fr);
+           grid-template-areas: "intro karte" "panel karte"; gap: 16px 22px; height: calc(100vh - 92px); min-height: 620px; max-height: 980px; margin: 0 0 36px; }
+  .hero { grid-area: intro; padding: 6px 0 0; }
+  .haupt .karte { grid-area: karte; }
+  .haupt .panel { grid-area: panel; min-height: 0; }
+  .haupt:not(.weiter) .panel { align-self: start; }
+  .haupt.weiter .hero .lead, .haupt.weiter .hero .gebiet { display: none; }
+  .haupt.weiter .hero h1 { font-size: clamp(24px, 2.4vw, 32px); }
+  .hero h1 { font-size: clamp(30px, 3.4vw, 46px); line-height: 1.05; font-weight: 750; margin: 0 0 10px; transition: font-size .25s; }
   .hero h1 em { font-style: normal; color: var(--leaf); }
-  .hero .lead { font-size: 18px; color: var(--fern); max-width: 36em; margin: 0 0 20px; }
+  .hero .lead { font-size: 17px; color: var(--fern); max-width: 36em; margin: 0 0 16px; }
   .suche { position: relative; max-width: 560px; }
   .suche form { display: flex; gap: 8px; background: var(--paper); border: 1.5px solid var(--line); border-radius: 18px; padding: 7px; box-shadow: 0 10px 30px rgba(28, 58, 41, .08); }
   .suche form:focus-within { border-color: var(--leaf); }
@@ -96,10 +103,9 @@
   .vorschlaege li[aria-selected="true"], .vorschlaege li:hover { background: var(--leaf-soft); }
   .vorschlaege li.info { cursor: default; color: var(--fern); font-size: 14px; }
   .vorschlaege li.info:hover { background: none; }
-  .gebiet { margin: 12px 2px 0; font-size: 13.5px; color: var(--fern); }
+  .gebiet { margin: 10px 2px 0; font-size: 13px; color: var(--fern); }
 
   /* ---------- Finder ---------- */
-  .finder { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(330px, 1fr); gap: 18px; margin: 10px 0 36px; height: min(78vh, 760px); min-height: 520px; scroll-margin-top: 12px; }
   .karte { position: relative; border-radius: 26px; overflow: hidden; background: #cfd8cb; box-shadow: 0 10px 30px rgba(28, 58, 41, .08); }
   #map { width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; user-select: none; }
   #map.ziehen { cursor: grabbing; }
@@ -154,7 +160,7 @@
   .bewertung.schwach { background: #eceee9; color: var(--fern); }
 
   .wand { position: relative; background: #e3e7e0; border-radius: 16px; overflow: hidden; margin: 0 0 12px; touch-action: none; }
-  .wand img { display: block; width: 100%; height: auto; max-height: 46vh; object-fit: contain; }
+  .wand img { display: block; width: 100%; height: auto; max-height: 36vh; object-fit: contain; }
   .wand svg { position: absolute; inset: 0; width: 100%; height: 100%; }
   .wand .bk rect { fill: rgba(244, 183, 49, .28); stroke: var(--sun2); stroke-width: 2.5; vector-effect: non-scaling-stroke; cursor: pointer; }
   .wand .bk:hover rect { fill: rgba(244, 183, 49, .45); }
@@ -207,9 +213,9 @@
   footer p { margin: 4px 0; }
 
   @media (max-width: 920px) {
-    .hero { padding-top: 8px; }
-    .finder { grid-template-columns: 1fr; height: auto; }
-    .karte { height: 56vh; min-height: 340px; }
+    .haupt { grid-template-columns: 1fr; grid-template-rows: auto auto auto; grid-template-areas: "intro" "karte" "panel"; height: auto; max-height: none; min-height: 0; }
+    .haupt .karte { height: 58vh; min-height: 340px; scroll-margin-top: 8px; }
+    .haupt.weiter .hero .lead, .haupt.weiter .hero .gebiet { display: block; }
     .drei, .zwei { grid-template-columns: 1fr; }
     nav.top { display: none; }
   }
@@ -269,8 +275,8 @@
 
 <main>
   <div class="wrap">
-    <section class="hero" aria-labelledby="titel">
-      <div>
+    <section class="haupt" id="finder" aria-labelledby="titel">
+      <div class="hero" id="intro">
         <h1 id="titel">Lohnt sich ein Balkonkraftwerk auf <em>Ihrem</em> Balkon?</h1>
         <p class="lead">Adresse eingeben, Balkon antippen. Wir rechnen Sonne und Schatten aus dem 3D-Stadtmodell Berlin durch – und zeigen, was Sie sparen. Kostenlos, ohne Anmeldung.</p>
         <div class="suche">
@@ -283,13 +289,10 @@
         </div>
         <p class="gebiet" id="gebiet">Derzeit für ein Testgebiet in Berlin verfügbar – weitere Kieze folgen.</p>
       </div>
-    </section>
-
-    <section class="finder" id="finder" aria-label="Balkon finden">
-      <div class="karte">
+      <div class="karte" id="karte">
         <svg id="map" xmlns="http://www.w3.org/2000/svg" aria-label="Luftbild mit Hauswänden"></svg>
         <div class="laedt" id="karteLaedt">Karte wird geladen …</div>
-        <div class="ui hinweis-karte" id="hinweisKarte">Tippen Sie auf Ihr Haus oder suchen Sie oben Ihre Adresse</div>
+        <div class="ui hinweis-karte" id="hinweisKarte">Tippen Sie auf Ihr Haus – oder suchen Sie Ihre Adresse</div>
         <button class="ui legende" id="legende" aria-expanded="false" aria-label="Was bedeuten die Farben?">
           <svg id="miniKompass" viewBox="-26 -30 52 56" aria-hidden="true"></svg>
           <span class="kurz"><b>Gelb</b> = viel Sonne</span>
@@ -523,7 +526,7 @@
   let pinP = null;
   const apply = () => { svg.setAttribute('viewBox', `${view.x} ${view.y} ${view.w} ${view.h}`); if (pinP) setzePin(pinP); if (gNr) nummern(); };
   function fit() {
-    const r = svg.getBoundingClientRect(), s = Math.max(OW / r.width, OH / r.height);
+    const r = svg.getBoundingClientRect(), s = Math.min(OW / r.width, OH / r.height) * 0.92;   // füllend, Kachelrand außerhalb
     view = {w: r.width * s, h: r.height * s, x: (OW - r.width * s) / 2, y: (OH - r.height * s) / 2}; apply();
   }
   function zoomAuf(cx, cy, breiteM) {
@@ -644,11 +647,11 @@
     e.preventDefault();
     const t = treffer && treffer.length ? treffer : await suche(inp.value);
     if (t && t.length) nimm(t[Math.max(0, aktiv)]);
-    else { zeigeVorschlaege(t, inp.value.trim() || ' '); $('finder').scrollIntoView({behavior: 'smooth'}); }
+    else zeigeVorschlaege(t, inp.value.trim() || ' ');
   });
   function nimm(a) {
     inp.value = `${a.s} ${a.n}`; liste.classList.remove('offen');
-    st.adresse = a; $('finder').scrollIntoView({behavior: 'smooth', block: 'start'});
+    st.adresse = a; if (matchMedia('(max-width: 920px)').matches) $('karte').scrollIntoView({behavior: 'smooth', block: 'start'});
     start().then(() => zeigeAdresse(a));
   }
   function zeigeAdresse(a) {
@@ -703,12 +706,11 @@
   }
   function render() {
     const P = $('panel');
+    $('finder').classList.toggle('weiter', st.schritt >= 2);
     if (!st.geladen) { P.innerHTML = kopf(0) + '<h2>Wo ist Ihr Balkon?</h2><p class="text">Karte wird geladen …</p>'; return; }
     if (st.schritt === 1) {
-      P.innerHTML = kopf(1) + `<h2>Wo ist Ihr Balkon?</h2><p class="text">Suchen Sie oben Ihre Adresse oder tippen Sie Ihr Haus auf der Karte an. ` +
-        `Gelb markierte Hauswände bekommen besonders viel Sonne.</p>` +
-        `<div class="aktion"><button class="btn zart" id="zuSuche">Adresse eingeben</button></div>`;
-      $('zuSuche').addEventListener('click', () => { window.scrollTo({top: 0, behavior: 'smooth'}); setTimeout(() => inp.focus(), 350); });
+      P.innerHTML = kopf(1) + `<p class="text" style="margin-top:4px">Suchen Sie oben Ihre Adresse – oder tippen Sie Ihr Haus direkt auf der Karte an. ` +
+        `<b>Gelb</b> markierte Hauswände bekommen besonders viel Sonne.</p>`;
       return;
     }
     if (st.schritt === 2) {

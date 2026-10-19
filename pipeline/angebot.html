@@ -60,6 +60,14 @@
   .chip { border: 1px solid var(--line); background: var(--paper); border-radius: 999px; padding: 3px 11px; font-size: 13px; cursor: pointer; color: var(--fern); }
   .chip[aria-pressed="true"] { background: var(--moss); border-color: var(--moss); color: #fff; }
   .look { position: absolute; right: 16px; top: 16px; }
+  .korr { position: absolute; left: 16px; top: 16px; font-size: 12px; background: rgba(250, 252, 247, .85); }
+  .korrbar { position: absolute; left: 16px; top: 16px; right: 84px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px;
+             background: rgba(250, 252, 247, .96); border-radius: 14px; padding: 8px 10px; box-shadow: 0 6px 24px rgba(28, 58, 41, .12); }
+  .korrbar[hidden], .korr[hidden] { display: none; }
+  .korrbar span { flex: 1 1 200px; color: var(--moss); }
+  .korrbar .chip.go { background: var(--leaf); border-color: var(--leaf); color: #fff; }
+  .korrbar .chip:disabled { opacity: .5; cursor: default; }
+  .stage.korrigieren canvas { cursor: pointer; }
   .meter { position: absolute; right: 16px; top: 60px; height: min(42%, 260px); width: 56px; display: flex; flex-direction: column; align-items: center; gap: 5px;
            background: rgba(250, 252, 247, .9); backdrop-filter: blur(8px); border-radius: 16px; padding: 9px 6px; box-shadow: 0 6px 24px rgba(28, 58, 41, .08); }
   .meter .val { text-align: center; line-height: 1.1; }
@@ -247,6 +255,13 @@
     <section class="stage" id="stage" aria-label="3D-Ansicht Ihres Balkons">
       <div class="loading" id="loading">Ihr Balkon wird geladen …</div>
       <button class="chip look" id="look" aria-pressed="false">Foto-Ansicht</button>
+      <button class="chip korr" id="korr" hidden>Baum stimmt nicht?</button>
+      <div class="korrbar" id="korrbar" hidden role="group" aria-label="Bäume korrigieren">
+        <span id="korrText">Tippen Sie auf Bäume, die es so nicht gibt – wir rechnen ohne sie neu.</span>
+        <button class="chip go" id="korrOk" disabled>Neu berechnen</button>
+        <button class="chip" id="korrZurueck" hidden>Original</button>
+        <button class="chip" id="korrAbbr">Abbrechen</button>
+      </div>
       <div class="meter off" id="meter" role="meter" aria-label="Strom, der gerade ins Haus fließt" aria-valuemin="0" aria-valuemax="800">
         <div class="val"><b id="mW">0</b><span>Watt</span></div>
         <div class="track"><div class="fill" id="mFill"></div></div>
@@ -659,6 +674,9 @@ let sichtFrei = null;
 const geistHaus = new THREE.MeshLambertMaterial({color: 0xf7f8f3, transparent: true, opacity: 0.16, depthWrite: false});
 const geistBaum = new THREE.MeshLambertMaterial({color: 0x9cc89a, flatShading: true, transparent: true, opacity: 0.18, depthWrite: false});
 const strahl = new THREE.Raycaster();
+const wegMat = new THREE.MeshLambertMaterial({color: 0xe05a4f, transparent: true, opacity: 0.5, depthWrite: false});
+const wegBaeume = new Set();
+let korrModus = false;
 let sichtTakt = 0;
 function sichtPruefen(dt) {
   if (!sichtFrei || !sel) return;
@@ -684,7 +702,10 @@ function sichtPruefen(dt) {
     const m = (haeuser.has(id) || einzeln.has(t)) ? geistHaus : sichtFrei.hausMat;
     if (t.material !== m) t.material = m;
   }
-  for (const k of sichtFrei.kronen) { const m = baeume.has(k) ? geistBaum : sichtFrei.krone; if (k.material !== m) k.material = m; k.userData.stamm.visible = !baeume.has(k); }
+  for (const k of sichtFrei.kronen) {
+    if (wegBaeume.has(k)) { if (k.material !== wegMat) k.material = wegMat; k.userData.stamm.visible = false; continue; }
+    const m = baeume.has(k) ? geistBaum : sichtFrei.krone; if (k.material !== m) k.material = m; k.userData.stamm.visible = !baeume.has(k);
+  }
 }
 // Prüfmodus (?pruefen=1): zählt Sichtstrahlen zu den Modulen, die trotz Ausblenden noch von etwas Undurchsichtigem verdeckt sind
 function sichtBericht() {
@@ -775,9 +796,10 @@ async function loadModell() {
     c.position.set(x, h - r * 0.85, -y); c.castShadow = true; c.receiveShadow = true; modellGroup.add(c);
     const st = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.25, Math.max(0.5, h - r * 1.4), 6), stamm);
     st.position.set(x, Math.max(0.5, h - r * 1.4) / 2, -y); st.castShadow = true; modellGroup.add(st);
-    c.userData.stamm = st; kronen.push(c);
+    c.userData.stamm = st; c.userData.xyr = [x, y, r]; kronen.push(c);
   }
   sichtFrei = {bloecke, haeuser, eigen, kronen, hausMat, krone, imPoly};
+  if (kronen.length || (D.ohne_baeume || []).length) $('korr').hidden = false;
   waehleKamera();
   const platte = new THREE.MeshLambertMaterial({color: 0xeceee8});
   const glas = new THREE.MeshLambertMaterial({color: 0xffffff, transparent: true, opacity: 0.55});
@@ -921,7 +943,7 @@ let last = performance.now(), playAcc = 0;
 function loop(t) {
   requestAnimationFrame(loop);
   const dt = Math.min(0.1, (t - last) / 1000); last = t;
-  if (!reduce && !dragging && (!touched || t - idleSince > 8000)) {
+  if (!reduce && !dragging && !korrModus && (!touched || t - idleSince > 8000)) {
     if (touched) { touched = false; swingT = 0; }
     swingT += dt * 0.22; camAt(SWING_MITTE + SWING_WEITE * Math.sin(swingT));
   }
@@ -930,6 +952,49 @@ function loop(t) {
   sichtPruefen(dt);
   controls.update(); renderer.render(scene, camera);
 }
+
+// ---------------------------------------------------------------- Bäume korrigieren (klein, optional)
+// Kronen kommen aus dem Höhenmodell und sind manchmal falsch (gefällt, zu groß, gar kein Baum).
+// Nutzer können nur entfernen; der Server rechnet Sonne und Schatten dann ohne diese Bäume neu.
+const basisId = D.basis || D.id;
+if ((D.ohne_baeume || []).length) {
+  $('korr').textContent = `${D.ohne_baeume.length} ${D.ohne_baeume.length === 1 ? 'Baum' : 'Bäume'} entfernt · ändern`;
+  $('korrZurueck').hidden = false;
+}
+function korrText() {
+  const n = wegBaeume.size;
+  $('korrText').textContent = n ? `${n} ${n === 1 ? 'Baum' : 'Bäume'} markiert. Noch einer? Sonst neu berechnen.` : 'Tippen Sie auf Bäume, die es so nicht gibt – wir rechnen ohne sie neu.';
+  $('korrOk').disabled = !n;
+}
+$('korr').addEventListener('click', () => { korrModus = true; $('korr').hidden = true; if ($('look')) $('look').style.visibility = 'hidden'; $('korrbar').hidden = false; stage.classList.add('korrigieren'); korrText(); });
+$('korrAbbr').addEventListener('click', () => { korrModus = false; wegBaeume.clear(); if ($('look')) $('look').style.visibility = ''; $('korrbar').hidden = true; $('korr').hidden = false; stage.classList.remove('korrigieren'); idleSince = performance.now(); });
+$('korrZurueck').addEventListener('click', () => { location.href = `?id=${encodeURIComponent(basisId)}`; });
+let tipp = null;
+renderer.domElement.addEventListener('pointerdown', e => { tipp = [e.clientX, e.clientY]; });
+renderer.domElement.addEventListener('pointerup', e => {
+  if (!korrModus || !tipp || !sichtFrei || Math.hypot(e.clientX - tipp[0], e.clientY - tipp[1]) > 6) return;
+  const r = renderer.domElement.getBoundingClientRect();
+  strahl.setFromCamera(new THREE.Vector2((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1), camera);
+  strahl.far = Infinity;
+  const hit = strahl.intersectObjects(sichtFrei.kronen, false)[0];
+  if (!hit) return;
+  const k = hit.object;
+  if (wegBaeume.has(k)) { wegBaeume.delete(k); k.material = sichtFrei.krone; k.userData.stamm.visible = true; } else wegBaeume.add(k);
+  korrText();
+});
+$('korrOk').addEventListener('click', async () => {
+  const liste = [...(D.ohne_baeume || []), ...[...wegBaeume].map(k => k.userData.xyr)];
+  $('korrOk').disabled = true; $('korrText').textContent = 'Wir rechnen Sonne und Schatten neu …';
+  try {
+    const res = await fetch('../api/angebot', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({basis: basisId, ohne_baeume: liste})});
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(j.fehler || 'Neu berechnen geht gerade nicht.');
+    location.href = `?id=${encodeURIComponent(j.id)}`;
+  } catch (err) {
+    $('korrText').textContent = err.message === 'Failed to fetch' ? 'Neu berechnen geht gerade nicht.' : err.message;
+    $('korrOk').disabled = false;
+  }
+});
 
 renderOpts(); placeModules(); drawSunpath(); setSun();
 requestAnimationFrame(loop);

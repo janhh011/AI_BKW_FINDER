@@ -548,13 +548,16 @@ class Rechner:
         self.adir = os.path.join(webapp, "angebot")
         self.tex_names = None
 
-    def simuliere(self, fid, b):
-        """Ein Balkon (Box im Fassadenbild) -> (Geometrie, Ergebnis, Azimut, Randlage) oder None."""
+    def simuliere(self, fid, b, P=None, baum=None):
+        """Ein Balkon (Box im Fassadenbild) -> (Geometrie, Ergebnis, Azimut, Randlage) oder None.
+        P/baum: optional eine veränderte Punktwolke (z. B. ohne vom Nutzer entfernte Bäume)."""
+        P = self.P if P is None else P
+        baum = self.baum if baum is None else baum
         f = self.fac[int(fid)]
-        geo = balkon_geometrie(f, b, self.P, self.baum)
+        geo = balkon_geometrie(f, b, P, baum)
         if geo is None:
             return None
-        Q, qb = horizont_vorfilter(geo, self.P, self.baum)
+        Q, qb = horizont_vorfilter(geo, P, baum)
         az_mod = (math.degrees(math.atan2(geo["n"][0], geo["n"][1])) + self.gn_true) % 360
         r = simuliere_balkon(self.sim, geo, Q, qb, self.gn_true, az_mod)
         mx, my = geo["mitte"][:2]
@@ -577,15 +580,26 @@ class Rechner:
             if os.path.exists(os.path.join(here, src)):
                 shutil.copyfile(os.path.join(here, src), os.path.join(self.adir, dst))
 
-    def angebot(self, fid, bi, balkone, key=None, szene=False, details=None):
+    def ohne_baeume(self, mitte, kronen, faktor=1.3):
+        """Punktwolke ohne die Baumpunkte unter den angegebenen Kronen.
+        kronen: [[x, y, r], ...] relativ zur Balkonmitte (Koordinaten wie in modell.json)."""
+        weg = np.zeros(len(self.P), bool)
+        for x, y, r in kronen:
+            d = np.hypot(self.P[:, 0] - (mitte[0] + x), self.P[:, 1] - (mitte[1] + y))
+            weg |= self.baum & (d < r * faktor + 0.5)
+        return self.P[~weg], self.baum[~weg], int(weg.sum())
+
+    def angebot(self, fid, bi, balkone, key=None, szene=False, details=None, P=None, baum=None, extra=None):
         """Angebotsdaten für balkone[bi] auf Fassade fid schreiben -> daten (dict) oder None.
         balkone: alle Balkone dieser Fassade (für das Modell); selbst eingezeichnete einfach anhängen."""
         self.bereite_ordner()
         fid = str(fid)
-        fac, P, baum, sim, gn_true = self.fac, self.P, self.baum, self.sim, self.gn_true
+        fac, sim, gn_true = self.fac, self.sim, self.gn_true
+        P = self.P if P is None else P
+        baum = self.baum if baum is None else baum
         b = balkone[bi]
         if details is None:
-            details = self.simuliere(fid, b)
+            details = self.simuliere(fid, b, P, baum)
         if details is None:
             return None
         geo, r, az_mod, rand = details
@@ -627,7 +641,19 @@ class Rechner:
         alt = os.path.join(out, "daten.json")
         if sz is None and os.path.exists(alt) and os.path.exists(os.path.join(out, "scene.bin")):
             sz = json.load(open(alt, encoding="utf-8")).get("szene")   # früher erzeugtes Foto-Mesh weiter nutzen
-        modell = exportiere_modell(out, P0, z0, f, balkone, P, baum, aktiv_bi=bi)
+        if extra and extra.get("ohne_baeume"):
+            # Modell aus der vollständigen Punktwolke, dann genau die angeklickten Kronen weglassen
+            # (sonst entstehen am Rand der entfernten Krone neue kleine Kronen)
+            modell = exportiere_modell(out, P0, z0, f, balkone, self.P, self.baum, aktiv_bi=bi)
+            mp = os.path.join(out, "modell.json")
+            mj = json.load(open(mp, encoding="utf-8"))
+            weg = extra["ohne_baeume"]
+            mj["baeume"] = [t for t in mj["baeume"] if all(math.hypot(t[0] - x, t[1] - y) > 0.6 for x, y, r in weg)]
+            with open(mp, "w", encoding="utf-8") as fh:
+                json.dump(mj, fh, separators=(",", ":"))
+            modell["baeume"] = len(mj["baeume"])
+        else:
+            modell = exportiere_modell(out, P0, z0, f, balkone, P, baum, aktiv_bi=bi)
         lon, lat = self.to_ll.transform(P0[0], P0[1])
         idx = self.idx
         pac = np.round(r["pac"]).astype(int)
@@ -665,6 +691,8 @@ class Rechner:
                           tau_belaubt=TAU_BELAUBT, tau_kahl=TAU_KAHL),
             szene=sz, modell=modell, quelle=self.meta.get("source"), erstellt=time.strftime("%Y-%m-%d %H:%M"),
         )
+        if extra:
+            daten.update(extra)
         with open(os.path.join(out, "daten.json"), "w", encoding="utf-8") as fh:
             json.dump(daten, fh, ensure_ascii=False, separators=(",", ":"))
         if sz:
@@ -695,7 +723,7 @@ def schreibe_angebotsliste(webapp):
     vorhanden = []
     for name in sorted(os.listdir(adir)):
         p = os.path.join(adir, name, "daten.json")
-        if os.path.exists(p) and "_u" not in name:          # selbst eingezeichnete Balkone bleiben privat
+        if os.path.exists(p) and "_u" not in name and "_b" not in name:   # eigene/geänderte Balkone bleiben privat
             d = json.load(open(p, encoding="utf-8"))
             vorhanden.append(dict(id=name, fassade=d["fassade"], balkon=d["balkon"], typ=d["typ"],
                                   geschoss=d.get("geschoss"), kwh=d["jahr"]["kwh"],
