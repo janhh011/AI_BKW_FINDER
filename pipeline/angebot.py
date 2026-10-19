@@ -57,6 +57,8 @@ NB = 360 // AZ_STEP
 RAND_WARNUNG = 60.0      # m, Balkone näher am Kachelrand haben unvollständigen Horizont
 SZENE_RADIUS = 85.0      # m, Ausschnitt der 3D-Szene
 JAHR = 2025
+AUSSTELLWINKEL = 30      # Grad, verstellbare Geländerhalterung (Paket "Optimiert")
+WP_OPTIMIERT = 450       # Wp, bifaziales Glas-Glas-Modul gleicher Größe
 
 # Mittlere Monatssummen Globalstrahlung horizontal (kWh/m²) und Lufttemperatur (°C), Raum Berlin,
 # gerundete Klimamittel. Linke-Trübung typisch Mitteleuropa, Stadt.
@@ -286,10 +288,13 @@ def horizont(p, nrm, Q, qb, gn_true):
     return hb, ht
 
 
-def himmel_faktor(hb, ht, az_mod, tau):
-    """Anteil des für eine senkrechte Fläche sichtbaren Himmels (isotrop gewichtet)."""
-    c = np.clip(np.cos(np.radians(AZC - az_mod)), 0, None)
-    w = c[:, None] * (np.cos(np.radians(ELC)) ** 2)[None, :]
+def himmel_faktor(hb, ht, az_mod, tau, neigung=90.0):
+    """Anteil des für die Modulfläche sichtbaren Himmels (isotrop gewichtet); neigung 90° = senkrecht."""
+    A = np.radians(AZC - az_mod)[:, None]
+    E = np.radians(ELC)[None, :]
+    b = math.radians(neigung)
+    ns = math.sin(b) * np.cos(E) * np.cos(A) + math.cos(b) * np.sin(E)
+    w = np.clip(ns, 0, None) * np.cos(E)
     Bb = ELC[None, :] < hb[:, None]
     Bt = (ELC[None, :] < ht[:, None]) & ~Bb
     tot = w.sum()
@@ -310,16 +315,16 @@ class Sim:
         self.tau = np.where(self.belaubt, TAU_BELAUBT, TAU_KAHL)
         self.dni_extra = pvlib.irradiance.get_extra_radiation(mid).to_numpy()
 
-    def einstrahlung(self, az_mod):
+    def einstrahlung(self, az_mod, neigung=90.0):
         sp, w = self.sp, self.w
-        aoi = pvlib.irradiance.aoi(90, az_mod, sp["apparent_zenith"], sp["azimuth"]).to_numpy()
-        hd = pvlib.irradiance.haydavies(90, az_mod, w["dhi"], w["dni"], self.dni_extra,
+        aoi = pvlib.irradiance.aoi(neigung, az_mod, sp["apparent_zenith"], sp["azimuth"]).to_numpy()
+        hd = pvlib.irradiance.haydavies(neigung, az_mod, w["dhi"], w["dni"], self.dni_extra,
                                         sp["apparent_zenith"], sp["azimuth"], return_components=True)
         iso = np.nan_to_num(np.asarray(hd["poa_isotropic"], float))
         circ = np.nan_to_num(np.asarray(hd["poa_circumsolar"], float))
         beam = np.where((aoi < 90) & (self.el > 0), w["dni"].to_numpy() * np.cos(np.radians(aoi)), 0.0)
         beam = np.clip(beam, 0, None)
-        ground = w["ghi"].to_numpy() * ALBEDO * 0.5
+        ground = w["ghi"].to_numpy() * ALBEDO * (1 - math.cos(math.radians(neigung))) / 2
         iam = np.nan_to_num(pvlib.iam.ashrae(aoi, b=0.05))
         return dict(aoi=aoi, iso=iso, circ=circ, beam=beam, ground=ground, iam=iam)
 
@@ -346,8 +351,8 @@ class Sim:
         return float((pvlib.pvsystem.pvwatts_dc(g, tc, 1000, GAMMA) * 0.86).sum() / 1000)
 
 
-def simuliere_balkon(sim, geo, Q, qb, gn_true, az_mod):
-    E = sim.einstrahlung(az_mod)
+def simuliere_balkon(sim, geo, Q, qb, gn_true, az_mod, neigung=90.0, wp_modul=None):
+    E = sim.einstrahlung(az_mod, neigung)
     nrm = geo["n"]
     mv = geo["vorschlag"]
     fracs, isos, horis = [], [], []
@@ -360,14 +365,15 @@ def simuliere_balkon(sim, geo, Q, qb, gn_true, az_mod):
             frei = sim.el > hb[sim.bi]
             hinter_baum = sim.el <= ht[sim.bi]
             fr += np.where(frei, np.where(hinter_baum, sim.tau, 1.0), 0.0)
-            iso_b += himmel_faktor(hb, ht, az_mod, TAU_BELAUBT)
-            iso_k += himmel_faktor(hb, ht, az_mod, TAU_KAHL)
+            iso_b += himmel_faktor(hb, ht, az_mod, TAU_BELAUBT, neigung)
+            iso_k += himmel_faktor(hb, ht, az_mod, TAU_KAHL, neigung)
         k = len(m["punkte"])
         fracs.append(fr / k)
         isos.append(np.where(sim.belaubt, iso_b / k, iso_k / k))
-    pac = sim.leistung(E, fracs, isos, mv["wp_modul"])
+    wpm = wp_modul or mv["wp_modul"]
+    pac = sim.leistung(E, fracs, isos, wpm)
     one = np.ones(len(sim.mid))
-    pac_frei = sim.leistung(E, [one] * len(fracs), [one] * len(fracs), mv["wp_modul"])
+    pac_frei = sim.leistung(E, [one] * len(fracs), [one] * len(fracs), wpm)
     hb_all = np.max([h[0] for h in horis], axis=0)
     ht_all = np.max([h[1] for h in horis], axis=0)
     # Sonnenstunden auf dem Modul (Mittel der Module, nur Stunden mit Sonne vor der Fassade)
@@ -645,6 +651,17 @@ def main():
                                   module=[[lokal(e, geo["mitte"], fac[int(fid)]["ground"]) for e in m["ecken"]]
                                           for m in g2["module"]],
                                   stunde_wh=pac2.tolist()))
+        # optimierte Variante: bifaziale 450-Wp-Module, 30° ausgestellt (Modulneigung 60°)
+        nm = min(max(fit, 1), 2)
+        g3 = balkon_geometrie(fac[int(fid)], BK[fid]["balkone"][bi], P, baum, n_module=nm if fit >= 1 else None)
+        Q3, qb3 = horizont_vorfilter(g3, P, baum)
+        r3 = simuliere_balkon(sim, g3, Q3, qb3, gn_true, az_mod, neigung=90 - AUSSTELLWINKEL, wp_modul=WP_OPTIMIERT)
+        pac3 = np.round(r3["pac"]).astype(int)
+        optimiert = dict(n=g3["vorschlag"]["n"], wp=g3["vorschlag"]["n"] * WP_OPTIMIERT, wp_modul=WP_OPTIMIERT,
+                         ausstellwinkel=AUSSTELLWINKEL, kwh=round(float(pac3.sum()) / 1000, 1),
+                         kwh_frei=round(float(r3["pac_frei"].sum()) / 1000, 1),
+                         module=[[lokal(e, geo["mitte"], fac[int(fid)]["ground"]) for e in m["ecken"]] for m in g3["module"]],
+                         stunde_wh=pac3.tolist())
         f = fac[int(fid)]
         b = BK[fid]["balkone"][bi]
         key = f"{fid}_{bi}"
@@ -688,6 +705,7 @@ def main():
             stunde_wh=pac.tolist(),
             stunde_frei_wh=frei.tolist(),
             varianten=varianten,
+            optimiert=optimiert,
             sonne_anteil=[round(float(x), 2) for x in r["frac"]],
             jahr_basis=JAHR, wetter=wquelle, globalstrahlung=round(ghi_y),
             annahmen=dict(verluste=VERLUSTE, gamma=GAMMA, wr_ac=WR_AC, wr_eta=WR_ETA, albedo=ALBEDO,

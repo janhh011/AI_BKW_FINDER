@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Balki-Strom – Ihr Balkonkraftwerk</title>
+<title>balki strom – Ihr Balkonkraftwerk</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'><rect width='48' height='48' rx='14' fill='%231f6b43'/><line x1='24' y1='5.5' x2='24' y2='12' stroke='%23f4b731' stroke-width='2.4' stroke-linecap='round'/><circle cx='24' cy='19' r='7.5' fill='%23f4b731'/><rect x='22.7' y='25' width='2.6' height='6' fill='%23f4b731'/><rect x='8.5' y='29.5' width='31' height='3.2' rx='1.6' fill='%23fafcf7'/><g fill='%23fafcf7'><rect x='11.5' y='32' width='2.4' height='8'/><rect x='17.3' y='32' width='2.4' height='8'/><rect x='22.8' y='32' width='2.4' height='8'/><rect x='28.3' y='32' width='2.4' height='8'/><rect x='34.1' y='32' width='2.4' height='8'/></g><rect x='6.5' y='39.5' width='35' height='3.2' rx='1.6' fill='%23fafcf7'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,650;12..96,750&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
@@ -31,8 +32,10 @@
 
   .page { height: 100vh; min-height: 640px; display: grid; grid-template-rows: auto 1fr; grid-template-columns: minmax(0, 1fr); padding: 18px 28px 22px; gap: 14px; }
   header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px; }
-  .brand { display: flex; align-items: center; gap: 9px; font-weight: 650; font-size: 19px; letter-spacing: -.01em; }
-  .brand svg { width: 26px; height: 26px; }
+  .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--moss); }
+  .brand svg { width: 34px; height: 34px; }
+  .brand .wort { font-family: "Bricolage Grotesque", Figtree, sans-serif; font-size: 23px; letter-spacing: -.035em; font-weight: 500; line-height: 1; }
+  .brand .wort b { font-weight: 750; margin-right: .18em; }
   .who { color: var(--fern); font-size: 14px; }
   .who { display: flex; gap: 14px; align-items: center; }
   .who select { font: inherit; border: 0; background: transparent; color: var(--fern); cursor: pointer; max-width: 46vw; }
@@ -112,6 +115,54 @@
   dialog p { font-size: 13px; color: var(--fern); margin: 0 0 8px; }
   dialog input { width: 70px; font: inherit; padding: 2px 6px; border: 1px solid var(--line); border-radius: 8px; text-align: right; }
 
+
+  /* Pakete mit Produktbild */
+  .opt { grid-template-columns: 78px 1fr auto !important; padding: 10px 16px 10px 10px; }
+  .opt .bild { grid-row: 1 / span 3; width: 78px; height: 58px; border-radius: 12px; background: #eef3ea; display: grid; place-items: center; }
+  .opt .bild svg { width: 70px; height: 52px; }
+  .opt[aria-checked="true"] .bild { background: #e3efe1; }
+  .opt .dot { display: none; }
+  .opt .desc { grid-column: 2; font-size: 13.5px; color: var(--fern); line-height: 1.35; }
+  .opt .price small.mwst { color: #8a9a8e; font-weight: 500; }
+  .house { font-size: 13px; gap: 6px; margin-bottom: 14px; }
+  .house .chip { padding: 1px 9px; font-size: 12.5px; }
+
+  /* Abschnitte unter dem ersten Bildschirm */
+  .band { padding: 64px 28px 56px; }
+  .band.hell { background: var(--paper); }
+  .band-in { max-width: 1180px; margin: 0 auto; }
+  .band h2 { font-size: clamp(28px, 3vw, 38px); line-height: 1.1; letter-spacing: -.025em; margin: 0 0 8px; font-weight: 750; }
+  .sub2 { color: var(--fern); margin: 0 0 22px; max-width: 60ch; }
+  .sub2 b { color: var(--moss); }
+  .eco { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(280px, 1fr); gap: 44px; align-items: start; }
+  .legend { display: flex; gap: 18px; flex-wrap: wrap; font-size: 13px; color: var(--fern); margin-bottom: 6px; }
+  .legend i { display: inline-block; width: 18px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 7px; }
+  .legend .l1 { background: var(--leaf); height: 4px; }
+  .legend .l2 { background: repeating-linear-gradient(90deg, #8a9a8e 0 5px, transparent 5px 9px); }
+  #ecoChart { width: 100%; height: auto; display: block; overflow: visible; }
+  #ecoChart text { font: 12px Figtree, sans-serif; fill: #8a9a8e; }
+  .eco-side { display: grid; gap: 16px; padding-top: 8px; }
+  .rendite { background: var(--moss); color: #fff; border-radius: 22px; padding: 22px 24px; }
+  .rendite .big { display: block; font-family: "Bricolage Grotesque", Figtree, sans-serif; font-size: 52px; font-weight: 750; letter-spacing: -.03em; line-height: 1; color: #f4b731; margin-bottom: 8px; }
+  .rendite span:last-child { font-size: 15px; line-height: 1.4; display: block; }
+  .stecker { display: flex; gap: 14px; align-items: center; background: #fdeec2; border-radius: 999px 22px 22px 999px; padding: 10px 20px 10px 12px;
+             transform: rotate(-1.5deg); box-shadow: 0 4px 14px rgba(227, 162, 26, .25); }
+  .stecker svg { width: 40px; height: 40px; flex: none; transform: rotate(90deg); }
+  .stecker b { display: block; font-size: 17px; }
+  .stecker span { font-size: 14px; color: #6b5512; }
+  .facts { display: grid; grid-template-columns: 1fr auto; gap: 6px 16px; margin: 0; font-size: 14px; }
+  .facts dt { color: var(--fern); } .facts dd { margin: 0; text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .fuss { max-width: 1180px; margin: 22px auto 0; font-size: 12px; color: #8a9a8e; }
+  .zeit { list-style: none; margin: 8px 0 30px; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; counter-reset: s; position: relative; }
+  .zeit::before { content: ""; position: absolute; left: 6%; right: 6%; top: 15px; height: 2px; background: repeating-linear-gradient(90deg, var(--line) 0 8px, transparent 8px 14px); }
+  .zeit li { position: relative; font-size: 14px; color: var(--fern); line-height: 1.4; padding-top: 44px; }
+  .zeit li::before { counter-increment: s; content: counter(s); position: absolute; top: 0; left: 0; width: 32px; height: 32px; border-radius: 50%;
+                     background: var(--leaf-soft); color: var(--leaf); font-weight: 700; display: grid; place-items: center; }
+  .zeit li.ziel::before { content: "☀"; background: #f4b731; color: var(--moss); }
+  .zeit .dauer { display: inline-block; font-family: "Bricolage Grotesque", Figtree, sans-serif; font-weight: 750; font-size: 22px; color: var(--moss); letter-spacing: -.02em; margin-bottom: 2px; }
+  .zeit b { display: block; color: var(--moss); font-size: 15px; margin-bottom: 2px; }
+  @media (max-width: 900px) { .eco { grid-template-columns: 1fr; } .zeit { grid-template-columns: 1fr 1fr; } .zeit::before { display: none; } }
+  @media (max-width: 560px) { .zeit { grid-template-columns: 1fr; } .band { padding: 44px 16px; } }
   @media (max-height: 820px) {
     .page { padding: 12px 24px 14px; gap: 10px; }
     h1 { margin-bottom: 6px; }
@@ -152,10 +203,7 @@
 <body>
 <div class="page">
   <header>
-    <div class="brand">
-      <svg viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="13" fill="#2f7d4f"/><path d="M7 16.5c3.5-.2 8.6-2.4 11.5-9 .9 6.6-2.4 11.6-8.3 11.6-1.3 0-2.4-.9-3.2-2.6Z" fill="#e9efe5"/><circle cx="18.6" cy="7.4" r="2.2" fill="#e3a21a"/></svg>
-      Balki-Strom
-    </div>
+    <a class="brand" href="../" aria-label="balki strom"><svg viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="14" fill="#1f6b43"/><line x1="24" y1="5.5" x2="24" y2="12" stroke="#f4b731" stroke-width="2.4" stroke-linecap="round"/><circle cx="24" cy="19" r="7.5" fill="#f4b731"/><rect x="22.7" y="25" width="2.6" height="6" fill="#f4b731"/><rect x="8.5" y="29.5" width="31" height="3.2" rx="1.6" fill="#fafcf7"/><g fill="#fafcf7"><rect x="11.5" y="32" width="2.4" height="8"/><rect x="17.3" y="32" width="2.4" height="8"/><rect x="22.8" y="32" width="2.4" height="8"/><rect x="28.3" y="32" width="2.4" height="8"/><rect x="34.1" y="32" width="2.4" height="8"/></g><rect x="6.5" y="39.5" width="35" height="3.2" rx="1.6" fill="#fafcf7"/></svg><span class="wort"><b>balki</b>strom</span></a>
     <div class="who"><a class="back" href="../">Zur Karte</a><select id="pick" aria-label="Beispiel wählen"></select></div>
   </header>
 
@@ -186,23 +234,54 @@
       <p class="lead" id="lead"></p>
       <div class="opts" id="opts" role="radiogroup" aria-label="Ausstattung wählen"></div>
       <div class="house" role="group" aria-label="Personen im Haushalt">
-        Personen im Haushalt
+        <span>Personen im Haushalt</span>
         <button class="chip" data-kwh="1500">1</button><button class="chip" data-kwh="2500">2</button>
         <button class="chip" data-kwh="3200">3</button><button class="chip" data-kwh="4000">4+</button>
       </div>
-      <div class="steps">
-        <div class="step"><b><span>1</span>Bestellen</b>Wir liefern alles passend für Ihr Geländer.</div>
-        <div class="step"><b><span>2</span>Einhängen</b>Module ans Geländer, Stecker in die Steckdose.</div>
-        <div class="step"><b><span>3</span>Online anmelden</b>Ein kurzes Formular – wir füllen es mit Ihnen aus.</div>
-      </div>
       <div class="cta">
-        <button class="btn" id="order">Angebot anfordern</button>
-        <button class="link" id="howBtn">So haben wir gerechnet</button>
+        <button class="btn" id="order">Unverbindlich anfragen</button>
+        <a class="link" href="#rechnung">Rechnet sich das? ↓</a>
       </div>
       <div class="fine" id="fine"></div>
     </section>
   </main>
 </div>
+
+<section class="band" id="rechnung">
+  <div class="band-in eco">
+    <div>
+      <h2>Rechnet sich das?</h2>
+      <p class="sub2" id="ecoLead"></p>
+      <div class="legend"><span><i class="l1"></i>Ihr Balkonkraftwerk</span><span><i class="l2"></i>gleicher Betrag in einem ETF (7 % p. a.)</span></div>
+      <svg id="ecoChart" viewBox="0 0 640 260" role="img" aria-label="Vergleich Balkonkraftwerk und ETF über 20 Jahre"></svg>
+    </div>
+    <div class="eco-side">
+      <div class="rendite"><span class="big" id="rendite"></span><span id="renditeText"></span></div>
+      <div class="stecker" id="mwst">
+        <svg viewBox="0 0 40 40" aria-hidden="true"><rect x="9" y="3" width="4" height="10" rx="2" fill="#1c3a29"/><rect x="27" y="3" width="4" height="10" rx="2" fill="#1c3a29"/><path d="M5 12h30v8a15 15 0 0 1-30 0z" fill="#1c3a29"/><rect x="17" y="33" width="6" height="7" rx="2" fill="#1c3a29"/></svg>
+        <div><b>0 % Mehrwertsteuer</b><span id="mwstText"></span></div>
+      </div>
+      <dl class="facts" id="facts"></dl>
+      <button class="link" id="howBtn">So haben wir gerechnet</button>
+    </div>
+  </div>
+  <p class="fuss" id="ecoFuss"></p>
+</section>
+
+<section class="band hell" id="ablauf">
+  <div class="band-in">
+    <h2>So einfach geht's</h2>
+    <p class="sub2">Die meiste Zeit wartet der Paketbote. Ihre eigene Arbeit: <b>unter einer Stunde.</b></p>
+    <ol class="zeit">
+      <li><span class="dauer">3 Minuten</span><b>Bestellen</b>Ausstattung wählen, Foto vom Geländer hochladen, fertig.</li>
+      <li><span class="dauer">2–5 Werktage</span><b>Lieferung</b>Alles kommt passend für Ihr Geländer bis an die Haustür.</li>
+      <li><span class="dauer">ca. 45 Minuten</span><b>Montage</b>Halterung ans Geländer, Module einhängen, Stecker in die Steckdose.</li>
+      <li><span class="dauer">ca. 5 Minuten</span><b>Online anmelden</b>Kurzer Eintrag im Marktstammdatenregister – das ist Pflicht, aber einfach. Wir zeigen Ihnen, wie.</li>
+      <li class="ziel"><span class="dauer">20+ Jahre</span><b>Sonnenstrom genießen</b>Ab jetzt läuft Ihr Zähler langsamer – jeden sonnigen Tag.</li>
+    </ol>
+    <div class="cta"><button class="btn" id="order2">Unverbindlich anfragen</button></div>
+  </div>
+</section>
 
 <dialog id="how">
   <h2>So haben wir gerechnet</h2>
@@ -223,11 +302,22 @@ const eur = x => nf(Math.round(x)) + ' €';
 const RAD = Math.PI / 180;
 const el = (tag, attrs = {}, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
 
-// Annahmen für die Wirtschaftlichkeit (Beispielpreise)
-const PREIS_BASIS = 150;        // Wechselrichter 800 W, Kabel, Anmeldehilfe
-const PREIS_MODUL = 150;        // je Modul inkl. Geländerhalterung
-const SPEICHER = {kwh: 1.6, preis: 550, standby_w: 6, eta: 0.92};
-const GLEICHZEITIG = 0.85;      // stündliche Rechnung überschätzt den direkten Eigenverbrauch
+// ---------------------------------------------------------------- Produktkatalog (Mockup)
+// Beispielpreise aus aktuellen Marktangeboten (Okt. 2026), Hersteller bewusst anonymisiert.
+const KATALOG = [
+  {id: 'k1', typ: 'set', module: 1, wp: 430, breite: 1.72, bauart: 'Full-Black-Modul', wr: '800-W-Wechselrichter mit WLAN', preis: 229},
+  {id: 'k2', typ: 'set', module: 2, wp: 430, breite: 1.72, bauart: 'Full-Black-Module', wr: '800-W-Wechselrichter mit WLAN', preis: 349},
+  {id: 'k3', typ: 'set', module: 2, wp: 450, breite: 1.76, bauart: 'bifaziale Glas-Glas-Module', wr: '800-W-Wechselrichter mit WLAN', preis: 389},
+  {id: 'k4', typ: 'set', module: 2, wp: 500, breite: 1.96, bauart: 'bifaziale XL-Module', wr: '800-W-Wechselrichter', preis: 329},
+  {id: 'k5', typ: 'set', module: 4, wp: 500, breite: 1.96, bauart: 'bifaziale XL-Module', wr: '2000-W-Wechselrichter', preis: 579},
+  {id: 'k6', typ: 'speicher', module: 2, wp: 450, breite: 1.76, bauart: 'bifaziale Glas-Glas-Module', kwh: 2.1, wr: 'Speicher mit integriertem Wechselrichter und App', preis: 849},
+  {id: 'k7', typ: 'speicher', module: 2, wp: 500, breite: 1.96, bauart: 'Hochleistungsmodule', kwh: 2.7, wr: 'Speicher mit App und Notstromsteckdose', preis: 1199},
+  {id: 'k8', typ: 'speicher', module: 4, wp: 500, breite: 1.96, bauart: 'bifaziale Module', kwh: 1.9, wr: 'Speicher mit integriertem Mikrowechselrichter', preis: 945},
+  {id: 'h1', typ: 'halterung', neigbar: false, preis: 29, text: 'Geländerhalterung'},
+  {id: 'h2', typ: 'halterung', neigbar: true, preis: 59, text: 'neigbare Geländerhalterung (0–45°)'},
+];
+const MWST = 0.19, GLEICHZEITIG = 0.85, STROM_PLUS = 0.02, DEGRADATION = 0.005, ETF = 0.07, JAHRE = 20;
+const SPEICHER_STANDBY_W = 6, SPEICHER_ETA = 0.92;
 
 // ---------------------------------------------------------------- Daten
 const LIST = window.ANGEBOTE || [];
@@ -242,51 +332,83 @@ const [D, LP] = await Promise.all([fetch(`${id}/daten.json`).then(r => r.json())
 const N = D.stunde_wh.length;
 const LPV = Float64Array.from(LP.werte);
 const VARS = (D.varianten && D.varianten.length ? D.varianten : [{n: D.vorschlag.n, wp: D.vorschlag.wp, kwh: D.jahr.kwh, kwh_frei: D.jahr.kwh_frei, module: D.module, stunde_wh: D.stunde_wh}])
-  .map(v => ({...v, pv: Float64Array.from(v.stunde_wh)}));
+  .map(v => ({...v, pv: Float64Array.from(v.stunde_wh), neigung: 0}));
+const OPT = D.optimiert ? {...D.optimiert, pv: Float64Array.from(D.optimiert.stunde_wh), neigung: D.optimiert.ausstellwinkel} : null;
 
-// Pakete aus den Varianten
-const vMax = VARS[VARS.length - 1], v1 = VARS[0], v2 = VARS.find(v => v.n === 2) || vMax;
+// ---------------------------------------------------------------- Matching: Katalog -> drei Ausstattungen
+const platz = D.breite_m;                                   // nutzbare Geländerbreite
+const passt = k => k.module * k.breite + (k.module - 1) * 0.04 <= platz + 0.05 && k.module <= 2;
+const halter = n => KATALOG.find(k => k.typ === 'halterung' && k.neigbar === n);
+const sets = KATALOG.filter(k => k.typ === 'set' && passt(k));
+const speicher = KATALOG.filter(k => k.typ === 'speicher' && passt(k));
+const vSenk = VARS.find(v => v.n === 2) || VARS[VARS.length - 1];
+// 1) einfach & effektiv: günstigstes passendes Set mit möglichst vielen Modulen, senkrecht
+const s1 = sets.filter(k => k.module === Math.min(2, vSenk.n)).sort((a, b) => a.preis - b.preis)[0] || sets[0];
+// 2) optimiert: leistungsstärkstes passendes Set, neigbare Halterung (30° ausgestellt)
+const s2 = sets.filter(k => k.module === (OPT ? OPT.n : 2)).sort((a, b) => b.wp - a.wp || a.preis - b.preis)[0] || s1;
+// 3) smart mit Speicher: günstigster passender Speicher
+const s3 = speicher.sort((a, b) => a.preis - b.preis)[0];
+function skaliere(v, wp) { const f = wp / (v.wp / v.n); return {...v, pv: v.pv.map(x => Math.min(800, x * f)), kwh: v.kwh * f, wp: wp * v.n}; }
 const PAKETE = [];
-PAKETE.push({key: 'einstieg', name: 'Einstieg', v: v1, speicher: false});
-if (v2.n > v1.n) PAKETE.push({key: 'standard', name: 'Standard', v: v2, speicher: false});
-PAKETE.push({key: 'montage', name: 'Rundum-sorglos', v: v2, speicher: false, montage: true});
-const SPEICHER_PAKET = {key: 'speicher', name: 'Mit Speicher', v: v2, speicher: true};
-if (vMax.n > 2) PAKETE.push({key: 'maximal', name: 'Maximal', v: vMax, speicher: false});
-const MONTAGE = 149;
-const preisVon = p => PREIS_BASIS + PREIS_MODUL * p.v.n + (p.speicher ? SPEICHER.preis : 0) + (p.montage ? MONTAGE : 0);
-for (const p of PAKETE) p.preis = preisVon(p);
-SPEICHER_PAKET.preis = preisVon(SPEICHER_PAKET);
+if (s1) PAKETE.push({key: 'einfach', name: 'Einfach & effektiv', set: s1, halter: halter(false),
+  v: skaliere(VARS.find(v => v.n === s1.module) || vSenk, s1.wp), neigung: 0, speicherKwh: 0,
+  desc: `${s1.module} ${s1.bauart}, ${s1.wr}, senkrecht am Geländer.`});
+if (s2 && OPT) PAKETE.push({key: 'optimiert', name: 'Optimiert', set: s2, halter: halter(true),
+  v: skaliere(OPT, s2.wp), neigung: OPT.neigung, speicherKwh: 0,
+  desc: `Stärkere ${s2.bauart}, um ${OPT.neigung}° zur Sonne geneigt – deutlich mehr Ertrag.`});
+if (s3 && OPT) PAKETE.push({key: 'smart', name: 'Smart mit Speicher', set: s3, halter: halter(true),
+  v: skaliere(OPT, s3.wp), neigung: OPT.neigung, speicherKwh: s3.kwh,
+  desc: `Geneigte Module plus ${nf(s3.kwh, 1)}-kWh-Speicher mit App – Sonnenstrom auch am Abend.`});
+for (const p of PAKETE) { p.preis = p.set.preis + p.halter.preis * p.set.module; p.mwst = p.preis * MWST; }
 
 let verbrauch = 2500, preis = 0.37;
 
-function eigenverbrauch(pv, speicher) {
+function eigenverbrauch(pv, kapKwh) {
   let direkt = 0, ausSpeicher = 0, soc = 0;
-  const cap = SPEICHER.kwh * 1000;
+  const cap = kapKwh * 1000;
   for (let i = 0; i < N; i++) {
     const last = LPV[i] * verbrauch * 1000, p = pv[i];
     direkt += Math.min(p, last);
-    if (!speicher) continue;
-    if (p > last) soc = Math.min(cap, soc + Math.min(p - last, 800) * SPEICHER.eta);
+    if (!cap) continue;
+    if (p > last) soc = Math.min(cap, soc + Math.min(p - last, 800) * SPEICHER_ETA);
     else { const d = Math.min(last - p, soc, 800); soc -= d; ausSpeicher += d; }
   }
   let kwh = direkt / 1000 * GLEICHZEITIG + ausSpeicher / 1000;
-  if (speicher) kwh -= SPEICHER.standby_w * 8.76;
+  if (cap) kwh -= SPEICHER_STANDBY_W * 8.76;
   return Math.max(0, kwh);
 }
+function irr(cf) {
+  let lo = -0.9, hi = 3;
+  const npv = r => cf.reduce((a, c, t) => a + c / (1 + r) ** t, 0);
+  for (let k = 0; k < 100; k++) { const m = (lo + hi) / 2; npv(m) > 0 ? lo = m : hi = m; }
+  return (lo + hi) / 2;
+}
 function rechne() {
-  // Speicher nur anbieten, wenn er spürbar mehr spart (sonst ist er hier nicht sinnvoll)
-  const ohne = eigenverbrauch(v2.pv, false), mit = eigenverbrauch(v2.pv, true);
-  const i = PAKETE.indexOf(SPEICHER_PAKET);
-  if ((mit - ohne) * preis >= 40 && i < 0) PAKETE.splice(PAKETE.length - (vMax.n > 2 ? 1 : 0), 0, SPEICHER_PAKET);
-  if ((mit - ohne) * preis < 40 && i >= 0) { PAKETE.splice(i, 1); if (sel === SPEICHER_PAKET) sel = null; }
   for (const p of PAKETE) {
-    p.selbst = eigenverbrauch(p.v.pv, p.speicher);
+    p.selbst = eigenverbrauch(p.v.pv, p.speicherKwh);
     p.spart = p.selbst * preis;
     p.jahre = p.preis / Math.max(p.spart, 1);
-    p.netto20 = p.spart * 20 * 0.95 - p.preis;
+    const cf = [-p.preis]; p.kum = [-p.preis];
+    for (let y = 1; y <= JAHRE; y++) {
+      const sY = p.spart * (1 - DEGRADATION) ** (y - 1) * (1 + STROM_PLUS) ** (y - 1);
+      cf.push(sY); p.kum.push(p.kum[y - 1] + sY);
+    }
+    p.rendite = irr(cf);
+    p.netto20 = p.kum[JAHRE];
   }
   const best = PAKETE.reduce((a, b) => (b.netto20 > a.netto20 ? b : a));
   for (const p of PAKETE) p.empfehlung = p === best;
+}
+
+// ---------------------------------------------------------------- Produktbilder (eigene Illustrationen, keine Herstellerfotos)
+function produktBild(p) {
+  const panel = (x, y, w, h, skew = 0) => `<g transform="translate(${x} ${y}) skewY(${skew})"><rect width="${w}" height="${h}" rx="1.5" fill="#1b2c4f"/>` +
+    [1, 2, 3].map(i => `<line x1="${i * w / 4}" y1="0" x2="${i * w / 4}" y2="${h}" stroke="#5f79a8" stroke-width=".6"/>`).join('') +
+    `<line x1="0" y1="${h / 2}" x2="${w}" y2="${h / 2}" stroke="#5f79a8" stroke-width=".6"/><rect width="${w}" height="${h}" rx="1.5" fill="none" stroke="#c9d1cf" stroke-width="1"/></g>`;
+  const gelaender = '<rect x="4" y="44" width="62" height="2.4" rx="1" fill="#9fb0a2"/>';
+  if (p.key === 'einfach') return `<svg viewBox="0 0 70 52">${panel(6, 18, 27, 24)}${panel(37, 18, 27, 24)}${gelaender}<rect x="31" y="8" width="8" height="6" rx="1.5" fill="#8fa194"/></svg>`;
+  if (p.key === 'optimiert') return `<svg viewBox="0 0 70 52">${panel(6, 20, 27, 22, -14)}${panel(37, 20, 27, 22, -14)}${gelaender}<path d="M58 9 a6 6 0 0 1 6 6" fill="none" stroke="#e3a21a" stroke-width="1.6"/><circle cx="60" cy="8" r="3.2" fill="#f4b731"/></svg>`;
+  return `<svg viewBox="0 0 70 52">${panel(4, 22, 22, 20, -14)}${panel(28, 22, 22, 20, -14)}${gelaender}<rect x="53" y="22" width="13" height="20" rx="2.5" fill="#f2f4ef" stroke="#a9b5a6"/><rect x="56" y="26" width="7" height="2" rx="1" fill="#2f7d4f"/><rect x="51" y="5" width="11" height="15" rx="2" fill="#1c3a29"/><rect x="53" y="8" width="7" height="8" rx="1" fill="#8fd18f"/></svg>`;
 }
 
 // ---------------------------------------------------------------- Texte
@@ -294,51 +416,97 @@ const HIMMEL = ['Norden', 'Nordosten', 'Osten', 'Südosten', 'Süden', 'Südwest
 const seite = HIMMEL[Math.round(D.az / 45) % 8];
 const stock = D.geschoss === 0 ? 'im Erdgeschoss' : `im ${D.geschoss}. Stock`;
 const sonnig = 1 - D.jahr.kwh / D.jahr.kwh_frei;
-const lage = sonnig < 0.15 ? 'bekommt viel Sonne' : sonnig < 0.35 ? 'bekommt gut Sonne, zeitweise etwas Schatten' : 'liegt öfter im Schatten – lohnt sich trotzdem';
-$('lead').textContent = `Wir haben Ihren Balkon ${stock} vermessen: ${nf(D.breite_m, 1)} Meter Geländer nach ${seite}. Er ${lage}. ` +
-  `Platz für ${vMax.n === 1 ? 'ein Solarmodul' : (vMax.n === 2 ? 'zwei Solarmodule' : vMax.n + ' Solarmodule')}.`;
+const lage = sonnig < 0.15 ? 'bekommt viel Sonne' : sonnig < 0.35 ? 'bekommt gut Sonne' : 'liegt öfter im Schatten – lohnt sich trotzdem';
+$('lead').textContent = `Wir haben Ihren Balkon ${stock} vermessen: ${nf(D.breite_m, 1)} m Geländer nach ${seite}, er ${lage}. ${['Eine passende Ausstattung', 'Zwei passende Ausstattungen', 'Drei passende Ausstattungen'][PAKETE.length - 1] || 'Passende Ausstattungen'}:`;
 let sel = null;
+const jahreText = j => j > JAHRE ? `über ${JAHRE} Jahren` : `${nf(Math.round(j * 2) / 2, 1).replace(',0', '')} Jahren`;
 
 function renderOpts() {
   rechne();
-  if (!sel) sel = PAKETE.find(p => p.empfehlung);
+  if (!sel || !PAKETE.includes(sel)) sel = PAKETE.find(p => p.empfehlung);
   const box = $('opts'); box.innerHTML = '';
   for (const p of PAKETE) {
     const b = document.createElement('button');
     b.className = 'opt'; b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', p === sel);
-    const mod = p.v.n === 1 ? '1 Solarmodul' : `${p.v.n} Solarmodule`;
-    b.innerHTML = `<span class="dot"></span>
+    b.innerHTML = `<span class="bild">${produktBild(p)}</span>
       <span class="name">${p.name}${p.empfehlung ? '<span class="tag">lohnt sich am meisten</span>' : ''}</span>
-      <span class="price">${eur(p.preis)}<small>spart ${eur(p.spart)} im Jahr</small></span>
-      <span class="sub">${mod}${p.speicher ? ' + Speicher' : ''}${p.montage ? ', wir montieren und melden an' : ''}, rechnet sich nach ${nf(Math.round(p.jahre * 2) / 2, 1).replace(',0', '')} Jahren</span>
-      <span class="tech">${nf(p.v.wp)} Watt · ${nf(p.v.kwh)} kWh Strom im Jahr${p.speicher ? ` · Speicher ${nf(SPEICHER.kwh, 1)} kWh` : ''}</span>`;
+      <span class="price">${eur(p.preis)}<small>spart ${eur(p.spart)} im Jahr</small><small class="mwst">rechnet sich nach ${jahreText(p.jahre)}</small></span>
+      <span class="desc">${p.desc}</span>
+      <span class="tech">${nf(p.v.wp)} Watt · ca. ${nf(Math.round(p.v.kwh / 10) * 10)} kWh Strom im Jahr</span>`;
     b.addEventListener('click', () => { sel = p; renderOpts(); placeModules(); setSun(); });
     box.appendChild(b);
   }
   $('headline').textContent = `Ihr Balkon spart ${eur(sel.spart)} Strom im Jahr.`;
-  $('fine').textContent = `Beispielpreise inkl. Lieferung, 0 % MwSt. Berechnet mit ${nf(preis * 100, 1)} ct pro kWh und ${nf(verbrauch)} kWh Jahresverbrauch. Unverbindlich – endgültig nach einem Foto Ihres Geländers.`;
+  $('fine').textContent = `Beispielpreise inkl. Lieferung, 0 % MwSt. Berechnet mit ${nf(preis * 100, 1)} ct/kWh und ${nf(verbrauch)} kWh Jahresverbrauch. Unverbindlich – endgültig nach einem Foto Ihres Geländers.`;
   for (const c of document.querySelectorAll('.house .chip')) c.setAttribute('aria-pressed', +c.dataset.kwh === verbrauch);
-  renderHow();
+  renderEco(); renderHow();
 }
 for (const c of document.querySelectorAll('.house .chip')) c.addEventListener('click', () => { verbrauch = +c.dataset.kwh; renderOpts(); });
+
+// ---------------------------------------------------------------- Wirtschaftlichkeit: Balkonkraftwerk vs. ETF
+function renderEco() {
+  const p = sel;
+  const etf = Array.from({length: JAHRE + 1}, (_, t) => p.preis * ((1 + ETF) ** t - 1));
+  $('ecoLead').innerHTML = `Paket <b>${p.name}</b> für ${eur(p.preis)}: Nach ${jahreText(p.jahre)} ist es bezahlt, danach ist jeder Sonnentag Gewinn. ` +
+    `Nach 20 Jahren haben Sie rund <b>${eur(p.kum[JAHRE])}</b> gespart – derselbe Betrag im ETF hätte etwa <b>${eur(etf[JAHRE])}</b> gebracht.`;
+  const r = p.rendite;
+  $('rendite').textContent = `${nf(r * 100)} %`;
+  $('renditeText').innerHTML = r > ETF * 1.5
+    ? `Rendite pro Jahr – rund ${nf(r / ETF, 0)}-mal so viel wie ein durchschnittlicher Aktien-ETF mit etwa 7 %.*`
+    : (r > ETF ? 'Rendite pro Jahr – mehr als ein durchschnittlicher Aktien-ETF mit etwa 7 %.*' : 'Rendite pro Jahr. Hier lohnt sich vor allem der Klimaeffekt.*');
+  $('mwstText').textContent = `Sie sparen ${eur(p.mwst)} gegenüber dem normalen Steuersatz.`;
+  $('facts').innerHTML = [
+    ['Anschaffung', eur(p.preis)], ['Ersparnis im 1. Jahr', eur(p.spart)],
+    ['Davon selbst genutzt', `${nf(p.selbst)} von ${nf(p.v.kwh)} kWh`], ['Bezahlt nach', jahreText(p.jahre)],
+    ['Ersparnis in 20 Jahren', eur(p.kum[JAHRE] + p.preis)],
+  ].map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join('');
+  $('ecoFuss').textContent = `* Keine Anlageberatung. Der ETF-Vergleich nutzt 7 % pro Jahr als ungefähren langjährigen Durchschnitt eines weltweiten Aktienindex; ` +
+    `vergangene Entwicklungen sind keine Garantie für die Zukunft. Die Rendite des Balkonkraftwerks ergibt sich aus der eingesparten Stromrechnung über ${JAHRE} Jahre ` +
+    `(Strompreis ${nf(preis * 100, 1)} ct/kWh, +${nf(STROM_PLUS * 100)} % pro Jahr, Modulleistung −${nf(DEGRADATION * 100, 1)} % pro Jahr) und hängt von Verbrauch und Wetter ab. ` +
+    `Ersatzteile wie Wechselrichter oder Speicher können innerhalb dieser Zeit anfallen. 0 % MwSt. gilt seit 2023 für Photovoltaikanlagen an Wohngebäuden.`;
+  // Diagramm
+  const svg = $('ecoChart'); svg.innerHTML = '';
+  const W = 640, H = 260, L = 58, R = 12, T = 12, B = 30;
+  const alle = [...p.kum, ...etf];
+  const lo = Math.min(0, ...alle), hi = Math.max(...alle);
+  const st = (() => { const raw = (hi - lo) / 4, m = 10 ** Math.floor(Math.log10(raw)), f = raw / m; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * m; })();
+  const y0 = Math.floor(lo / st) * st, y1 = Math.ceil(hi / st) * st;
+  const x = t => L + t / JAHRE * (W - L - R), y = v => T + (y1 - v) / (y1 - y0) * (H - T - B);
+  for (let v = y0; v <= y1 + 1e-6; v += st) {
+    el('line', {x1: L, x2: W - R, y1: y(v), y2: y(v), stroke: v === 0 ? '#9fb0a2' : '#e1e8dd', 'stroke-width': v === 0 ? 1.4 : 1}, svg);
+    el('text', {x: L - 8, y: y(v) + 4, 'text-anchor': 'end'}, svg).textContent = nf(v) + ' €';
+  }
+  for (const t of [0, 5, 10, 15, 20]) el('text', {x: x(t), y: H - 8, 'text-anchor': 'middle'}, svg).textContent = t ? `${t} Jahre` : 'heute';
+  const pfad = arr => arr.map((v, t) => `${t ? 'L' : 'M'}${x(t).toFixed(1)},${y(v).toFixed(1)}`).join('');
+  el('path', {d: pfad(p.kum) + `L${x(JAHRE)},${y(0)}L${x(0)},${y(0)}Z`, fill: 'rgba(47,125,79,.10)'}, svg);
+  el('path', {d: pfad(etf), fill: 'none', stroke: '#8a9a8e', 'stroke-width': 2, 'stroke-dasharray': '5 4'}, svg);
+  el('path', {d: pfad(p.kum), fill: 'none', stroke: '#2f7d4f', 'stroke-width': 3, 'stroke-linejoin': 'round'}, svg);
+  if (p.jahre <= JAHRE) {
+    el('circle', {cx: x(p.jahre), cy: y(0), r: 5, fill: '#fff', stroke: '#1c3a29', 'stroke-width': 2}, svg);
+    el('text', {x: x(p.jahre) + 9, y: y(0) + 20, style: 'fill:#1c3a29;font-weight:600'}, svg).textContent = `bezahlt nach ${jahreText(p.jahre)}`;
+  }
+  el('text', {x: x(JAHRE) - 2, y: y(p.kum[JAHRE]) - 10, 'text-anchor': 'end', style: 'fill:#2f7d4f;font-weight:700;font-size:13px'}, svg).textContent = eur(p.kum[JAHRE]);
+  el('text', {x: x(JAHRE) - 2, y: y(etf[JAHRE]) + 24, 'text-anchor': 'end', style: 'fill:#6f8073;font-weight:600'}, svg).textContent = 'ETF ' + eur(etf[JAHRE]);
+}
 
 function renderHow() {
   const p = sel;
   $('howList').innerHTML = [
     ['Ausrichtung', `${seite} (${nf(D.az)}°)`], ['Geländerbreite', `${nf(D.breite_m, 1)} m`],
-    ['Leistung', `${nf(p.v.wp)} Watt`], ['Stromertrag pro Jahr', `${nf(p.v.kwh)} kWh`],
+    ['Ausstattung', `${p.set.module} × ${p.set.wp} Wp, ${p.neigung ? p.neigung + '° geneigt' : 'senkrecht'}${p.speicherKwh ? `, Speicher ${nf(p.speicherKwh, 1)} kWh` : ''}`],
+    ['Stromertrag pro Jahr', `${nf(p.v.kwh)} kWh`],
     ['davon selbst genutzt', `${nf(p.selbst)} kWh (${nf(p.selbst / p.v.kwh * 100)} %)`],
     ['Sonnenstunden auf den Modulen', `${nf(D.jahr.sonnenstunden)} von ${nf(D.jahr.sonnenstunden_frei)}`],
     ['Ertragsverlust durch Schatten', `${nf((1 - p.v.kwh / p.v.kwh_frei) * 100)} %`],
   ].map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join('');
   $('howText').textContent = `Wir haben Nachbarhäuser und Bäume aus dem 3D-Stadtmodell Berlin vermessen und den Ertrag für jede Stunde eines Jahres simuliert (${D.wetter}). ` +
     `Ihren Verbrauch schätzen wir mit dem Standard-Haushaltsprofil. Strom, den Sie gerade nicht brauchen, geht ohne Vergütung ins Netz` +
-    `${p.speicher ? `, außer der Speicher (${nf(SPEICHER.kwh, 1)} kWh) nimmt ihn auf` : ''}. Genauigkeit etwa ±15 %.`;
+    `${p.speicherKwh ? `, außer der Speicher nimmt ihn auf` : ''}. Preise sind Beispielpreise aus aktuellen Marktangeboten. Genauigkeit etwa ±15 %.`;
 }
 $('howBtn').addEventListener('click', () => $('how').showModal());
 $('howClose').addEventListener('click', () => $('how').close());
 $('preis').addEventListener('input', e => { preis = (+e.target.value || 37) / 100; renderOpts(); });
-$('order').addEventListener('click', () => { $('order').textContent = 'Danke – wir melden uns'; $('order').disabled = true; });
+for (const bId of ['order', 'order2']) $(bId).addEventListener('click', () => { for (const x of ['order', 'order2']) { $(x).textContent = 'Danke – wir melden uns'; $(x).disabled = true; } });
 
 // ---------------------------------------------------------------- Zeit und Sonne
 const Y = D.jahr_basis;
@@ -616,14 +784,19 @@ const modGroup = new THREE.Group(); scene.add(modGroup);
 let modAnim = 0;
 function placeModules() {
   modGroup.clear();
+  const neig = (sel.neigung || 0) * RAD;
   for (const q of sel.v.module) {
     const p = q.map(v => new THREE.Vector3(...v).addScaledVector(nrm, 0.05));
+    if (neig) {      // um die Unterkante nach außen kippen
+      const h = p[3].distanceTo(p[0]);
+      for (const [o, u] of [[3, 0], [2, 1]]) p[o] = p[u].clone().add(new THREE.Vector3(0, h * Math.cos(neig), 0)).addScaledVector(nrm, h * Math.sin(neig));
+    }
     const g = new THREE.BufferGeometry().setFromPoints([p[0], p[1], p[2], p[0], p[2], p[3]]);
     g.setAttribute('uv', new THREE.Float32BufferAttribute([0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1], 2));
     g.computeVertexNormals();
-    const m = new THREE.Mesh(g, modMat); m.receiveShadow = true; modGroup.add(m);
+    const m = new THREE.Mesh(g, modMat); m.receiveShadow = true; m.castShadow = true; modGroup.add(m);
   }
-  if (sel.speicher) {
+  if (sel.speicherKwh) {
     const q = sel.v.module[0].map(v => new THREE.Vector3(...v));
     const box = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.32, 0.3), new THREE.MeshStandardMaterial({color: 0xf4f6f2, roughness: 0.5}));
     const base = q[0].clone().lerp(q[1], 0.15).addScaledVector(nrm, -0.45); base.y = Math.min(q[0].y, q[1].y) + 0.16;
@@ -645,11 +818,12 @@ function leistungJetzt(s) {
   const zen = 90 - s.el;
   const am = 1 / (Math.cos(zen * RAD) + 0.50572 * (96.07995 - zen) ** -1.6364);
   const dni = 1353 * 0.7 ** (am ** 0.678), dhi = 0.12 * dni, ghi = dni * Math.sin(s.el * RAD) + dhi;
-  const cosAoi = Math.cos(s.el * RAD) * Math.cos((s.az - D.az) * RAD);
+  const b = (90 - (sel.neigung || 0)) * RAD;      // Modulneigung gegen die Horizontale
+  const cosAoi = Math.sin(b) * Math.cos(s.el * RAD) * Math.cos((s.az - D.az) * RAD) + Math.cos(b) * Math.sin(s.el * RAD);
   let sicht = 1;
   if (s.el <= horAt(HB, s.az)) sicht = 0;
   else if (s.el <= horAt(HT, s.az)) sicht = (doy > 120 && doy < 305) ? 0.2 : 0.55;
-  const poa = (cosAoi > 0 ? dni * cosAoi * sicht : 0) + dhi * 0.4 + ghi * 0.075;
+  const poa = (cosAoi > 0 ? dni * cosAoi * sicht : 0) + dhi * (0.4 + 0.3 * Math.cos(b)) + ghi * 0.15 * (1 - Math.cos(b)) / 2;
   return Math.min(800, sel.v.wp * poa / 1000 * 0.86);
 }
 function setSun() {
