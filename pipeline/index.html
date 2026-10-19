@@ -487,7 +487,7 @@
   const svg = $('map');
   let D, M, R, xmin, ymin, xmax, ymax, OW, OH, byId = new Map(), gF, gPin;
   let view = {x: 0, y: 0, w: 1, h: 1};
-  const st = {schritt: 1, f: null, bk: null, wand: [], adresse: null, zeichnen: false, box: null, gelaender: null, geladen: false};
+  const st = {analyseRichtungen: ['S', 'SO', 'SW'], schritt: 1, f: null, bk: null, wand: [], adresse: null, zeichnen: false, box: null, gelaender: null, geladen: false};
 
   let startP = null;
   function start() {
@@ -727,7 +727,11 @@
       if (sim && sim.passt) html += `<div class="ergebnis"><div><b>${fmt(sim.kwh)}</b><span>kWh Strom im Jahr (senkrecht)</span></div><div><b>${fmt(sim.verlust * 100)} %</b><span>Verlust durch Schatten</span></div><div><b>${fmt(sim.sonne)}</b><span>Sonnenstunden</span></div></div>`;
       html += `<div class="aktion"><span class="angebot-wrap"><button class="btn" id="angebot">Angebot ansehen</button><span class="unverb">unverbindlich</span></span><button class="link" id="anders">anderer Balkon</button></div>`;
     } else {
-      if (bks === null) {
+      if (bks === null && !st.analyseRichtungen.includes(f.cls)) {
+        html += `<p class="text">Zeichnen Sie Ihren Balkon einfach auf der Hauswand ein – wir rechnen danach Sonne und Schatten genau wie bei jedem anderen Balkon.</p>` +
+          `<p class="klein" style="margin:-6px 0 12px">Unsere automatische Balkonsuche gibt es nur für Hauswände nach Süden, Südosten und Südwesten.</p>` +
+          `<div class="aktion"><button class="btn" id="selbst">Balkon selbst einzeichnen</button></div>`;
+      } else if (bks === null) {
         html += `<p class="text">Diese Hauswand haben wir noch nicht nach Balkonen durchsucht.</p><div class="aktion">` +
           (st.api ? `<button class="btn" id="suchen" ${st.analyse ? 'disabled' : ''}>${st.analyse ? '<span class="sp"></span>Wir suchen Balkone …' : 'Balkone suchen'}</button>` : '') +
           `<button class="${st.api ? 'link' : 'btn'}" id="selbst">Balkon selbst einzeichnen</button></div>`;
@@ -742,7 +746,11 @@
     P.innerHTML = html;
     $('zur').addEventListener('click', () => { if (st.wand.length) { st.schritt = 2; st.f = null; } else { st.schritt = 1; st.f = null; } markiere(); render(); });
     const img = $('wImg');
-    if (img) { img.onload = () => zeichneWand(f); if (img.complete && img.naturalWidth) zeichneWand(f); }
+    if (img) {
+      img.onload = () => zeichneWand(f);
+      img.onerror = () => { $('wand').innerHTML = '<div class="wand-leer">Die Ansicht dieser Hauswand konnte nicht geladen werden.</div>'; };
+      if (img.complete && img.naturalWidth) zeichneWand(f);
+    }
     const on = (id, fn) => { const x = $(id); if (x) x.addEventListener('click', fn); };
     on('selbst', () => { st.zeichnen = true; st.bk = null; st.box = null; st.fehler = null; render(); });
     on('abbr', () => { st.zeichnen = false; st.box = null; render(); });
@@ -847,7 +855,7 @@
       });
   }
 
-  api().then(a => { st.api = !!(a && a.analyse); if (st.schritt === 3) render(); });
+  api().then(a => { st.api = !!(a && a.analyse); if (a && a.analyse_richtungen) st.analyseRichtungen = a.analyse_richtungen; if (st.schritt === 3) render(); });
   render();
 })();
 </script>

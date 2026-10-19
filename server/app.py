@@ -48,6 +48,8 @@ LIMITS = {                       # (Anzahl, Zeitfenster in s) je IP
 }
 TAGESBUDGET = int(os.environ.get("ANALYSEN_PRO_TAG", 300))      # Claude-Aufrufe je Tag, alle Nutzer zusammen
 MODELL = os.environ.get("BKW_MODELL", "sonnet")
+# Automatische Balkonsuche (Claude) nur für sonnige Wände; alle anderen: selbst einzeichnen
+ANALYSE_RICHTUNGEN = set(os.environ.get("ANALYSE_RICHTUNGEN", "S,SO,SW").split(","))
 
 
 def log(*a):
@@ -137,7 +139,7 @@ class App:
         if f is None:
             return None
         e = self.R.BK.get(str(fid))
-        out = dict(id=fid, analysiert=e is not None, bild=f.get("img"), cls=f["cls"], az=f["az"],
+        out = dict(id=fid, analysiert=e is not None, analyse_moeglich=f["cls"] in ANALYSE_RICHTUNGEN, bild=f.get("img"), cls=f["cls"], az=f["az"],
                    breite_m=f["len"], hoehe_m=f["h"], img_res=f.get("img_res"))
         if e is not None:
             out.update(geschosse=e.get("geschosse"), bildqualitaet=e.get("bildqualitaet"), balkone=[
@@ -150,6 +152,9 @@ class App:
         f = self.R.fac.get(fid)
         if f is None or not f.get("img"):
             raise ValueError("Für diese Hauswand gibt es kein Bild.")
+        if f["cls"] not in ANALYSE_RICHTUNGEN:
+            raise ValueError("Die automatische Suche gibt es nur für Hauswände nach Süden, Südosten und Südwesten. "
+                             "Bitte zeichnen Sie Ihren Balkon selbst ein.")
         with self.analyse_locks[fid]:              # gleichzeitige Anfragen zur selben Wand: nur ein Aufruf
             if str(fid) in self.R.BK:
                 return self.fassade(fid)
@@ -281,7 +286,7 @@ def handler_fuer(app, begrenzer, vertraue_proxy):
                 if not begrenzer.erlaubt(self.ip(), "lesen"):
                     return self.fehler(429, "Zu viele Anfragen. Bitte kurz warten.")
                 if pfad == "/api/status":
-                    return self.json(200, {"analyse": app.client is not None, "angebot": True})
+                    return self.json(200, {"analyse": app.client is not None, "angebot": True, "analyse_richtungen": sorted(ANALYSE_RICHTUNGEN)})
                 teile = pfad.strip("/").split("/")
                 if len(teile) == 3 and teile[1] == "fassade" and teile[2].isdigit():
                     f = app.fassade(int(teile[2]))
