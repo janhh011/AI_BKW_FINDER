@@ -185,10 +185,11 @@
   .bilanz > div:not(.gegen) { display: grid; }
   .bilanz .zahl { font-family: "Bricolage Grotesque", Figtree, sans-serif; font-weight: 750; font-size: clamp(34px, 4vw, 52px); letter-spacing: -.03em; line-height: 1; color: var(--moss); }
   .bilanz > div:last-child .zahl { color: var(--leaf); }
-  .bilanz span:not(.zahl) { color: var(--fern); font-size: 15px; margin-top: 4px; }
+  .bilanz > div > span:not(.zahl) { color: var(--fern); font-size: 15px; margin-top: 4px; }
   .bilanz .gegen { font-size: 40px; color: var(--sun); font-weight: 700; }
   html { scroll-behavior: smooth; }
-  .hinweis { font-size: 12px; color: #8a9a8e; max-width: 70ch; margin: -14px 0 26px; }
+  .bilanz .stern { font-size: .45em; vertical-align: super; margin-left: 2px; color: var(--fern); font-weight: 600; }
+  .hinweis { font-size: 11.5px; color: #9aa89d; max-width: 80ch; margin: 22px 0 0; line-height: 1.5; }
   @media (max-height: 820px) {
     .opt .tech { display: none; }
     .opt .desc { font-size: 12.5px; }
@@ -312,9 +313,8 @@
     <div class="bilanz">
       <div><span class="zahl">≈ 1 Stunde</span><span>Ihr Aufwand – insgesamt</span></div>
       <div class="gegen" aria-hidden="true">→</div>
-      <div><span class="zahl"><span id="zehnJahre">–</span>*</span><span id="zehnJahreText">gespart in den nächsten 10 Jahren</span></div>
+      <div><span class="zahl"><span id="zehnJahre">–</span><sup class="stern">*</sup></span><span id="zehnJahreText">gespart in den nächsten 10 Jahren</span></div>
     </div>
-    <p class="hinweis">* Geschätzt auf Basis unserer Modelle (3D-Stadtmodell, Wetter-Referenzjahr, Standard-Verbrauchsprofil eines Haushalts). Die tatsächliche Ersparnis kann je nach Nutzung, Wetter, Strompreis und Montage abweichen. Zeitangaben sind Erfahrungswerte.</p>
     <p class="sub2">Die meiste Zeit wartet der Paketbote. So läuft es ab:</p>
     <ol class="zeit">
       <li><span class="dauer">3 Minuten</span><b>Bestellen</b>Ausstattung wählen, Foto vom Geländer hochladen, fertig.</li>
@@ -324,6 +324,7 @@
       <li class="ziel"><span class="dauer">20+ Jahre</span><b>Sonnenstrom genießen</b>Ab jetzt läuft Ihr Zähler langsamer – jeden sonnigen Tag.</li>
     </ol>
     <div class="cta"><button class="btn" id="order2">Unverbindlich anfragen</button></div>
+    <p class="hinweis">* Geschätzt auf Basis unserer Modelle (3D-Stadtmodell, Wetter-Referenzjahr, Standard-Verbrauchsprofil eines Haushalts). Die tatsächliche Ersparnis kann je nach Nutzung, Wetter, Strompreis und Montage abweichen. Zeitangaben sind Erfahrungswerte.</p>
   </div>
 </section>
 
@@ -839,9 +840,9 @@ function placeModules() {
   const neig = (sel.neigung || 0) * RAD;
   for (const q of sel.v.module) {
     const p = q.map(v => new THREE.Vector3(...v).addScaledVector(nrm, 0.05));
-    if (neig) {      // um die Unterkante nach außen kippen
+    if (neig) {      // Oberkante bleibt am Geländer, Unterkante wird nach außen ausgestellt -> Fläche schaut zum Himmel
       const h = p[3].distanceTo(p[0]);
-      for (const [o, u] of [[3, 0], [2, 1]]) p[o] = p[u].clone().add(new THREE.Vector3(0, h * Math.cos(neig), 0)).addScaledVector(nrm, h * Math.sin(neig));
+      for (const [u, o] of [[0, 3], [1, 2]]) p[u] = p[o].clone().add(new THREE.Vector3(0, -h * Math.cos(neig), 0)).addScaledVector(nrm, h * Math.sin(neig));
     }
     const g = new THREE.BufferGeometry().setFromPoints([p[0], p[1], p[2], p[0], p[2], p[3]]);
     g.setAttribute('uv', new THREE.Float32BufferAttribute([0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1], 2));
