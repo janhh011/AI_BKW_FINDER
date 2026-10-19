@@ -7,7 +7,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'><rect width='48' height='48' rx='14' fill='%231f6b43'/><line x1='24' y1='5.5' x2='24' y2='12' stroke='%23f4b731' stroke-width='2.4' stroke-linecap='round'/><circle cx='24' cy='19' r='7.5' fill='%23f4b731'/><rect x='22.7' y='25' width='2.6' height='6' fill='%23f4b731'/><rect x='8.5' y='29.5' width='31' height='3.2' rx='1.6' fill='%23fafcf7'/><g fill='%23fafcf7'><rect x='11.5' y='32' width='2.4' height='8'/><rect x='17.3' y='32' width='2.4' height='8'/><rect x='22.8' y='32' width='2.4' height='8'/><rect x='28.3' y='32' width='2.4' height='8'/><rect x='34.1' y='32' width='2.4' height='8'/></g><rect x='6.5' y='39.5' width='35' height='3.2' rx='1.6' fill='%23fafcf7'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,650;12..96,750&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,650;12..96,750&family=Figtree:wght@400;500;600&family=Caveat:wght@700&display=swap" rel="stylesheet">
 <style>
   :root {
     --sage: #e9efe5;        /* Seitengrund */
@@ -88,7 +88,7 @@
   .opt .dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--line); grid-row: span 3; }
   .opt[aria-checked="true"] .dot { border: 5px solid var(--leaf); }
   .opt .name { font-weight: 600; font-size: 16px; display: flex; gap: 8px; align-items: center; }
-  .opt .tag { font-size: 12px; font-weight: 600; color: var(--leaf); background: var(--leaf-soft); border-radius: 999px; padding: 1px 8px; }
+  .opt .tag { white-space: nowrap; font-size: 12px; font-weight: 600; color: var(--leaf); background: var(--leaf-soft); border-radius: 999px; padding: 1px 8px; }
   .opt .sub { font-size: 14px; color: var(--fern); grid-column: 2; }
   .opt .tech { grid-column: 2; font-size: 12.5px; color: #8a9a8e; }
   .opt .price { grid-row: 1 / span 3; grid-column: 3; text-align: right; font-size: 24px; font-weight: 650; letter-spacing: -.01em; line-height: 1.1; }
@@ -163,7 +163,37 @@
   .zeit b { display: block; color: var(--moss); font-size: 15px; margin-bottom: 2px; }
   @media (max-width: 900px) { .eco { grid-template-columns: 1fr; } .zeit { grid-template-columns: 1fr 1fr; } .zeit::before { display: none; } }
   @media (max-width: 560px) { .zeit { grid-template-columns: 1fr; } .band { padding: 44px 16px; } }
+
+  /* Neugier-Teaser unten rechts im ersten Bildschirm */
+  .offer { position: relative; }
+  .teaser { margin-top: auto; align-self: flex-end; text-align: right; text-decoration: none; color: var(--moss); display: grid; justify-items: end; padding: 10px 4px 0; }
+  .teaser .frage { font-family: "Bricolage Grotesque", Figtree, sans-serif; font-weight: 750; font-size: clamp(30px, 4.2vh, 46px); letter-spacing: -.03em; line-height: 1; }
+  .teaser .spoiler { font-family: Caveat, "Bricolage Grotesque", cursive; font-weight: 700; font-size: clamp(26px, 3.4vh, 36px); color: var(--leaf);
+                     transform: rotate(-4deg); margin: 2px 18px 0 0; }
+  .teaser .pfeil { width: 44px; height: 44px; border-radius: 50%; background: var(--sun); color: var(--moss); display: grid; place-items: center; margin-top: 6px;
+                   animation: hupf 1.6s ease-in-out infinite; box-shadow: 0 6px 16px rgba(227, 162, 26, .35); }
+  .teaser .pfeil svg { width: 22px; height: 22px; }
+  .teaser:hover .frage { text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 6px; }
+  @keyframes hupf { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(8px); } }
+  .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 6px 0 14px; }
+  .tab { border: 1.5px solid var(--line); background: var(--paper); border-radius: 999px; padding: 6px 14px; font-size: 14px; cursor: pointer; color: var(--fern); }
+  .tab b { color: var(--moss); font-weight: 600; margin-right: 6px; }
+  .tab[aria-selected="true"] { border-color: var(--leaf); background: #fff; color: var(--moss); box-shadow: 0 3px 12px rgba(47, 125, 79, .12); }
+  .bilanz { display: flex; align-items: center; gap: 28px; flex-wrap: wrap; margin: 14px 0 26px; }
+  .bilanz > div:not(.gegen) { display: grid; }
+  .bilanz .zahl { font-family: "Bricolage Grotesque", Figtree, sans-serif; font-weight: 750; font-size: clamp(34px, 4vw, 52px); letter-spacing: -.03em; line-height: 1; color: var(--moss); }
+  .bilanz > div:last-child .zahl { color: var(--leaf); }
+  .bilanz span:not(.zahl) { color: var(--fern); font-size: 15px; margin-top: 4px; }
+  .bilanz .gegen { font-size: 40px; color: var(--sun); font-weight: 700; }
+  html { scroll-behavior: smooth; }
   @media (max-height: 820px) {
+    .opt .tech { display: none; }
+    .opt .desc { font-size: 12.5px; }
+    .opt .bild { height: 50px; }
+    .teaser { grid-template-columns: auto auto; align-items: center; column-gap: 12px; padding-top: 4px; }
+    .teaser .frage { font-size: 28px; grid-column: 1; }
+    .teaser .spoiler { font-size: 24px; grid-column: 1; margin-top: 0; }
+    .teaser .pfeil { grid-column: 2; grid-row: 1 / span 2; width: 38px; height: 38px; margin: 0; }
     .page { padding: 12px 24px 14px; gap: 10px; }
     h1 { margin-bottom: 6px; }
     .lead { margin-bottom: 12px; font-size: 15px; }
@@ -240,9 +270,13 @@
       </div>
       <div class="cta">
         <button class="btn" id="order">Unverbindlich anfragen</button>
-        <a class="link" href="#rechnung">Rechnet sich das? ↓</a>
       </div>
       <div class="fine" id="fine"></div>
+      <a class="teaser" href="#rechnung" aria-label="Zur Wirtschaftlichkeit nach unten scrollen">
+        <span class="frage">Rechnet sich das?</span>
+        <span class="spoiler" id="spoiler">(Spoiler: ja.)</span>
+        <span class="pfeil" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 4v15m0 0-6-6m6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      </a>
     </section>
   </main>
 </div>
@@ -251,6 +285,7 @@
   <div class="band-in eco">
     <div>
       <h2>Rechnet sich das?</h2>
+      <div class="tabs" id="tabs" role="tablist" aria-label="Ausstattung für die Rechnung"></div>
       <p class="sub2" id="ecoLead"></p>
       <div class="legend"><span><i class="l1"></i>Ihr Balkonkraftwerk</span><span><i class="l2"></i>gleicher Betrag in einem ETF (7 % p. a.)</span></div>
       <svg id="ecoChart" viewBox="0 0 640 260" role="img" aria-label="Vergleich Balkonkraftwerk und ETF über 20 Jahre"></svg>
@@ -271,7 +306,12 @@
 <section class="band hell" id="ablauf">
   <div class="band-in">
     <h2>So einfach geht's</h2>
-    <p class="sub2">Die meiste Zeit wartet der Paketbote. Ihre eigene Arbeit: <b>unter einer Stunde.</b></p>
+    <div class="bilanz">
+      <div><span class="zahl">≈ 1 Stunde</span><span>Ihr Aufwand – insgesamt</span></div>
+      <div class="gegen" aria-hidden="true">→</div>
+      <div><span class="zahl" id="zehnJahre">–</span><span id="zehnJahreText">gespart in den nächsten 10 Jahren</span></div>
+    </div>
+    <p class="sub2">Die meiste Zeit wartet der Paketbote. So läuft es ab:</p>
     <ol class="zeit">
       <li><span class="dauer">3 Minuten</span><b>Bestellen</b>Ausstattung wählen, Foto vom Geländer hochladen, fertig.</li>
       <li><span class="dauer">2–5 Werktage</span><b>Lieferung</b>Alles kommt passend für Ihr Geländer bis an die Haustür.</li>
@@ -423,7 +463,7 @@ const jahreText = j => j > JAHRE ? `über ${JAHRE} Jahren` : `${nf(Math.round(j 
 
 function renderOpts() {
   rechne();
-  if (!sel || !PAKETE.includes(sel)) sel = PAKETE.find(p => p.empfehlung);
+  if (!sel || !PAKETE.includes(sel)) sel = PAKETE.find(p => p.key === 'optimiert') || PAKETE.find(p => p.empfehlung);
   const box = $('opts'); box.innerHTML = '';
   for (const p of PAKETE) {
     const b = document.createElement('button');
@@ -439,7 +479,21 @@ function renderOpts() {
   $('headline').textContent = `Ihr Balkon spart ${eur(sel.spart)} Strom im Jahr.`;
   $('fine').textContent = `Beispielpreise inkl. Lieferung, 0 % MwSt. Berechnet mit ${nf(preis * 100, 1)} ct/kWh und ${nf(verbrauch)} kWh Jahresverbrauch. Unverbindlich – endgültig nach einem Foto Ihres Geländers.`;
   for (const c of document.querySelectorAll('.house .chip')) c.setAttribute('aria-pressed', +c.dataset.kwh === verbrauch);
-  renderEco(); renderHow();
+  renderEco(); renderHow(); renderTabs();
+  const r = sel.rendite;
+  $('spoiler').textContent = r > ETF ? '(Spoiler: ja.)' : (r > 0.02 ? '(Spoiler: auf Dauer ja.)' : '(Spoiler: knapp.)');
+  $('zehnJahre').textContent = eur(sel.kum[10] + sel.preis);
+  $('zehnJahreText').textContent = `gespart in den nächsten 10 Jahren (${sel.name})`;
+}
+function renderTabs() {
+  const box = $('tabs'); box.innerHTML = '';
+  for (const p of PAKETE) {
+    const t = document.createElement('button');
+    t.className = 'tab'; t.setAttribute('role', 'tab'); t.setAttribute('aria-selected', p === sel);
+    t.innerHTML = `<b>${p.name}</b>${eur(p.preis)}`;
+    t.addEventListener('click', () => { sel = p; renderOpts(); placeModules(); setSun(); });
+    box.appendChild(t);
+  }
 }
 for (const c of document.querySelectorAll('.house .chip')) c.addEventListener('click', () => { verbrauch = +c.dataset.kwh; renderOpts(); });
 
