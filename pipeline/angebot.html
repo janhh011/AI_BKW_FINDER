@@ -111,7 +111,9 @@
   .step { font-size: 13.5px; color: var(--fern); line-height: 1.35; }
   .step b { display: flex; align-items: center; gap: 8px; color: var(--moss); font-size: 15px; font-weight: 600; margin-bottom: 3px; }
   .step b span { width: 24px; height: 24px; flex: none; border-radius: 50%; background: var(--leaf-soft); color: var(--leaf); display: grid; place-items: center; font-size: 13px; }
-  .cta { display: flex; align-items: center; gap: 18px; }
+  .cta { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+  .partnerhinweis { font-size: 12px; color: #8a9a8e; max-width: 26em; line-height: 1.35; }
+  .partnerhinweis[hidden] { display: none; }
   .btn { background: var(--leaf); color: #fff; border: 0; border-radius: 14px; padding: 14px 24px; font-weight: 600; font-size: 16px; cursor: pointer; }
   .btn:hover { background: #276b43; }
   .link { background: none; border: 0; padding: 0; color: var(--fern); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; font-size: 14px; }
@@ -134,6 +136,8 @@
   .opt[aria-checked="true"] .bild { background: #e3efe1; }
   .opt .dot { display: none; }
   .opt .desc { grid-column: 2; font-size: 13.5px; color: var(--fern); line-height: 1.35; }
+  .opt:not([aria-checked="true"]) .desc { display: none; }   /* Beschreibung nur beim gewählten Paket: kompakter */
+  .opt:not([aria-checked="true"]) .bild { height: 46px; }
   .opt .price small.mwst { color: #8a9a8e; font-weight: 500; }
   .house { font-size: 13px; gap: 6px; margin-bottom: 14px; }
   .house .chip { padding: 1px 9px; font-size: 12.5px; }
@@ -147,6 +151,7 @@
   .sub2 { color: var(--fern); margin: 0 0 22px; max-width: 60ch; }
   .sub2 b { color: var(--moss); }
   .eco { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(280px, 1fr); gap: 44px; align-items: start; }
+  .legend[hidden] { display: none; }
   .legend { display: flex; gap: 18px; flex-wrap: wrap; font-size: 13px; color: var(--fern); margin-bottom: 6px; }
   .legend i { display: inline-block; width: 18px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 7px; }
   .legend .l1 { background: var(--leaf); height: 4px; }
@@ -293,6 +298,7 @@
       </div>
       <div class="cta">
         <button class="btn" id="order">Unverbindlich anfragen</button>
+        <span class="partnerhinweis" hidden>Partnerlink: Wir erhalten ggf. eine Provision – Ihr Preis ändert sich nicht.</span>
       </div>
       <div class="fine" id="fine"></div>
       <a class="teaser" href="#rechnung" aria-label="Zur Wirtschaftlichkeit nach unten scrollen">
@@ -310,7 +316,7 @@
       <h2>Rechnet sich das?</h2>
       <div class="tabs" id="tabs" role="tablist" aria-label="Ausstattung für die Rechnung"></div>
       <p class="sub2" id="ecoLead"></p>
-      <div class="legend"><span><i class="l1"></i>Ihr Balkonkraftwerk</span><span><i class="l2"></i>gleicher Betrag in einem ETF (7 % p. a.)</span></div>
+      <div class="legend" id="ecoLegende"><span><i class="l1"></i>Ihr Balkonkraftwerk</span><span><i class="l2"></i>gleicher Betrag in einem ETF (7 % p. a.)</span></div>
       <svg id="ecoChart" viewBox="0 0 640 260" role="img" aria-label="Vergleich Balkonkraftwerk und ETF über 20 Jahre"></svg>
     </div>
     <div class="eco-side">
@@ -342,7 +348,7 @@
       <li><span class="dauer">ca. 5 Minuten</span><b>Online anmelden</b>Kurzer Eintrag im Marktstammdatenregister – das ist Pflicht, aber einfach. Wir zeigen Ihnen, wie.</li>
       <li class="ziel"><span class="dauer">20+ Jahre</span><b>Sonnenstrom genießen</b>Ab jetzt läuft Ihr Zähler langsamer – jeden sonnigen Tag.</li>
     </ol>
-    <div class="cta"><button class="btn" id="order2">Unverbindlich anfragen</button></div>
+    <div class="cta"><button class="btn" id="order2">Unverbindlich anfragen</button><span class="partnerhinweis" hidden>Partnerlink: Wir erhalten ggf. eine Provision – Ihr Preis ändert sich nicht.</span></div>
     <p class="hinweis">* Geschätzt auf Basis unserer Modelle (3D-Stadtmodell, Wetter-Referenzjahr, minutengenaues Verbrauchsmodell eines typischen Haushalts). Die tatsächliche Ersparnis kann je nach Nutzung, Wetter, Strompreis und Montage abweichen. Zeitangaben sind Erfahrungswerte.</p>
   </div>
 </section>
@@ -370,6 +376,7 @@ const el = (tag, attrs = {}, parent) => { const e = document.createElementNS(NS,
 // ---------------------------------------------------------------- Produktkatalog (Mockup)
 // Beispielpreise aus aktuellen Marktangeboten (Okt. 2026), Hersteller bewusst anonymisiert.
 const KATALOG = [
+  {id: 'k0', typ: 'set', module: 1, wp: 410, breite: 1.72, bauart: 'Solarmodul', wr: 'kleiner Wechselrichter mit Stecker', preis: 159},
   {id: 'k1', typ: 'set', module: 1, wp: 430, breite: 1.72, bauart: 'Full-Black-Modul', wr: '800-W-Wechselrichter mit WLAN', preis: 229},
   {id: 'k2', typ: 'set', module: 2, wp: 430, breite: 1.72, bauart: 'Full-Black-Module', wr: '800-W-Wechselrichter mit WLAN', preis: 349},
   {id: 'k3', typ: 'set', module: 2, wp: 450, breite: 1.76, bauart: 'bifaziale Glas-Glas-Module', wr: '800-W-Wechselrichter mit WLAN', preis: 389},
@@ -408,6 +415,12 @@ const s2 = sets.filter(k => k.module === (OPT ? OPT.n : 2)).sort((a, b) => b.wp 
 const s3 = speicher.sort((a, b) => a.preis - b.preis)[0];
 function skaliere(v, wp) { const f = wp / (v.wp / v.n); return {...v, pv: v.pv.map(x => Math.min(800, x * f)), kwh: v.kwh * f, wp: wp * v.n}; }
 const PAKETE = [];
+// 0) zum Reinschnuppern: das günstigste Set mit einem Modul – kleiner Einstieg ins Hobby
+const s0 = KATALOG.filter(k => k.typ === 'set' && k.module === 1 && passt(k)).sort((a, b) => a.preis - b.preis)[0];
+const v1 = VARS.find(v => v.n === 1);
+if (s0 && v1 && (!s1 || s1.module > 1)) PAKETE.push({key: 'schnupper', name: 'Zum Reinschnuppern', set: s0, halter: halter(false),
+  v: skaliere(v1, s0.wp), neigung: 0, speicherKwh: 0,
+  desc: `Ein Modul mit Stecker – der günstigste Einstieg. Erweitern geht später.`});
 if (s1) PAKETE.push({key: 'einfach', name: 'Einfach & effektiv', set: s1, halter: halter(false),
   v: skaliere(VARS.find(v => v.n === s1.module) || vSenk, s1.wp), neigung: 0, speicherKwh: 0,
   desc: `${s1.module} ${s1.bauart}, ${s1.wr}, senkrecht am Geländer.`});
@@ -461,6 +474,7 @@ function produktBild(p) {
     [1, 2, 3].map(i => `<line x1="${i * w / 4}" y1="0" x2="${i * w / 4}" y2="${h}" stroke="#5f79a8" stroke-width=".6"/>`).join('') +
     `<line x1="0" y1="${h / 2}" x2="${w}" y2="${h / 2}" stroke="#5f79a8" stroke-width=".6"/><rect width="${w}" height="${h}" rx="1.5" fill="none" stroke="#c9d1cf" stroke-width="1"/></g>`;
   const gelaender = '<rect x="4" y="44" width="62" height="2.4" rx="1" fill="#9fb0a2"/>';
+  if (p.key === 'schnupper') return `<svg viewBox="0 0 70 52">${panel(21, 18, 28, 24)}${gelaender}<rect x="31" y="8" width="8" height="6" rx="1.5" fill="#8fa194"/></svg>`;
   if (p.key === 'einfach') return `<svg viewBox="0 0 70 52">${panel(6, 18, 27, 24)}${panel(37, 18, 27, 24)}${gelaender}<rect x="31" y="8" width="8" height="6" rx="1.5" fill="#8fa194"/></svg>`;
   if (p.key === 'optimiert') return `<svg viewBox="0 0 70 52">${panel(6, 20, 27, 22, -14)}${panel(37, 20, 27, 22, -14)}${gelaender}<path d="M58 9 a6 6 0 0 1 6 6" fill="none" stroke="#e3a21a" stroke-width="1.6"/><circle cx="60" cy="8" r="3.2" fill="#f4b731"/></svg>`;
   return `<svg viewBox="0 0 70 52">${panel(4, 22, 22, 20, -14)}${panel(28, 22, 22, 20, -14)}${gelaender}<rect x="53" y="22" width="13" height="20" rx="2.5" fill="#f2f4ef" stroke="#a9b5a6"/><rect x="56" y="26" width="7" height="2" rx="1" fill="#2f7d4f"/><rect x="51" y="5" width="11" height="15" rx="2" fill="#1c3a29"/><rect x="53" y="8" width="7" height="8" rx="1" fill="#8fd18f"/></svg>`;
@@ -472,7 +486,7 @@ const seite = HIMMEL[Math.round(D.az / 45) % 8];
 const stock = D.geschoss == null ? 'an Ihrer Hauswand' : (D.geschoss === 0 ? 'im Erdgeschoss' : `im ${D.geschoss}. Stock`);
 const sonnig = 1 - D.jahr.kwh / D.jahr.kwh_frei;
 const lage = sonnig < 0.15 ? 'bekommt viel Sonne' : sonnig < 0.35 ? 'bekommt gut Sonne' : 'liegt öfter im Schatten – lohnt sich trotzdem';
-$('lead').textContent = `${D.quelle_balkon === 'selbst eingezeichnet' ? `Ihr eingezeichneter Balkon ${stock}` : `Wir haben Ihren Balkon ${stock} vermessen`}: ${nf(D.breite_m, 1)} m Geländer nach ${seite}, er ${lage}. ${['Eine passende Ausstattung', 'Zwei passende Ausstattungen', 'Drei passende Ausstattungen'][PAKETE.length - 1] || 'Passende Ausstattungen'}:`;
+$('lead').textContent = `${D.quelle_balkon === 'selbst eingezeichnet' ? `Ihr eingezeichneter Balkon ${stock}` : `Wir haben Ihren Balkon ${stock} vermessen`}: ${nf(D.breite_m, 1)} m Geländer nach ${seite}, er ${lage}. ${['Eine passende Ausstattung', 'Zwei passende Ausstattungen', 'Drei passende Ausstattungen', 'Vier passende Ausstattungen'][PAKETE.length - 1] || 'Passende Ausstattungen'}:`;
 let sel = null;
 const jahreText = j => j > JAHRE ? `über ${JAHRE} Jahren` : `${nf(Math.round(j * 2) / 2, 1).replace(',0', '')} Jahren`;
 
@@ -494,7 +508,7 @@ function renderOpts() {
   $('headline').textContent = `Ihr Balkon spart ${eur(sel.spart)} Strom im Jahr.`;
   $('fine').textContent = `Alle Werte sind Schätzungen auf Basis unserer Modelle und können je nach Nutzung, Wetter und Strompreis abweichen. Beispielpreise inkl. Lieferung, 0 % MwSt.; gerechnet mit ${nf(preis * 100, 1)} ct/kWh, ${nf(verbrauch)} kWh Jahresverbrauch und ${({0: 'tagsüber meist niemand', 0.4: 'tagsüber teilweise jemand', 1: 'tagsüber meist jemand'})[zuhause]} zu Hause. Unverbindlich – endgültig nach einem Foto Ihres Geländers.`;
   for (const c of document.querySelectorAll('.house .chip')) c.setAttribute('aria-pressed', c.dataset.da != null ? +c.dataset.da === zuhause : +c.dataset.kwh === verbrauch);
-  renderEco(); renderHow(); renderTabs();
+  renderEco(); renderHow(); renderTabs(); if (typeof renderBestellen === 'function') renderBestellen();
   const r = sel.rendite;
   $('spoiler').textContent = r > ETF ? '(Spoiler: ja.)' : (r > 0.02 ? '(Spoiler: auf Dauer ja.)' : '(Spoiler: knapp.)');
   $('zehnJahre').textContent = eur(sel.kum[10] + sel.preis);
@@ -519,27 +533,28 @@ for (const c of document.querySelectorAll('.house .chip')) c.addEventListener('c
 function renderEco() {
   const p = sel;
   const etf = Array.from({length: JAHRE + 1}, (_, t) => p.preis * ((1 + ETF) ** t - 1));
+  const r = p.rendite, mitEtf = r > ETF;          // ETF-Vergleich nur, wenn das Balkonkraftwerk vorne liegt
   $('ecoLead').innerHTML = `Paket <b>${p.name}</b> für ${eur(p.preis)}: Nach ${jahreText(p.jahre)} ist es bezahlt, danach ist jeder Sonnentag Gewinn. ` +
-    `Nach 20 Jahren haben Sie rund <b>${eur(p.kum[JAHRE])}</b> gespart – derselbe Betrag im ETF hätte etwa <b>${eur(etf[JAHRE])}</b> gebracht.`;
-  const r = p.rendite;
+    `Nach 20 Jahren haben Sie rund <b>${eur(p.kum[JAHRE])}</b> gespart` + (mitEtf ? ` – derselbe Betrag im ETF hätte etwa <b>${eur(etf[JAHRE])}</b> gebracht.` : '.');
+  $('ecoLegende').hidden = !mitEtf;
   $('rendite').textContent = `${nf(r * 100)} %`;
   $('renditeText').innerHTML = r > ETF * 1.5
     ? `Rendite pro Jahr – rund ${nf(r / ETF, 0)}-mal so viel wie ein durchschnittlicher Aktien-ETF mit etwa 7 %.*`
-    : (r > ETF ? 'Rendite pro Jahr – mehr als ein durchschnittlicher Aktien-ETF mit etwa 7 %.*' : 'Rendite pro Jahr. Hier lohnt sich vor allem der Klimaeffekt.*');
+    : (r > ETF ? 'Rendite pro Jahr – mehr als ein durchschnittlicher Aktien-ETF mit etwa 7 %.*' : 'Rendite pro Jahr, gerechnet auf die eingesparte Stromrechnung.*');
   $('mwstText').textContent = `Sie sparen ${eur(p.mwst)} gegenüber dem normalen Steuersatz.`;
   $('facts').innerHTML = [
     ['Anschaffung', eur(p.preis)], ['Ersparnis im 1. Jahr', eur(p.spart)],
     ['Davon selbst genutzt', `${nf(p.selbst)} von ${nf(p.v.kwh)} kWh`], ['Bezahlt nach', jahreText(p.jahre)],
     ['Ersparnis in 20 Jahren', eur(p.kum[JAHRE] + p.preis)],
   ].map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join('');
-  $('ecoFuss').textContent = `* Keine Anlageberatung. Der ETF-Vergleich nutzt 7 % pro Jahr als ungefähren langjährigen Durchschnitt eines weltweiten Aktienindex; ` +
-    `vergangene Entwicklungen sind keine Garantie für die Zukunft. Die Rendite des Balkonkraftwerks ergibt sich aus der eingesparten Stromrechnung über ${JAHRE} Jahre ` +
+  $('ecoFuss').textContent = `* Keine Anlageberatung. ` + (mitEtf ? `Der ETF-Vergleich nutzt 7 % pro Jahr als ungefähren langjährigen Durchschnitt eines weltweiten Aktienindex; ` +
+    `vergangene Entwicklungen sind keine Garantie für die Zukunft. ` : '') + `Die Rendite des Balkonkraftwerks ergibt sich aus der eingesparten Stromrechnung über ${JAHRE} Jahre ` +
     `(Strompreis ${nf(preis * 100, 1)} ct/kWh, +${nf(STROM_PLUS * 100)} % pro Jahr, Modulleistung −${nf(DEGRADATION * 100, 1)} % pro Jahr) und hängt von Verbrauch und Wetter ab. ` +
     `Ersatzteile wie Wechselrichter oder Speicher können innerhalb dieser Zeit anfallen. 0 % MwSt. gilt seit 2023 für Photovoltaikanlagen an Wohngebäuden.`;
   // Diagramm
   const svg = $('ecoChart'); svg.innerHTML = '';
   const W = 640, H = 260, L = 58, R = 12, T = 12, B = 30;
-  const alle = [...p.kum, ...etf];
+  const alle = mitEtf ? [...p.kum, ...etf] : [...p.kum];
   const lo = Math.min(0, ...alle), hi = Math.max(...alle);
   const st = (() => { const raw = (hi - lo) / 4, m = 10 ** Math.floor(Math.log10(raw)), f = raw / m; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * m; })();
   const y0 = Math.floor(lo / st) * st, y1 = Math.ceil(hi / st) * st;
@@ -551,14 +566,14 @@ function renderEco() {
   for (const t of [0, 5, 10, 15, 20]) el('text', {x: x(t), y: H - 8, 'text-anchor': 'middle'}, svg).textContent = t ? `${t} Jahre` : 'heute';
   const pfad = arr => arr.map((v, t) => `${t ? 'L' : 'M'}${x(t).toFixed(1)},${y(v).toFixed(1)}`).join('');
   el('path', {d: pfad(p.kum) + `L${x(JAHRE)},${y(0)}L${x(0)},${y(0)}Z`, fill: 'rgba(47,125,79,.10)'}, svg);
-  el('path', {d: pfad(etf), fill: 'none', stroke: '#8a9a8e', 'stroke-width': 2, 'stroke-dasharray': '5 4'}, svg);
+  if (mitEtf) el('path', {d: pfad(etf), fill: 'none', stroke: '#8a9a8e', 'stroke-width': 2, 'stroke-dasharray': '5 4'}, svg);
   el('path', {d: pfad(p.kum), fill: 'none', stroke: '#2f7d4f', 'stroke-width': 3, 'stroke-linejoin': 'round'}, svg);
   if (p.jahre <= JAHRE) {
     el('circle', {cx: x(p.jahre), cy: y(0), r: 5, fill: '#fff', stroke: '#1c3a29', 'stroke-width': 2}, svg);
     el('text', {x: x(p.jahre) + 9, y: y(0) + 20, style: 'fill:#1c3a29;font-weight:600'}, svg).textContent = `bezahlt nach ${jahreText(p.jahre)}`;
   }
   el('text', {x: x(JAHRE) - 2, y: y(p.kum[JAHRE]) - 10, 'text-anchor': 'end', style: 'fill:#2f7d4f;font-weight:700;font-size:13px'}, svg).textContent = eur(p.kum[JAHRE]);
-  el('text', {x: x(JAHRE) - 2, y: y(etf[JAHRE]) + 24, 'text-anchor': 'end', style: 'fill:#6f8073;font-weight:600'}, svg).textContent = 'ETF ' + eur(etf[JAHRE]);
+  if (mitEtf) el('text', {x: x(JAHRE) - 2, y: y(etf[JAHRE]) + 24, 'text-anchor': 'end', style: 'fill:#6f8073;font-weight:600'}, svg).textContent = 'ETF ' + eur(etf[JAHRE]);
 }
 
 function renderHow() {
@@ -578,7 +593,37 @@ function renderHow() {
 $('howBtn').addEventListener('click', () => $('how').showModal());
 $('howClose').addEventListener('click', () => $('how').close());
 $('preis').addEventListener('input', e => { preis = (+e.target.value || 37) / 100; renderOpts(); });
-for (const bId of ['order', 'order2']) $(bId).addEventListener('click', () => { for (const x of ['order', 'order2']) { $(x).textContent = 'Danke – wir melden uns'; $(x).disabled = true; } });
+// ---------------------------------------------------------------- Bestellen: Partnerlink (Provision) oder unverbindliche Anfrage
+// Links stehen in partner.json (je Set); ohne Link sammelt der Knopf nur eine Anfrage.
+const PARTNER = await fetch('partner.json').then(r => r.ok ? r.json() : null).catch(() => null);
+function partnerLink(p) {
+  if (!PARTNER) return null;
+  const roh = (PARTNER.sets || {})[p.set.id] || PARTNER.standard;
+  if (!roh || !/^https:\/\//.test(roh)) return null;
+  const subid = `${D.id}-${p.set.id}`;
+  return roh.replaceAll('{subid}', encodeURIComponent(subid)).replaceAll('{angebot}', encodeURIComponent(D.id)).replaceAll('{set}', encodeURIComponent(p.set.id));
+}
+let angefragt = false;
+function renderBestellen() {
+  const link = partnerLink(sel);
+  for (const x of ['order', 'order2']) {
+    if (angefragt && !link) continue;
+    $(x).textContent = link ? `Zum Angebot${PARTNER.partner ? ' bei ' + PARTNER.partner : ''}` : 'Unverbindlich anfragen';
+    $(x).disabled = false;
+  }
+  for (const x of document.querySelectorAll('.partnerhinweis')) x.hidden = !link;
+}
+for (const bId of ['order', 'order2']) $(bId).addEventListener('click', () => {
+  const link = partnerLink(sel);
+  if (link) {
+    const daten = JSON.stringify({angebot: D.id, set: sel.set.id, paket: sel.key});
+    try { navigator.sendBeacon('../api/klick', new Blob([daten], {type: 'application/json'})); } catch (e) { /* Zählung ist optional */ }
+    window.open(link, '_blank', 'noopener');
+    return;
+  }
+  angefragt = true;
+  for (const x of ['order', 'order2']) { $(x).textContent = 'Danke – wir melden uns'; $(x).disabled = true; }
+});
 
 // ---------------------------------------------------------------- Zeit und Sonne
 const Y = D.jahr_basis;
@@ -671,8 +716,8 @@ camAt(SWING_MITTE);
 // ---------------------------------------------------------------- freie Sicht auf die Module
 // Alles, was zwischen Kamera und Modulen steht (Häuser gegenüber, Bäume), wird durchsichtig. Schatten bleiben.
 let sichtFrei = null;
-const geistHaus = new THREE.MeshLambertMaterial({color: 0xf7f8f3, transparent: true, opacity: 0.16, depthWrite: false});
-const geistBaum = new THREE.MeshLambertMaterial({color: 0x9cc89a, flatShading: true, transparent: true, opacity: 0.18, depthWrite: false});
+const geistHaus = new THREE.MeshLambertMaterial({color: 0xf7f8f3, transparent: true, opacity: 0.07, depthWrite: false});
+const geistBaum = new THREE.MeshLambertMaterial({color: 0x9cc89a, flatShading: true, transparent: true, opacity: 0.07, depthWrite: false});
 const strahl = new THREE.Raycaster();
 const wegMat = new THREE.MeshLambertMaterial({color: 0xe05a4f, transparent: true, opacity: 0.5, depthWrite: false});
 const wegBaeume = new Set();
@@ -701,6 +746,14 @@ function sichtPruefen(dt) {
   for (const [id, teile] of sichtFrei.haeuser) for (const t of teile) {
     const m = (haeuser.has(id) || einzeln.has(t)) ? geistHaus : sichtFrei.hausMat;
     if (t.material !== m) t.material = m;
+  }
+  // Bäume im Vordergrund (zwischen Kamera und Balkon, nahe der Blickachse) ebenfalls ausblenden – sie verdecken sonst die halbe Ansicht
+  {
+    const m = ziele[ziele.length - 1], achse = m.clone().sub(camera.position), lang = achse.length(); achse.normalize();
+    for (const k of sichtFrei.kronen) {
+      const v = k.position.clone().sub(camera.position), t = v.dot(achse);
+      if (t > 0 && t < lang - 3 && v.addScaledVector(achse, -t).length() < k.userData.xyr[2] + 4 + 0.25 * t) baeume.add(k);
+    }
   }
   for (const k of sichtFrei.kronen) {
     if (wegBaeume.has(k)) { if (k.material !== wegMat) k.material = wegMat; k.userData.stamm.visible = false; continue; }

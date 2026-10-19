@@ -42,6 +42,8 @@ python3 pipeline/adressen.py webapp
 python3 server/app.py data/<kachel> webapp --port 8000     # oder: webapp/start.command
 ```
 
+Partnerlinks (Provision beim Kauf) je Set in `pipeline/partner.json` eintragen; ohne Link sammelt der Knopf nur Anfragen.
+
 Hosting, Sicherheit und Datenschutz: [docs/ARCHITEKTUR.md](docs/ARCHITEKTUR.md)
 
 ## Stand

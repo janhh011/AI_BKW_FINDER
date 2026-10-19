@@ -1,0 +1,9 @@
+{
+  "_hinweis": "Partnerlinks (Affiliate) je Set aus dem Katalog in angebot.html eintragen. Platzhalter: {subid} = Angebot-ID und Set (für die Zuordnung der Provision), {angebot}, {set}. Leer = Knopf sammelt nur unverbindliche Anfragen.",
+  "partner": "",
+  "standard": "",
+  "sets": {
+    "k0": "", "k1": "", "k2": "", "k3": "", "k4": "", "k5": "",
+    "k6": "", "k7": "", "k8": ""
+  }
+}

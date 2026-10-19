@@ -46,8 +46,15 @@ WR_ETA = 0.96
 VERLUSTE = 0.03          # Kabel, Mismatch, Verschmutzung
 GAMMA = -0.0035          # Temperaturkoeffizient Leistung 1/K
 ALBEDO = 0.15            # städtischer Boden
-TAU_BELAUBT = 0.20       # Lichtdurchlass Baumkrone Mai–Oktober
-TAU_KAHL = 0.55          # Lichtdurchlass Baumkrone November–April
+TAU_BELAUBT = 0.30       # Lichtdurchlass Baumkrone Mai–Oktober (Kronen sind nicht dicht, eher optimistisch)
+TAU_KAHL = 0.65          # Lichtdurchlass Baumkrone November–April
+# Bereinigung der Punktwolke für die Verschattung: nur eindeutige Hindernisse zählen
+BAUM_MIN_FLAECHE = 20    # m², kleinere Grünflecken (Hecken, Balkonpflanzen, Fehlklassifikation) zählen nicht
+BAUM_MIN_HOEHE = 6.0     # m über Gelände
+BAU_MIN_FLAECHE = 30     # m², kleinere Aufbauten/Störungen im Mesh zählen nicht
+BAU_MIN_HOEHE = 2.5      # m über Gelände
+HORIZONT_MIN_PUNKTE = 6  # so viele Punkte müssen in einem Sektor höher liegen, damit er als verdeckt zählt
+NAH_MIN = 1.8            # m, nähere Punkte zählen nicht als Schattenwerfer (eigener Balkon, Mesh-Rauschen)
 GREEN_EXG = 0.06         # Grünindex-Schwelle für Baum-Dreiecke (wie in der Fassaden-Pipeline)
 PUNKT_ABSTAND = 0.6      # m, Dichte der Punktwolke
 HORIZONT_RADIUS = 220.0  # m
@@ -113,6 +120,54 @@ def baum_dreiecke(F, VT, FT, mat, tex, cache):
     tri_baum = exg > GREEN_EXG
     np.save(cache, tri_baum)
     return tri_baum
+
+
+def bereinige_wolke(P, baum, cache):
+    """Nur eindeutige Hindernisse behalten: zusammenhängende Gebäude (>= 30 m², nach Öffnen)
+    und große Bäume (>= 20 m² Krone, >= 6 m hoch). Kleinteiliges (Hecken, Balkonkästen,
+    Mesh-Artefakte, Laternen, Autos) fällt für Schatten und 3D-Modell weg.
+    Rückgabe: Maske der Punkte, die bleiben."""
+    sig = [BAUM_MIN_FLAECHE, BAUM_MIN_HOEHE, BAU_MIN_FLAECHE, BAU_MIN_HOEHE, len(P)]
+    if os.path.exists(cache):
+        z = np.load(cache)
+        if list(z["sig"]) == sig:
+            return z["keep"]
+    from scipy.ndimage import minimum_filter, binary_opening, binary_dilation, label, maximum
+    res = 1.0
+    x0, y0 = P[:, 0].min(), P[:, 1].min()
+    ix = ((P[:, 0] - x0) / res).astype(np.int64)
+    iy = ((P[:, 1] - y0) / res).astype(np.int64)
+    ny, nx = iy.max() + 1, ix.max() + 1
+    zmin = np.full((ny, nx), np.inf)
+    np.minimum.at(zmin, (iy, ix), P[:, 2])
+    zmin[~np.isfinite(zmin)] = np.nanmax(np.where(np.isfinite(zmin), zmin, np.nan))
+    gelaende = minimum_filter(zmin, size=31)                       # tiefster Punkt im 31-m-Fenster
+    h = P[:, 2] - gelaende[iy, ix]
+    acht = np.ones((3, 3), bool)
+    # Bäume
+    hb = np.full((ny, nx), -1.0)
+    np.maximum.at(hb, (iy[baum], ix[baum]), h[baum])
+    lab, n = label(hb >= 2.0, structure=acht)
+    flaeche = np.bincount(lab.ravel(), minlength=n + 1) * res * res
+    hoehe = np.zeros(n + 1)
+    if n:
+        hoehe[1:] = maximum(hb, lab, index=np.arange(1, n + 1))
+    ok_t = (flaeche >= BAUM_MIN_FLAECHE) & (hoehe >= BAUM_MIN_HOEHE)
+    ok_t[0] = False
+    baum_zelle = ok_t[lab]
+    # Gebäude
+    hg = np.full((ny, nx), -1.0)
+    np.maximum.at(hg, (iy[~baum], ix[~baum]), h[~baum])
+    gm = binary_opening(hg >= BAU_MIN_HOEHE, structure=acht)
+    lab2, n2 = label(gm, structure=acht)
+    ok_g = np.bincount(lab2.ravel(), minlength=n2 + 1) * res * res >= BAU_MIN_FLAECHE
+    ok_g[0] = False
+    bau_zelle = binary_dilation(ok_g[lab2], structure=acht)          # Wandpunkte am Rand mitnehmen
+    keep = np.where(baum, baum_zelle[iy, ix] & (h >= 1.0), bau_zelle[iy, ix] | (h < BAU_MIN_HOEHE))
+    np.savez_compressed(cache, keep=keep, sig=np.array(sig, float))
+    log(f"Punktwolke bereinigt: {(~keep[baum]).mean() * 100:.0f} % der Baumpunkte und "
+        f"{(~keep[~baum]).mean() * 100:.0f} % der übrigen Punkte entfernt (kleine/unklare Hindernisse)")
+    return keep
 
 
 def punktwolke(V, F, tri_baum, cache):
@@ -275,16 +330,31 @@ def horizont(p, nrm, Q, qb, gn_true):
     d = Q - p
     dh = np.hypot(d[:, 0], d[:, 1])
     front = d[:, :2] @ nrm
-    ok = (front > 0.4) & (np.hypot(dh, d[:, 2]) > 1.0) & (d[:, 2] > 0) & (dh < HORIZONT_RADIUS)
+    # Teile direkt am Modul (Balkonplatte darüber, Brüstung, Loggia-Wände) sind im Mesh unsicher und
+    # werden ignoriert: es zählen nur Hindernisse ab NAH_MIN Meter Abstand vor dem Modul.
+    ok = (front > NAH_MIN) & (dh > NAH_MIN) & (d[:, 2] > 0) & (dh < HORIZONT_RADIUS)
     d, dh, bt = d[ok], dh[ok], qb[ok]
     el = np.degrees(np.arctan2(d[:, 2], dh))
     azt = (np.degrees(np.arctan2(d[:, 0], d[:, 1])) + gn_true) % 360
     bi = (azt // AZ_STEP).astype(np.int64) % NB
-    hb = np.zeros(NB)
-    ht = np.zeros(NB)
-    np.maximum.at(hb, bi[~bt], el[~bt])
-    np.maximum.at(ht, bi[bt], el[bt])
-    return hb, ht
+    return _horizont_robust(bi[~bt], el[~bt]), _horizont_robust(bi[bt], el[bt])
+
+
+def _horizont_robust(bi, el, n=HORIZONT_MIN_PUNKTE):
+    """Je Richtungssektor die Höhe, über der noch mindestens n Punkte liegen.
+    Einzelne Ausreißer im Mesh (Antennen, Kanten, Rauschen) werfen so keinen Schatten."""
+    h = np.zeros(NB)
+    if len(el) == 0:
+        return h
+    o = np.lexsort((-el, bi))
+    bi, el = bi[o], el[o]
+    start = np.searchsorted(bi, np.arange(NB))
+    ende = np.searchsorted(bi, np.arange(NB), side="right")
+    for k in range(NB):
+        c = ende[k] - start[k]
+        if c >= n:
+            h[k] = el[start[k] + n - 1]
+    return h
 
 
 def himmel_faktor(hb, ht, az_mod, tau, neigung=90.0):
@@ -411,7 +481,7 @@ MODELL_RES = 0.5         # m, Rasterweite
 MODELL_STUFE = 1.0       # m, Höhenstufen der Gebäudeblöcke
 
 
-def exportiere_modell(out, P0, z0, f, balkone, P, baum, aktiv_bi=None):
+def exportiere_modell(out, P0, z0, f, balkone, P, baum, aktiv_bi=None, geo_wolke=None):
     """Vereinfachtes Modell für die Angebotsseite: Gebäude als Blöcke in 1-m-Stufen,
     Bäume als Kronen, Balkone der eigenen Fassade als Platten mit Brüstung."""
     import cv2
@@ -476,12 +546,15 @@ def exportiere_modell(out, P0, z0, f, balkone, P, baum, aktiv_bi=None):
 
     # Baumkronen: lokale Maxima der Baumhöhe
     ht_s = np.where(ht > 3.5, ht, 0)
-    peaks = (ht_s == maximum_filter(ht_s, size=int(5 / res))) & (ht_s > 4)
+    peaks = (ht_s == maximum_filter(ht_s, size=int(5 / res))) & (ht_s >= BAUM_MIN_HOEHE)
     baeume = []
     for y, x in zip(*np.nonzero(peaks)):
         hh = float(ht_s[y, x])
         r = float(np.clip(hh * 0.28, 2.0, 5.0))
-        baeume.append([round((x + 0.5) * res - R, 2), round((y + 0.5) * res - R, 2), round(hh, 1), round(r, 1)])
+        bx, by = (x + 0.5) * res - R, (y + 0.5) * res - R
+        if bx * nn[0] + by * nn[1] < -4:          # Bäume hinter dem eigenen Haus spielen keine Rolle -> weglassen
+            continue
+        baeume.append([round(bx, 2), round(by, 2), round(hh, 1), round(r, 1)])
 
     # Balkone der eigenen Fassade
     platten = []
@@ -490,7 +563,7 @@ def exportiere_modell(out, P0, z0, f, balkone, P, baum, aktiv_bi=None):
         aktiv = i == aktiv_bi
         if not aktiv and (b.get("typ") == "Loggia" or b.get("sicherheit", 0) < 0.3):
             continue
-        g = balkon_geometrie(f, b, P, baum)
+        g = balkon_geometrie(f, b, *(geo_wolke or (P, baum)))
         tiefe = g["tiefe"] if g else 1.2
         res_i = f["img_res"]
         L0 = np.array(f["img_left"], float) - P0[:2]
@@ -530,6 +603,9 @@ class Rechner:
         self.fac = {f["id"]: f for f in D["facades"]}
         self.tri_baum = baum_dreiecke(F, VT, FT, mat, tex, os.path.join(webapp, "_cache", "baum_dreiecke.npy"))
         self.P, self.baum = punktwolke(V, F, self.tri_baum, os.path.join(webapp, "_cache", "punkte.npz"))
+        # Roh-Wolke für die Balkon-Geometrie, bereinigte Wolke für Schatten und 3D-Modell
+        keep = bereinige_wolke(self.P, self.baum, os.path.join(webapp, "_cache", "wolke_bereinigt.npz"))
+        self.Ps, self.baums = self.P[keep], self.baum[keep]
         self.xmin, self.ymin, self.xmax, self.ymax = self.meta["bounds"]
         cx, cy = (self.xmin + self.xmax) / 2, (self.ymin + self.ymax) / 2
         self.to_ll = Transformer.from_crs(self.meta["crs"], "EPSG:4326", always_xy=True)
@@ -551,10 +627,10 @@ class Rechner:
     def simuliere(self, fid, b, P=None, baum=None):
         """Ein Balkon (Box im Fassadenbild) -> (Geometrie, Ergebnis, Azimut, Randlage) oder None.
         P/baum: optional eine veränderte Punktwolke (z. B. ohne vom Nutzer entfernte Bäume)."""
-        P = self.P if P is None else P
-        baum = self.baum if baum is None else baum
+        P = self.Ps if P is None else P
+        baum = self.baums if baum is None else baum
         f = self.fac[int(fid)]
-        geo = balkon_geometrie(f, b, P, baum)
+        geo = balkon_geometrie(f, b, self.P, self.baum)
         if geo is None:
             return None
         Q, qb = horizont_vorfilter(geo, P, baum)
@@ -576,18 +652,18 @@ class Rechner:
                 shutil.copyfile(p, dst)
             self.tex_names.append("tex/" + os.path.basename(p))
         here = os.path.dirname(os.path.abspath(__file__))
-        for src, dst in (("angebot.html", "index.html"), ("lastgang.js", "lastgang.js")):
+        for src, dst in (("angebot.html", "index.html"), ("lastgang.js", "lastgang.js"), ("partner.json", "partner.json")):
             if os.path.exists(os.path.join(here, src)):
                 shutil.copyfile(os.path.join(here, src), os.path.join(self.adir, dst))
 
     def ohne_baeume(self, mitte, kronen, faktor=1.3):
         """Punktwolke ohne die Baumpunkte unter den angegebenen Kronen.
         kronen: [[x, y, r], ...] relativ zur Balkonmitte (Koordinaten wie in modell.json)."""
-        weg = np.zeros(len(self.P), bool)
+        weg = np.zeros(len(self.Ps), bool)
         for x, y, r in kronen:
-            d = np.hypot(self.P[:, 0] - (mitte[0] + x), self.P[:, 1] - (mitte[1] + y))
-            weg |= self.baum & (d < r * faktor + 0.5)
-        return self.P[~weg], self.baum[~weg], int(weg.sum())
+            d = np.hypot(self.Ps[:, 0] - (mitte[0] + x), self.Ps[:, 1] - (mitte[1] + y))
+            weg |= self.baums & (d < r * faktor + 0.5)
+        return self.Ps[~weg], self.baums[~weg], int(weg.sum())
 
     def angebot(self, fid, bi, balkone, key=None, szene=False, details=None, P=None, baum=None, extra=None):
         """Angebotsdaten für balkone[bi] auf Fassade fid schreiben -> daten (dict) oder None.
@@ -595,8 +671,8 @@ class Rechner:
         self.bereite_ordner()
         fid = str(fid)
         fac, sim, gn_true = self.fac, self.sim, self.gn_true
-        P = self.P if P is None else P
-        baum = self.baum if baum is None else baum
+        P = self.Ps if P is None else P
+        baum = self.baums if baum is None else baum
         b = balkone[bi]
         if details is None:
             details = self.simuliere(fid, b, P, baum)
@@ -608,7 +684,7 @@ class Rechner:
         varianten = []
         fit = geo["vorschlag"]["fit"]
         for nm in (range(1, min(fit, 4) + 1) if fit >= 1 else [1]):
-            g2 = balkon_geometrie(f, b, P, baum, n_module=nm if fit >= 1 else None)
+            g2 = balkon_geometrie(f, b, self.P, self.baum, n_module=nm if fit >= 1 else None)
             Q2, qb2 = horizont_vorfilter(g2, P, baum)
             r2 = simuliere_balkon(sim, g2, Q2, qb2, gn_true, az_mod)
             pac2 = np.round(r2["pac"]).astype(int)
@@ -620,7 +696,7 @@ class Rechner:
                                   stunde_wh=pac2.tolist()))
         # optimierte Variante: bifaziale 450-Wp-Module, 30° ausgestellt (Modulneigung 60°)
         nm = min(max(fit, 1), 2)
-        g3 = balkon_geometrie(f, b, P, baum, n_module=nm if fit >= 1 else None)
+        g3 = balkon_geometrie(f, b, self.P, self.baum, n_module=nm if fit >= 1 else None)
         Q3, qb3 = horizont_vorfilter(g3, P, baum)
         r3 = simuliere_balkon(sim, g3, Q3, qb3, gn_true, az_mod, neigung=90 - AUSSTELLWINKEL, wp_modul=WP_OPTIMIERT)
         pac3 = np.round(r3["pac"]).astype(int)
@@ -644,7 +720,7 @@ class Rechner:
         if extra and extra.get("ohne_baeume"):
             # Modell aus der vollständigen Punktwolke, dann genau die angeklickten Kronen weglassen
             # (sonst entstehen am Rand der entfernten Krone neue kleine Kronen)
-            modell = exportiere_modell(out, P0, z0, f, balkone, self.P, self.baum, aktiv_bi=bi)
+            modell = exportiere_modell(out, P0, z0, f, balkone, self.Ps, self.baums, aktiv_bi=bi, geo_wolke=(self.P, self.baum))
             mp = os.path.join(out, "modell.json")
             mj = json.load(open(mp, encoding="utf-8"))
             weg = extra["ohne_baeume"]
@@ -653,7 +729,7 @@ class Rechner:
                 json.dump(mj, fh, separators=(",", ":"))
             modell["baeume"] = len(mj["baeume"])
         else:
-            modell = exportiere_modell(out, P0, z0, f, balkone, P, baum, aktiv_bi=bi)
+            modell = exportiere_modell(out, P0, z0, f, balkone, P, baum, aktiv_bi=bi, geo_wolke=(self.P, self.baum))
         lon, lat = self.to_ll.transform(P0[0], P0[1])
         idx = self.idx
         pac = np.round(r["pac"]).astype(int)
