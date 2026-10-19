@@ -32,7 +32,6 @@ import time
 import numpy as np
 import pandas as pd
 import pvlib
-from demandlib import bdew
 from PIL import Image
 from pyproj import Geod, Transformer
 
@@ -519,165 +518,118 @@ def exportiere_modell(out, P0, z0, f, balkone, P, baum, aktiv_bi=None):
 
 
 # ------------------------------------------------------------------ Hauptprogramm
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("tile_dir")
-    ap.add_argument("webapp")
-    ap.add_argument("--szene", action="append", default=[], help="fassade:balkon, mehrfach möglich")
-    ap.add_argument("--wetter", help="PVGIS-TMY-Datei (JSON/CSV)")
-    ap.add_argument("--nur-szenen", action="store_true", help="nur die angegebenen Balkone rechnen")
-    ap.add_argument("--alle-angebote", action="store_true",
-                    help="Angebotsseiten für alle passenden Balkone erzeugen (Foto-Mesh nur für --szene)")
-    a = ap.parse_args()
+class Rechner:
+    """Lädt Kachel, Punktwolke und Wetter einmal und rechnet danach beliebig viele Balkone.
+    Wird von main() und vom Webserver (server/app.py) genutzt."""
 
-    D, BK, V, F, VT, FT, mat, tex = lade_eingaben(a.tile_dir, a.webapp)
-    meta = D["meta"]
-    fac = {f["id"]: f for f in D["facades"]}
-    tri_baum = baum_dreiecke(F, VT, FT, mat, tex, os.path.join(a.webapp, "_cache", "baum_dreiecke.npy"))
-    P, baum = punktwolke(V, F, tri_baum, os.path.join(a.webapp, "_cache", "punkte.npz"))
+    def __init__(self, tile_dir, webapp, wetter=None):
+        self.webapp = webapp
+        D, BK, V, F, VT, FT, mat, tex = lade_eingaben(tile_dir, webapp)
+        self.D, self.BK, self.V, self.F, self.VT, self.FT, self.mat, self.tex = D, BK, V, F, VT, FT, mat, tex
+        self.meta = D["meta"]
+        self.fac = {f["id"]: f for f in D["facades"]}
+        self.tri_baum = baum_dreiecke(F, VT, FT, mat, tex, os.path.join(webapp, "_cache", "baum_dreiecke.npy"))
+        self.P, self.baum = punktwolke(V, F, self.tri_baum, os.path.join(webapp, "_cache", "punkte.npz"))
+        self.xmin, self.ymin, self.xmax, self.ymax = self.meta["bounds"]
+        cx, cy = (self.xmin + self.xmax) / 2, (self.ymin + self.ymax) / 2
+        self.to_ll = Transformer.from_crs(self.meta["crs"], "EPSG:4326", always_xy=True)
+        lon0, lat0 = self.to_ll.transform(cx, cy)
+        lon1, lat1 = self.to_ll.transform(cx, cy + 100)
+        self.gn_true = Geod(ellps="WGS84").inv(lon0, lat0, lon1, lat1)[0]   # wahres Azimut der Gitter-Nordrichtung
+        self.idx, mid = zeitachse()
+        if wetter:
+            w, sp, self.wquelle = pvgis_wetter(wetter, lat0, lon0, mid)
+        else:
+            w, sp, self.wquelle = synth_wetter(lat0, lon0, mid)
+        self.sim = Sim(w, sp, mid)
+        self.ghi_y = w["ghi"].sum() / 1000
+        log(f"Wetter: {self.wquelle}; Globalstrahlung {self.ghi_y:.0f} kWh/m², "
+            f"Referenz Dach 35° Süd: {self.sim.referenz_dach():.0f} kWh/kWp")
+        self.adir = os.path.join(webapp, "angebot")
+        self.tex_names = None
 
-    xmin, ymin, xmax, ymax = meta["bounds"]
-    cx, cy = (xmin + xmax) / 2, (ymin + ymax) / 2
-    to_ll = Transformer.from_crs(meta["crs"], "EPSG:4326", always_xy=True)
-    lon0, lat0 = to_ll.transform(cx, cy)
-    lon1, lat1 = to_ll.transform(cx, cy + 100)
-    gn_true = Geod(ellps="WGS84").inv(lon0, lat0, lon1, lat1)[0]   # wahres Azimut der Gitter-Nordrichtung
-
-    idx, mid = zeitachse()
-    if a.wetter:
-        wetter, sp, wquelle = pvgis_wetter(a.wetter, lat0, lon0, mid)
-    else:
-        wetter, sp, wquelle = synth_wetter(lat0, lon0, mid)
-    sim = Sim(wetter, sp, mid)
-    ghi_y = wetter["ghi"].sum() / 1000
-    log(f"Wetter: {wquelle}; Globalstrahlung {ghi_y:.0f} kWh/m², "
-        f"Referenz Dach 35° Süd: {sim.referenz_dach():.0f} kWh/kWp")
-
-    szenen = set()
-    for s in a.szene:
-        fi, bi = s.split(":")
-        szenen.add((fi, int(bi)))
-
-    ergebnis = {}
-    jobs = []
-    for fid, entry in BK.items():
-        for bi, b in enumerate(entry.get("balkone", [])):
-            if a.nur_szenen and (fid, bi) not in szenen:
-                continue
-            jobs.append((fid, bi, b))
-    log(f"Simuliere {len(jobs)} Balkone")
-    t0 = time.time()
-    details = {}
-    for k, (fid, bi, b) in enumerate(jobs):
-        f = fac[int(fid)]
-        geo = balkon_geometrie(f, b, P, baum)
+    def simuliere(self, fid, b):
+        """Ein Balkon (Box im Fassadenbild) -> (Geometrie, Ergebnis, Azimut, Randlage) oder None."""
+        f = self.fac[int(fid)]
+        geo = balkon_geometrie(f, b, self.P, self.baum)
         if geo is None:
-            ergebnis.setdefault(fid, {})[str(bi)] = dict(passt=False)
-            continue
-        Q, qb = horizont_vorfilter(geo, P, baum)
-        az_mod = (math.degrees(math.atan2(geo["n"][0], geo["n"][1])) + gn_true) % 360
-        r = simuliere_balkon(sim, geo, Q, qb, gn_true, az_mod)
-        kwh = r["pac"].sum() / 1000
-        kwh_frei = r["pac_frei"].sum() / 1000
+            return None
+        Q, qb = horizont_vorfilter(geo, self.P, self.baum)
+        az_mod = (math.degrees(math.atan2(geo["n"][0], geo["n"][1])) + self.gn_true) % 360
+        r = simuliere_balkon(self.sim, geo, Q, qb, self.gn_true, az_mod)
         mx, my = geo["mitte"][:2]
-        rand = min(mx - xmin, xmax - mx, my - ymin, ymax - my) < RAND_WARNUNG
-        ergebnis.setdefault(fid, {})[str(bi)] = dict(
-            passt=True, kwh=round(kwh), kwh_frei=round(kwh_frei),
-            verlust=round(1 - kwh / max(kwh_frei, 1e-6), 3), wp=geo["vorschlag"]["wp"],
-            n=geo["vorschlag"]["n"], az=round(az_mod, 1), rand=bool(rand),
-            sonne=round(r["sonne_mod"]), himmel=round(r["himmel"], 2))
-        details[(fid, bi)] = (geo, r, az_mod, rand)
-        if (k + 1) % 20 == 0:
-            log(f"  {k + 1}/{len(jobs)} ({time.time() - t0:.0f} s)")
+        rand = min(mx - self.xmin, self.xmax - mx, my - self.ymin, self.ymax - my) < RAND_WARNUNG
+        return geo, r, az_mod, rand
 
-    # Kennzahlen für den Fassaden-Explorer
-    if not a.nur_szenen:
-        with open(os.path.join(a.webapp, "ertrag.js"), "w", encoding="utf-8") as fh:
-            fh.write("window.ERTRAG = ")
-            json.dump(dict(wetter=wquelle, erstellt=time.strftime("%Y-%m-%d %H:%M"), balkone=ergebnis),
-                      fh, ensure_ascii=False, separators=(",", ":"))
-            fh.write(";\n")
-        log(f"ertrag.js geschrieben ({sum(len(v) for v in ergebnis.values())} Balkone)")
-        rows = [(fid, bi, v) for fid, d in ergebnis.items() for bi, v in d.items() if v.get("passt")]
-        rows.sort(key=lambda r: -r[2]["kwh"])
-        print("\nfassade:balkon  typ       Wp   kWh/a  frei  Verlust  Rand")
-        for fid, bi, v in rows[:25]:
-            typ = BK[fid]["balkone"][int(bi)]["typ"]
-            print(f"{fid:>7}:{bi:<7} {typ:<8} {v['wp']:>4} {v['kwh']:>6} {v['kwh_frei']:>5}  "
-                  f"{v['verlust'] * 100:5.0f} %  {'ja' if v['rand'] else ''}")
+    def bereite_ordner(self):
+        """Texturen, Angebotsseite und Lastgang-Modul in webapp/angebot/ bereitstellen."""
+        if self.tex_names is not None:
+            return
+        os.makedirs(os.path.join(self.adir, "tex"), exist_ok=True)
+        self.tex_names = []
+        for p in self.tex:
+            dst = os.path.join(self.adir, "tex", os.path.basename(p))
+            if not os.path.exists(dst):
+                shutil.copyfile(p, dst)
+            self.tex_names.append("tex/" + os.path.basename(p))
+        here = os.path.dirname(os.path.abspath(__file__))
+        for src, dst in (("angebot.html", "index.html"), ("lastgang.js", "lastgang.js")):
+            if os.path.exists(os.path.join(here, src)):
+                shutil.copyfile(os.path.join(here, src), os.path.join(self.adir, dst))
 
-    if not szenen and not a.alle_angebote:
-        return
-
-    # Angebotsseiten
-    adir = os.path.join(a.webapp, "angebot")
-    os.makedirs(os.path.join(adir, "tex"), exist_ok=True)
-    tex_names = []
-    for p in tex:
-        dst = os.path.join(adir, "tex", os.path.basename(p))
-        if not os.path.exists(dst):
-            shutil.copyfile(p, dst)
-        tex_names.append("tex/" + os.path.basename(p))
-    lp = bdew.H25(idx)
-    lp = np.asarray(lp, float)
-    lp = lp / lp.sum()
-    with open(os.path.join(adir, "lastprofil.json"), "w") as fh:
-        json.dump(dict(name="BDEW H25 Haushalt (dynamisiert), stündlich, Summe = 1", jahr=JAHR,
-                       werte=[round(float(x), 8) for x in lp]), fh, separators=(",", ":"))
-    here = os.path.dirname(os.path.abspath(__file__))
-    src_html = os.path.join(here, "angebot.html")
-    if os.path.exists(src_html):
-        shutil.copyfile(src_html, os.path.join(adir, "index.html"))
-
-    liste = []
-    angebote = set(szenen) | (set(details) if a.alle_angebote else set())
-    log(f"Erzeuge {len(angebote)} Angebotsseiten")
-    for fid, bi in sorted(angebote, key=lambda k: (int(k[0]), k[1])):
-        if (fid, bi) not in details:
-            log(f"Balkon {fid}:{bi} nicht gefunden oder zu schmal")
-            continue
-        geo, r, az_mod, rand = details[(fid, bi)]
+    def angebot(self, fid, bi, balkone, key=None, szene=False, details=None):
+        """Angebotsdaten für balkone[bi] auf Fassade fid schreiben -> daten (dict) oder None.
+        balkone: alle Balkone dieser Fassade (für das Modell); selbst eingezeichnete einfach anhängen."""
+        self.bereite_ordner()
+        fid = str(fid)
+        fac, P, baum, sim, gn_true = self.fac, self.P, self.baum, self.sim, self.gn_true
+        b = balkone[bi]
+        if details is None:
+            details = self.simuliere(fid, b)
+        if details is None:
+            return None
+        geo, r, az_mod, rand = details
+        f = fac[int(fid)]
         # Varianten mit 1 bis 4 Modulen, soweit sie auf das Geländer passen
         varianten = []
         fit = geo["vorschlag"]["fit"]
         for nm in (range(1, min(fit, 4) + 1) if fit >= 1 else [1]):
-            g2 = balkon_geometrie(fac[int(fid)], BK[fid]["balkone"][bi], P, baum, n_module=nm if fit >= 1 else None)
+            g2 = balkon_geometrie(f, b, P, baum, n_module=nm if fit >= 1 else None)
             Q2, qb2 = horizont_vorfilter(g2, P, baum)
             r2 = simuliere_balkon(sim, g2, Q2, qb2, gn_true, az_mod)
             pac2 = np.round(r2["pac"]).astype(int)
             varianten.append(dict(n=g2["vorschlag"]["n"], wp=g2["vorschlag"]["wp"], wp_modul=g2["vorschlag"]["wp_modul"],
                                   kwh=round(float(pac2.sum()) / 1000, 1),
                                   kwh_frei=round(float(r2["pac_frei"].sum()) / 1000, 1),
-                                  module=[[lokal(e, geo["mitte"], fac[int(fid)]["ground"]) for e in m["ecken"]]
+                                  module=[[lokal(e, geo["mitte"], f["ground"]) for e in m["ecken"]]
                                           for m in g2["module"]],
                                   stunde_wh=pac2.tolist()))
         # optimierte Variante: bifaziale 450-Wp-Module, 30° ausgestellt (Modulneigung 60°)
         nm = min(max(fit, 1), 2)
-        g3 = balkon_geometrie(fac[int(fid)], BK[fid]["balkone"][bi], P, baum, n_module=nm if fit >= 1 else None)
+        g3 = balkon_geometrie(f, b, P, baum, n_module=nm if fit >= 1 else None)
         Q3, qb3 = horizont_vorfilter(g3, P, baum)
         r3 = simuliere_balkon(sim, g3, Q3, qb3, gn_true, az_mod, neigung=90 - AUSSTELLWINKEL, wp_modul=WP_OPTIMIERT)
         pac3 = np.round(r3["pac"]).astype(int)
         optimiert = dict(n=g3["vorschlag"]["n"], wp=g3["vorschlag"]["n"] * WP_OPTIMIERT, wp_modul=WP_OPTIMIERT,
                          ausstellwinkel=AUSSTELLWINKEL, kwh=round(float(pac3.sum()) / 1000, 1),
                          kwh_frei=round(float(r3["pac_frei"].sum()) / 1000, 1),
-                         module=[[lokal(e, geo["mitte"], fac[int(fid)]["ground"]) for e in m["ecken"]] for m in g3["module"]],
+                         module=[[lokal(e, geo["mitte"], f["ground"]) for e in m["ecken"]] for m in g3["module"]],
                          stunde_wh=pac3.tolist())
-        f = fac[int(fid)]
-        b = BK[fid]["balkone"][bi]
-        key = f"{fid}_{bi}"
-        out = os.path.join(adir, key)
+        key = key or f"{fid}_{bi}"
+        out = os.path.join(self.adir, key)
         os.makedirs(out, exist_ok=True)
         P0 = geo["mitte"]
         z0 = f["ground"]
-        szene = None
-        if (fid, bi) in szenen:      # Foto-Mesh (ca. 4 MB) nur für ausgewählte Balkone
-            szene = exportiere_szene(out, P0, z0, V, F, VT, FT, mat, tri_baum)
-            szene["tex"] = tex_names
+        sz = None
+        if szene:      # Foto-Mesh (ca. 4 MB) nur für ausgewählte Balkone
+            sz = exportiere_szene(out, P0, z0, self.V, self.F, self.VT, self.FT, self.mat, self.tri_baum)
+            sz["tex"] = self.tex_names
         alt = os.path.join(out, "daten.json")
-        if szene is None and os.path.exists(alt) and os.path.exists(os.path.join(out, "scene.bin")):
-            szene = json.load(open(alt, encoding="utf-8")).get("szene")   # früher erzeugtes Foto-Mesh weiter nutzen
-        modell = exportiere_modell(out, P0, z0, f, BK[fid]["balkone"], P, baum, aktiv_bi=bi)
-        lon, lat = to_ll.transform(P0[0], P0[1])
+        if sz is None and os.path.exists(alt) and os.path.exists(os.path.join(out, "scene.bin")):
+            sz = json.load(open(alt, encoding="utf-8")).get("szene")   # früher erzeugtes Foto-Mesh weiter nutzen
+        modell = exportiere_modell(out, P0, z0, f, balkone, P, baum, aktiv_bi=bi)
+        lon, lat = self.to_ll.transform(P0[0], P0[1])
+        idx = self.idx
         pac = np.round(r["pac"]).astype(int)
         frei = np.round(r["pac_frei"]).astype(int)
         mon = pd.Series(pac, index=idx).groupby(idx.month).sum() / 1000
@@ -688,7 +640,8 @@ def main():
             sicherheit=b.get("sicherheit"), breite_m=b["breite_m"], hoehe_m=b["hoehe_m"],
             unterkante_m=b.get("unterkante_m"), lat=round(lat, 6), lon=round(lon, 6),
             az=round(az_mod, 1), fassade_cls=f["cls"], gitter_nord=round(gn_true, 3),
-            tiefe_m=round(geo["tiefe"], 2), rand=bool(rand),
+            tiefe_m=round(geo["tiefe"], 2), rand=bool(rand), quelle_balkon=b.get("quelle", "erkannt"),
+            gelaender=b.get("gelaender"),
             vorschlag=dict(n=mv["n"], wp=mv["wp"], wp_modul=mv["wp_modul"], text=mv["text"],
                            w=mv["w"], h=mv["h"], fit=mv["fit"]),
             module=[[lokal(e, P0, z0) for e in m["ecken"]] for m in geo["module"]],
@@ -707,30 +660,122 @@ def main():
             varianten=varianten,
             optimiert=optimiert,
             sonne_anteil=[round(float(x), 2) for x in r["frac"]],
-            jahr_basis=JAHR, wetter=wquelle, globalstrahlung=round(ghi_y),
+            jahr_basis=JAHR, wetter=self.wquelle, globalstrahlung=round(self.ghi_y),
             annahmen=dict(verluste=VERLUSTE, gamma=GAMMA, wr_ac=WR_AC, wr_eta=WR_ETA, albedo=ALBEDO,
                           tau_belaubt=TAU_BELAUBT, tau_kahl=TAU_KAHL),
-            szene=szene, modell=modell, quelle=meta.get("source"), erstellt=time.strftime("%Y-%m-%d %H:%M"),
+            szene=sz, modell=modell, quelle=self.meta.get("source"), erstellt=time.strftime("%Y-%m-%d %H:%M"),
         )
         with open(os.path.join(out, "daten.json"), "w", encoding="utf-8") as fh:
             json.dump(daten, fh, ensure_ascii=False, separators=(",", ":"))
-        liste.append(dict(id=key, fassade=int(fid), balkon=bi, kwh=daten["jahr"]["kwh"]))
-        if szene:
+        if sz:
             log(f"Angebot {key}: {daten['jahr']['kwh']:.0f} kWh/a (frei {daten['jahr']['kwh_frei']:.0f}), "
-                f"Foto-Szene {szene['vertices']:,} Punkte")
+                f"Foto-Szene {sz['vertices']:,} Punkte")
+        return daten
 
-    # Liste vorhandener Angebotsseiten (für Explorer und Auswahl)
-    lp_path = os.path.join(a.webapp, "angebote.js")
+
+def balkon_aus_eingabe(f, box, geschoss=None, gelaender=None):
+    """Selbst eingezeichneter Balkon (Box in Pixeln des Fassadenbilds) im Format der Erkennung."""
+    res = f.get("img_res")
+    x0, y0, x1, y1 = [float(v) for v in box]
+    x0, x1 = sorted((x0, x1))
+    y0, y1 = sorted((y0, y1))
+    b = dict(box=[round(x0), round(y0), round(x1), round(y1)], typ="Balkon", geschoss=geschoss,
+             sicherheit=1.0, breite_m=round((x1 - x0) * res, 2), hoehe_m=round((y1 - y0) * res, 2),
+             quelle="selbst eingezeichnet", gelaender=gelaender)
+    if f.get("img_ztop") is not None:
+        b["unterkante_m"] = round(f["img_ztop"] - y1 * res - f["ground"], 1)
+        if geschoss is None:      # Balkonplatte liegt etwa auf Geschosshöhe (≈ 3,1 m je Geschoss im Altbau/Neubau-Mittel)
+            b["geschoss"] = max(0, int(round(b["unterkante_m"] / 3.1)))
+    return b
+
+
+def schreibe_angebotsliste(webapp):
+    """Liste vorhandener Angebotsseiten (für Explorer und Auswahl)."""
+    adir = os.path.join(webapp, "angebot")
     vorhanden = []
     for name in sorted(os.listdir(adir)):
         p = os.path.join(adir, name, "daten.json")
-        if os.path.exists(p):
+        if os.path.exists(p) and "_u" not in name:          # selbst eingezeichnete Balkone bleiben privat
             d = json.load(open(p, encoding="utf-8"))
             vorhanden.append(dict(id=name, fassade=d["fassade"], balkon=d["balkon"], typ=d["typ"],
                                   geschoss=d.get("geschoss"), kwh=d["jahr"]["kwh"],
                                   verlust=round(1 - d["jahr"]["kwh"] / max(d["jahr"]["kwh_frei"], 1e-6), 3)))
-    with open(lp_path, "w", encoding="utf-8") as fh:
+    with open(os.path.join(webapp, "angebote.js"), "w", encoding="utf-8") as fh:
         fh.write("window.ANGEBOTE = " + json.dumps(vorhanden, ensure_ascii=False) + ";\n")
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("tile_dir")
+    ap.add_argument("webapp")
+    ap.add_argument("--szene", action="append", default=[], help="fassade:balkon, mehrfach möglich")
+    ap.add_argument("--wetter", help="PVGIS-TMY-Datei (JSON/CSV)")
+    ap.add_argument("--nur-szenen", action="store_true", help="nur die angegebenen Balkone rechnen")
+    ap.add_argument("--alle-angebote", action="store_true",
+                    help="Angebotsseiten für alle passenden Balkone erzeugen (Foto-Mesh nur für --szene)")
+    a = ap.parse_args()
+
+    R = Rechner(a.tile_dir, a.webapp, a.wetter)
+    BK = R.BK
+    szenen = set()
+    for s in a.szene:
+        fi, bi = s.split(":")
+        szenen.add((fi, int(bi)))
+
+    ergebnis = {}
+    jobs = []
+    for fid, entry in BK.items():
+        for bi, b in enumerate(entry.get("balkone", [])):
+            if a.nur_szenen and (fid, bi) not in szenen:
+                continue
+            jobs.append((fid, bi, b))
+    log(f"Simuliere {len(jobs)} Balkone")
+    t0 = time.time()
+    details = {}
+    for k, (fid, bi, b) in enumerate(jobs):
+        d = R.simuliere(fid, b)
+        if d is None:
+            ergebnis.setdefault(fid, {})[str(bi)] = dict(passt=False)
+            continue
+        geo, r, az_mod, rand = d
+        kwh = r["pac"].sum() / 1000
+        kwh_frei = r["pac_frei"].sum() / 1000
+        ergebnis.setdefault(fid, {})[str(bi)] = dict(
+            passt=True, kwh=round(kwh), kwh_frei=round(kwh_frei),
+            verlust=round(1 - kwh / max(kwh_frei, 1e-6), 3), wp=geo["vorschlag"]["wp"],
+            n=geo["vorschlag"]["n"], az=round(az_mod, 1), rand=bool(rand),
+            sonne=round(r["sonne_mod"]), himmel=round(r["himmel"], 2))
+        details[(fid, bi)] = d
+        if (k + 1) % 20 == 0:
+            log(f"  {k + 1}/{len(jobs)} ({time.time() - t0:.0f} s)")
+
+    # Kennzahlen für den Fassaden-Explorer
+    if not a.nur_szenen:
+        with open(os.path.join(a.webapp, "ertrag.js"), "w", encoding="utf-8") as fh:
+            fh.write("window.ERTRAG = ")
+            json.dump(dict(wetter=R.wquelle, erstellt=time.strftime("%Y-%m-%d %H:%M"), balkone=ergebnis),
+                      fh, ensure_ascii=False, separators=(",", ":"))
+            fh.write(";\n")
+        log(f"ertrag.js geschrieben ({sum(len(v) for v in ergebnis.values())} Balkone)")
+        rows = [(fid, bi, v) for fid, d in ergebnis.items() for bi, v in d.items() if v.get("passt")]
+        rows.sort(key=lambda r: -r[2]["kwh"])
+        print("\nfassade:balkon  typ       Wp   kWh/a  frei  Verlust  Rand")
+        for fid, bi, v in rows[:25]:
+            typ = BK[fid]["balkone"][int(bi)]["typ"]
+            print(f"{fid:>7}:{bi:<7} {typ:<8} {v['wp']:>4} {v['kwh']:>6} {v['kwh_frei']:>5}  "
+                  f"{v['verlust'] * 100:5.0f} %  {'ja' if v['rand'] else ''}")
+
+    if not szenen and not a.alle_angebote:
+        return
+
+    angebote = set(szenen) | (set(details) if a.alle_angebote else set())
+    log(f"Erzeuge {len(angebote)} Angebotsseiten")
+    for fid, bi in sorted(angebote, key=lambda k: (int(k[0]), k[1])):
+        if (fid, bi) not in details:
+            log(f"Balkon {fid}:{bi} nicht gefunden oder zu schmal")
+            continue
+        R.angebot(fid, bi, BK[fid]["balkone"], szene=(fid, bi) in szenen, details=details[(fid, bi)])
+    schreibe_angebotsliste(a.webapp)
 
 
 if __name__ == "__main__":

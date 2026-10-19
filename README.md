@@ -16,8 +16,9 @@ Findet Balkone mit Potenzial für Balkonkraftwerke im 3D-Stadtmodell von Berlin 
 
 1. **Fassaden** – aus einer Mesh-Kachel werden Gebäudeumrisse abgeleitet, jede Wand bekommt ihre Himmelsrichtung und eine Frontalansicht.
 2. **Balkone** – Claude markiert Balkone und Loggien per Batch API; Maße kommen aus dem Bildmaßstab.
-3. **Sonne und Schatten** – für jeden Modulpunkt wird der Horizont aus Nachbarhäusern und Bäumen vermessen und der Ertrag stündlich über ein Jahr simuliert (pvlib, Lastprofil BDEW H25).
+3. **Sonne und Schatten** – für jeden Modulpunkt wird der Horizont aus Nachbarhäusern und Bäumen vermessen und der Ertrag stündlich über ein Jahr simuliert (pvlib). Den Eigenverbrauch rechnet ein minutengenaues Haushaltsmodell (Grundlast, Geräte zu typischen Zeiten, tagsüber zu Hause oder nicht).
 4. **Angebot** – drei Ausstattungen mit Preis, Ersparnis und Amortisation, dazu ein 3D-Hausmodell mit Sonnenverlauf und Live-Leistung.
+5. **Nutzerseite** – Adresse eingeben, Hauswand wählen (Süd, Südost, Südwest hervorgehoben), Balkon antippen oder selbst einzeichnen. Claude sucht Balkone nur auf der Wand, die jemand anklickt; das Ergebnis wird für alle gespeichert. Der bisherige Fassaden-Explorer bleibt als internes Werkzeug (`intern.html`).
 
 ## Nutzung
 
@@ -34,9 +35,14 @@ python3 pipeline/balkone_claude.py collect
 # 3. Ertrag simulieren und Angebotsseiten erzeugen
 python3 pipeline/angebot.py data/<kachel> webapp --alle-angebote
 
-# 4. Webseite starten
-webapp/start.command
+# 4. Adressen für die Suche (amtliche Hauskoordinaten Berlin)
+python3 pipeline/adressen.py webapp
+
+# 5. Webseite mit API starten (Balkonsuche auf Abruf, selbst einzeichnen)
+python3 server/app.py data/<kachel> webapp --port 8000     # oder: webapp/start.command
 ```
+
+Hosting, Sicherheit und Datenschutz: [docs/ARCHITEKTUR.md](docs/ARCHITEKTUR.md)
 
 ## Stand
 

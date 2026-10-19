@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>balki strom – Ihr Balkonkraftwerk</title>
+<meta name="robots" content="noindex">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'><rect width='48' height='48' rx='14' fill='%231f6b43'/><line x1='24' y1='5.5' x2='24' y2='12' stroke='%23f4b731' stroke-width='2.4' stroke-linecap='round'/><circle cx='24' cy='19' r='7.5' fill='%23f4b731'/><rect x='22.7' y='25' width='2.6' height='6' fill='%23f4b731'/><rect x='8.5' y='29.5' width='31' height='3.2' rx='1.6' fill='%23fafcf7'/><g fill='%23fafcf7'><rect x='11.5' y='32' width='2.4' height='8'/><rect x='17.3' y='32' width='2.4' height='8'/><rect x='22.8' y='32' width='2.4' height='8'/><rect x='28.3' y='32' width='2.4' height='8'/><rect x='34.1' y='32' width='2.4' height='8'/></g><rect x='6.5' y='39.5' width='35' height='3.2' rx='1.6' fill='%23fafcf7'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -128,6 +129,7 @@
   .opt .price small.mwst { color: #8a9a8e; font-weight: 500; }
   .house { font-size: 13px; gap: 6px; margin-bottom: 14px; }
   .house .chip { padding: 1px 9px; font-size: 12.5px; }
+  .house .trenn { margin-left: 10px; }
 
   /* Abschnitte unter dem ersten Bildschirm */
   .band { padding: 64px 28px 56px; }
@@ -269,8 +271,10 @@
       <div class="opts" id="opts" role="radiogroup" aria-label="Ausstattung wählen"></div>
       <div class="house" role="group" aria-label="Personen im Haushalt">
         <span>Personen im Haushalt</span>
-        <button class="chip" data-kwh="1500">1</button><button class="chip" data-kwh="2500">2</button>
-        <button class="chip" data-kwh="3200">3</button><button class="chip" data-kwh="4000">4+</button>
+        <button class="chip" data-kwh="1500" data-p="1">1</button><button class="chip" data-kwh="2500" data-p="2">2</button>
+        <button class="chip" data-kwh="3200" data-p="3">3</button><button class="chip" data-kwh="4000" data-p="4">4+</button>
+        <span class="trenn">Tagsüber zu Hause</span>
+        <button class="chip" data-da="0">selten</button><button class="chip" data-da="0.4">teils</button><button class="chip" data-da="1">meist</button>
       </div>
       <div class="cta">
         <button class="btn" id="order">Unverbindlich anfragen</button>
@@ -324,7 +328,7 @@
       <li class="ziel"><span class="dauer">20+ Jahre</span><b>Sonnenstrom genießen</b>Ab jetzt läuft Ihr Zähler langsamer – jeden sonnigen Tag.</li>
     </ol>
     <div class="cta"><button class="btn" id="order2">Unverbindlich anfragen</button></div>
-    <p class="hinweis">* Geschätzt auf Basis unserer Modelle (3D-Stadtmodell, Wetter-Referenzjahr, Standard-Verbrauchsprofil eines Haushalts). Die tatsächliche Ersparnis kann je nach Nutzung, Wetter, Strompreis und Montage abweichen. Zeitangaben sind Erfahrungswerte.</p>
+    <p class="hinweis">* Geschätzt auf Basis unserer Modelle (3D-Stadtmodell, Wetter-Referenzjahr, minutengenaues Verbrauchsmodell eines typischen Haushalts). Die tatsächliche Ersparnis kann je nach Nutzung, Wetter, Strompreis und Montage abweichen. Zeitangaben sind Erfahrungswerte.</p>
   </div>
 </section>
 
@@ -339,6 +343,7 @@
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { lastgang, pvMinuten, eigenverbrauch as evMinute } from './lastgang.js';
 
 const $ = id => document.getElementById(id);
 const NS = 'http://www.w3.org/2000/svg';
@@ -361,15 +366,14 @@ const KATALOG = [
   {id: 'h1', typ: 'halterung', neigbar: false, preis: 29, text: 'Geländerhalterung'},
   {id: 'h2', typ: 'halterung', neigbar: true, preis: 59, text: 'neigbare Geländerhalterung (0–45°)'},
 ];
-const MWST = 0.19, GLEICHZEITIG = 0.85, STROM_PLUS = 0.02, DEGRADATION = 0.005, ETF = 0.07, JAHRE = 20;
+const MWST = 0.19, STROM_PLUS = 0.02, DEGRADATION = 0.005, ETF = 0.07, JAHRE = 20;
 const SPEICHER_STANDBY_W = 6, SPEICHER_ETA = 0.92;
 
 // ---------------------------------------------------------------- Daten
 const LIST = window.ANGEBOTE || [];
 const id = new URLSearchParams(location.search).get('id') || (LIST[0] && LIST[0].id);
-const [D, LP] = await Promise.all([fetch(`${id}/daten.json`).then(r => r.json()), fetch('lastprofil.json').then(r => r.json())]);
+const D = await fetch(`${id}/daten.json`).then(r => r.json());
 const N = D.stunde_wh.length;
-const LPV = Float64Array.from(LP.werte);
 const VARS = (D.varianten && D.varianten.length ? D.varianten : [{n: D.vorschlag.n, wp: D.vorschlag.wp, kwh: D.jahr.kwh, kwh_frei: D.jahr.kwh_frei, module: D.module, stunde_wh: D.stunde_wh}])
   .map(v => ({...v, pv: Float64Array.from(v.stunde_wh), neigung: 0}));
 const OPT = D.optimiert ? {...D.optimiert, pv: Float64Array.from(D.optimiert.stunde_wh), neigung: D.optimiert.ausstellwinkel} : null;
@@ -400,21 +404,18 @@ if (s3 && OPT) PAKETE.push({key: 'smart', name: 'Smart mit Speicher', set: s3, h
   desc: `Geneigte Module plus ${nf(s3.kwh, 1)}-kWh-Speicher mit App – Sonnenstrom auch am Abend.`});
 for (const p of PAKETE) { p.preis = p.set.preis + p.halter.preis * p.set.module; p.mwst = p.preis * MWST; }
 
-let verbrauch = 2500, preis = 0.37;
+let verbrauch = 2500, personen = 2, zuhause = 0.4, preis = 0.37;
 
+// Eigenverbrauch minutengenau: synthetischer Haushalt (Grundlast + Geräte zu typischen Zeiten), siehe lastgang.js
+const lastCache = new Map(), pvCache = new WeakMap();
+function haushalt() {
+  const k = `${verbrauch}_${personen}_${zuhause}`;
+  if (!lastCache.has(k)) lastCache.set(k, lastgang({kwh: verbrauch, personen, zuhause}));
+  return lastCache.get(k);
+}
 function eigenverbrauch(pv, kapKwh) {
-  let direkt = 0, ausSpeicher = 0, soc = 0;
-  const cap = kapKwh * 1000;
-  for (let i = 0; i < N; i++) {
-    const last = LPV[i] * verbrauch * 1000, p = pv[i];
-    direkt += Math.min(p, last);
-    if (!cap) continue;
-    if (p > last) soc = Math.min(cap, soc + Math.min(p - last, 800) * SPEICHER_ETA);
-    else { const d = Math.min(last - p, soc, 800); soc -= d; ausSpeicher += d; }
-  }
-  let kwh = direkt / 1000 * GLEICHZEITIG + ausSpeicher / 1000;
-  if (cap) kwh -= SPEICHER_STANDBY_W * 8.76;
-  return Math.max(0, kwh);
+  if (!pvCache.has(pv)) pvCache.set(pv, pvMinuten(pv));
+  return evMinute(pvCache.get(pv), haushalt(), {kapKwh, maxW: 800, eta: SPEICHER_ETA, standbyW: SPEICHER_STANDBY_W});
 }
 function irr(cf) {
   let lo = -0.9, hi = 3;
@@ -453,10 +454,10 @@ function produktBild(p) {
 // ---------------------------------------------------------------- Texte
 const HIMMEL = ['Norden', 'Nordosten', 'Osten', 'Südosten', 'Süden', 'Südwesten', 'Westen', 'Nordwesten'];
 const seite = HIMMEL[Math.round(D.az / 45) % 8];
-const stock = D.geschoss === 0 ? 'im Erdgeschoss' : `im ${D.geschoss}. Stock`;
+const stock = D.geschoss == null ? 'an Ihrer Hauswand' : (D.geschoss === 0 ? 'im Erdgeschoss' : `im ${D.geschoss}. Stock`);
 const sonnig = 1 - D.jahr.kwh / D.jahr.kwh_frei;
 const lage = sonnig < 0.15 ? 'bekommt viel Sonne' : sonnig < 0.35 ? 'bekommt gut Sonne' : 'liegt öfter im Schatten – lohnt sich trotzdem';
-$('lead').textContent = `Wir haben Ihren Balkon ${stock} vermessen: ${nf(D.breite_m, 1)} m Geländer nach ${seite}, er ${lage}. ${['Eine passende Ausstattung', 'Zwei passende Ausstattungen', 'Drei passende Ausstattungen'][PAKETE.length - 1] || 'Passende Ausstattungen'}:`;
+$('lead').textContent = `${D.quelle_balkon === 'selbst eingezeichnet' ? `Ihr eingezeichneter Balkon ${stock}` : `Wir haben Ihren Balkon ${stock} vermessen`}: ${nf(D.breite_m, 1)} m Geländer nach ${seite}, er ${lage}. ${['Eine passende Ausstattung', 'Zwei passende Ausstattungen', 'Drei passende Ausstattungen'][PAKETE.length - 1] || 'Passende Ausstattungen'}:`;
 let sel = null;
 const jahreText = j => j > JAHRE ? `über ${JAHRE} Jahren` : `${nf(Math.round(j * 2) / 2, 1).replace(',0', '')} Jahren`;
 
@@ -476,8 +477,8 @@ function renderOpts() {
     box.appendChild(b);
   }
   $('headline').textContent = `Ihr Balkon spart ${eur(sel.spart)} Strom im Jahr.`;
-  $('fine').textContent = `Alle Werte sind Schätzungen auf Basis unserer Modelle und können je nach Nutzung, Wetter und Strompreis abweichen. Beispielpreise inkl. Lieferung, 0 % MwSt.; gerechnet mit ${nf(preis * 100, 1)} ct/kWh und ${nf(verbrauch)} kWh Jahresverbrauch. Unverbindlich – endgültig nach einem Foto Ihres Geländers.`;
-  for (const c of document.querySelectorAll('.house .chip')) c.setAttribute('aria-pressed', +c.dataset.kwh === verbrauch);
+  $('fine').textContent = `Alle Werte sind Schätzungen auf Basis unserer Modelle und können je nach Nutzung, Wetter und Strompreis abweichen. Beispielpreise inkl. Lieferung, 0 % MwSt.; gerechnet mit ${nf(preis * 100, 1)} ct/kWh, ${nf(verbrauch)} kWh Jahresverbrauch und ${({0: 'tagsüber meist niemand', 0.4: 'tagsüber teilweise jemand', 1: 'tagsüber meist jemand'})[zuhause]} zu Hause. Unverbindlich – endgültig nach einem Foto Ihres Geländers.`;
+  for (const c of document.querySelectorAll('.house .chip')) c.setAttribute('aria-pressed', c.dataset.da != null ? +c.dataset.da === zuhause : +c.dataset.kwh === verbrauch);
   renderEco(); renderHow(); renderTabs();
   const r = sel.rendite;
   $('spoiler').textContent = r > ETF ? '(Spoiler: ja.)' : (r > 0.02 ? '(Spoiler: auf Dauer ja.)' : '(Spoiler: knapp.)');
@@ -494,7 +495,10 @@ function renderTabs() {
     box.appendChild(t);
   }
 }
-for (const c of document.querySelectorAll('.house .chip')) c.addEventListener('click', () => { verbrauch = +c.dataset.kwh; renderOpts(); });
+for (const c of document.querySelectorAll('.house .chip')) c.addEventListener('click', () => {
+  if (c.dataset.da != null) zuhause = +c.dataset.da; else { verbrauch = +c.dataset.kwh; personen = +c.dataset.p; }
+  renderOpts();
+});
 
 // ---------------------------------------------------------------- Wirtschaftlichkeit: Balkonkraftwerk vs. ETF
 function renderEco() {
@@ -553,7 +557,7 @@ function renderHow() {
     ['Ertragsverlust durch Schatten', `${nf((1 - p.v.kwh / p.v.kwh_frei) * 100)} %`],
   ].map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join('');
   $('howText').textContent = `Wir haben Nachbarhäuser und Bäume aus dem 3D-Stadtmodell Berlin vermessen und den Ertrag für jede Stunde eines Jahres simuliert (${D.wetter}). ` +
-    `Ihren Verbrauch schätzen wir mit dem Standard-Haushaltsprofil. Strom, den Sie gerade nicht brauchen, geht ohne Vergütung ins Netz` +
+    `Ihren Verbrauch rechnen wir Minute für Minute mit einem typischen Haushalt Ihrer Größe: Kühlschrank und Standby laufen immer, dazu Kaffee, Kochen, Wasch- und Spülmaschine, Licht und Fernsehen zu üblichen Zeiten – je nachdem, ob tagsüber jemand zu Hause ist. Ein Balkonkraftwerk deckt vor allem diese Grundlast und alles, was mittags läuft. Strom, den Sie gerade nicht brauchen, geht ohne Vergütung ins Netz` +
     `${p.speicherKwh ? `, außer der Speicher nimmt ihn auf` : ''}. Preise sind Beispielpreise aus aktuellen Marktangeboten. Genauigkeit etwa ±15 %.`;
 }
 $('howBtn').addEventListener('click', () => $('how').showModal());

@@ -595,7 +595,7 @@ def main(tile_dir, out_dir):
         ) for fc in facades]), f, ensure_ascii=False)
 
     here = os.path.dirname(os.path.abspath(__file__))
-    for fn in ("index.html", "start.command"):
+    for fn in ("index.html", "intern.html", "robots.txt", "start.command"):
         src = os.path.join(here, fn)
         if os.path.exists(src):
             shutil.copy(src, os.path.join(out_dir, fn))

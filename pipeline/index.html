@@ -3,175 +3,216 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>balki strom – Fassaden-Explorer</title>
+<title>Balkonkraftwerk-Rechner Berlin: Lohnt sich Solar auf Ihrem Balkon? | balki strom</title>
+<meta name="description" content="Adresse eingeben, Balkon antippen: Wir berechnen Sonne und Schatten für Ihren Balkon aus dem 3D-Stadtmodell Berlin – mit Ertrag, Ersparnis und passendem Balkonkraftwerk. Kostenlos, ohne Anmeldung.">
+<meta name="robots" content="index, follow">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="de_DE">
+<meta property="og:site_name" content="balki strom">
+<meta property="og:title" content="Lohnt sich ein Balkonkraftwerk auf Ihrem Balkon?">
+<meta property="og:description" content="Adresse eingeben, Balkon antippen – Sonne, Schatten und Ersparnis für Ihren Balkon in Berlin, berechnet aus dem 3D-Stadtmodell.">
+<meta name="theme-color" content="#1f6b43">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'><rect width='48' height='48' rx='14' fill='%231f6b43'/><line x1='24' y1='5.5' x2='24' y2='12' stroke='%23f4b731' stroke-width='2.4' stroke-linecap='round'/><circle cx='24' cy='19' r='7.5' fill='%23f4b731'/><rect x='22.7' y='25' width='2.6' height='6' fill='%23f4b731'/><rect x='8.5' y='29.5' width='31' height='3.2' rx='1.6' fill='%23fafcf7'/><g fill='%23fafcf7'><rect x='11.5' y='32' width='2.4' height='8'/><rect x='17.3' y='32' width='2.4' height='8'/><rect x='22.8' y='32' width='2.4' height='8'/><rect x='28.3' y='32' width='2.4' height='8'/><rect x='34.1' y='32' width='2.4' height='8'/></g><rect x='6.5' y='39.5' width='35' height='3.2' rx='1.6' fill='%23fafcf7'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,650;12..96,750&family=Figtree:wght@400;500;600&family=Caveat:wght@700&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "name": "balki strom – Balkonkraftwerk-Rechner Berlin",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "Web",
+      "inLanguage": "de",
+      "description": "Berechnet für einzelne Balkone in Berlin Sonne, Schatten, Stromertrag und Ersparnis eines Balkonkraftwerks aus dem 3D-Stadtmodell.",
+      "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"}
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {"@type": "Question", "name": "Welche Himmelsrichtung ist für ein Balkonkraftwerk am besten?",
+         "acceptedAnswer": {"@type": "Answer", "text": "Süd bringt senkrecht am Geländer den meisten Strom. Südost und Südwest liegen nur rund 8 % darunter, Ost und West etwa 30 %. Ost- und Westbalkone erzeugen dafür morgens bzw. abends Strom, wenn viele Haushalte ihn auch brauchen. Nordbalkone lohnen sich meist nicht."}},
+        {"@type": "Question", "name": "Wie viel Strom macht ein Balkonkraftwerk in Berlin?",
+         "acceptedAnswer": {"@type": "Answer", "text": "Zwei Module senkrecht am Südbalkon erzeugen ohne Schatten rund 600 kWh im Jahr, um 30° geneigt eher 800 bis 870 kWh. Nachbarhäuser und Bäume können davon viel wegnehmen – deshalb rechnen wir jeden Balkon einzeln mit dem 3D-Stadtmodell."}},
+        {"@type": "Question", "name": "Wie viel des Stroms nutze ich selbst?",
+         "acceptedAnswer": {"@type": "Answer", "text": "Typisch 30 bis 60 %. Kühlschrank, Router und Standby laufen immer, dazu kommt, was tagsüber läuft. Wer tagsüber zu Hause ist oder Wasch- und Spülmaschine mittags laufen lässt, nutzt deutlich mehr selbst. Ein kleiner Speicher hebt den Anteil auf 70 bis 90 %."}},
+        {"@type": "Question", "name": "Muss ich ein Balkonkraftwerk anmelden?",
+         "acceptedAnswer": {"@type": "Answer", "text": "Ja, aber nur kurz online im Marktstammdatenregister der Bundesnetzagentur. Die frühere zusätzliche Anmeldung beim Netzbetreiber entfällt. Erlaubt sind bis zu 800 Watt Wechselrichterleistung."}},
+        {"@type": "Question", "name": "Darf ich als Mieterin oder Mieter ein Balkonkraftwerk anbringen?",
+         "acceptedAnswer": {"@type": "Answer", "text": "Steckersolargeräte gelten seit Oktober 2024 als privilegierte Maßnahme. Vermieter und Eigentümergemeinschaften müssen zustimmen, dürfen aber noch über die Art der Anbringung mitreden. Fragen Sie vorher kurz schriftlich nach."}},
+        {"@type": "Question", "name": "Fällt Mehrwertsteuer auf ein Balkonkraftwerk an?",
+         "acceptedAnswer": {"@type": "Answer", "text": "Nein. Seit 2023 gilt für Photovoltaikanlagen an Wohngebäuden – auch für Balkonkraftwerke – ein Mehrwertsteuersatz von 0 %."}}
+      ]
+    }
+  ]
+}
+</script>
 <style>
   :root {
-    --bg: #0f1115;
-    --panel: #161a20;
-    --panel-2: #1d222a;
-    --line: #2a313b;
-    --text: #e8ebf0;
-    --muted: #8b95a3;
-    --accent: #ffb000;
-    --c-S: #ff5a36;
-    --c-SO: #ffb000;
-    --c-SW: #ff3ea5;
-    --c-other: #c9d1dc;
-    --c-balkon: #3ee08f;
-    --c-loggia: #4cc3ff;
-    --c-unsicher: #b9c2cf;
-    --radius: 8px;
-    color-scheme: dark;
+    --sage: #e9efe5; --paper: #fafcf7; --moss: #1c3a29; --leaf: #2f7d4f; --leaf-soft: #d7e8da;
+    --fern: #5f7566; --line: #d3ddd0; --sun: #e3a21a; --sun2: #f4b731; --sun-soft: rgba(227, 162, 26, .2);
+    --mittel: #8fb89a; --schwach: #b9c2b7;
+    color-scheme: light;
   }
   * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
-    font: 14px/1.45 ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; }
-  body { display: grid; grid-template-columns: 340px 1fr; overflow: hidden; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--sage); color: var(--moss); font: 16px/1.55 Figtree, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  h1, h2, h3, .brand .wort { font-family: "Bricolage Grotesque", Figtree, sans-serif; letter-spacing: -.025em; }
+  a { color: var(--leaf); }
+  button, input, select { font: inherit; color: inherit; }
+  :focus-visible { outline: 3px solid var(--leaf); outline-offset: 2px; }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 0 28px; }
 
-  /* ---------- Seitenleiste ---------- */
-  #side { background: var(--panel); border-right: 1px solid var(--line); overflow-y: auto;
-    display: flex; flex-direction: column; }
-  .sec { padding: 16px 18px; border-bottom: 1px solid var(--line); }
-  h1 { font-size: 17px; margin: 0 0 2px; font-weight: 650; letter-spacing: .2px; }
-  .sub { color: var(--muted); font-size: 12px; }
-  h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .9px; color: var(--muted);
-    margin: 0 0 10px; font-weight: 600; }
-
-  .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-  .stat { background: var(--panel-2); border-radius: var(--radius); padding: 9px 10px; }
-  .stat b { display: block; font-size: 18px; font-variant-numeric: tabular-nums; font-weight: 650; }
-  .stat span { color: var(--muted); font-size: 11px; }
-
-  .rose-wrap { display: flex; gap: 14px; align-items: center; }
-  #rose { width: 132px; height: 132px; flex: none; }
-  #rose path { cursor: pointer; stroke: var(--panel); stroke-width: 2; transition: opacity .15s; }
-  #rose path:hover { opacity: .8; }
-  #rose text { font-size: 10px; font-weight: 650; fill: #0f1115; pointer-events: none; text-anchor: middle; dominant-baseline: central; }
-  #rose text.off { fill: var(--muted); }
-  .rose-help { font-size: 12px; color: var(--muted); }
-  .rose-help .lg { display: flex; align-items: center; gap: 7px; color: var(--text); margin: 3px 0; }
-  .sw { width: 18px; height: 4px; border-radius: 2px; display: inline-block; }
-
-  .ctl { margin: 10px 0 2px; }
-  .ctl label { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
-  .ctl label b { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
-  input[type=range] { width: 100%; accent-color: var(--accent); }
-  .toggle { display: flex; align-items: center; gap: 8px; margin: 7px 0; font-size: 13px; cursor: pointer; user-select: none; }
-  .toggle input { accent-color: var(--accent); width: 15px; height: 15px; }
-  .quick { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
-  button { background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: 6px;
-    padding: 5px 9px; font: inherit; font-size: 12px; cursor: pointer; }
-  button:hover { border-color: #3b4552; }
-
-  #list { list-style: none; margin: 0; padding: 0; }
-  #list li { display: grid; grid-template-columns: 10px 1fr auto; gap: 9px; align-items: center;
-    padding: 6px 6px; border-radius: 6px; cursor: pointer; font-size: 13px; }
-  #list li:hover, #list li.on { background: var(--panel-2); }
-  #list .dot { width: 10px; height: 10px; border-radius: 50%; }
-  #list .meta { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
-  #list .bk { color: var(--c-balkon); font-weight: 650; }
-  .foot { color: var(--muted); font-size: 11px; padding: 14px 18px; margin-top: auto; }
-
-  /* ---------- Karte ---------- */
-  main { position: relative; overflow: hidden; }
-  #map { width: 100%; height: 100%; display: block; cursor: grab; background: #0b0d10; touch-action: none;
-    transition: filter .7s ease, transform .9s cubic-bezier(.2,.7,.2,1); transform-origin: 50% 60%; }
-  #map.dragging { cursor: grabbing; }
-  #map.sunk { filter: blur(3px) brightness(.45) saturate(.8); transform: perspective(1200px) rotateX(18deg) scale(1.08); }
-  .f line { vector-effect: non-scaling-stroke; stroke-linecap: round; }
-  .f .halo { stroke: rgba(0,0,0,.75); }
-  .f { cursor: pointer; }
-  .f.other .main { stroke: var(--c-other); opacity: .75; }
-  .f.hover .halo, .f.sel .halo { stroke: #fff; }
-  .arrow { pointer-events: none; }
-  .badge-bk circle { fill: var(--c-balkon); stroke: #0b0d10; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
-  .badge-bk text { fill: #06210f; font-weight: 750; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
-  .badge-bk { cursor: pointer; }
-
-  .mapui { position: absolute; display: flex; gap: 6px; }
-  .zoom { right: 14px; top: 14px; flex-direction: column; }
-  .zoom button { width: 34px; height: 34px; font-size: 18px; padding: 0; background: rgba(22,26,32,.92); }
-  .scale { left: 14px; bottom: 14px; background: rgba(22,26,32,.85); padding: 5px 9px; border-radius: 6px;
-    font-size: 11px; align-items: center; gap: 8px; }
-  .scale i { display: block; height: 6px; border: 2px solid var(--text); border-top: 0; }
-  .north { right: 14px; bottom: 14px; background: rgba(22,26,32,.85); border-radius: 50%; width: 38px; height: 38px;
-    justify-content: center; align-items: center; font-weight: 700; font-size: 12px; }
-  #tip { position: absolute; pointer-events: none; background: rgba(15,17,21,.95); border: 1px solid var(--line);
-    padding: 6px 9px; border-radius: 6px; font-size: 12px; white-space: nowrap; display: none; z-index: 5; }
-
-  /* ---------- Eintauch-Ansicht ---------- */
-  #imm { position: absolute; inset: 0; display: none; perspective: 1400px; perspective-origin: 50% 35%; z-index: 10; }
-  #imm.open { display: block; }
-  #immCard { position: absolute; left: 50%; top: 50%; width: min(1180px, calc(100% - 48px));
-    max-height: calc(100% - 48px); display: flex; flex-direction: column;
-    background: rgba(18,21,26,.97); border: 1px solid #333c48; border-radius: 14px; overflow: hidden;
-    box-shadow: 0 30px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.03) inset;
-    transform-style: preserve-3d; will-change: transform, opacity; }
-  #immCard.anim { transition: transform .95s cubic-bezier(.16,.84,.24,1), opacity .5s ease; }
-  #immCard.tilt { transition: transform .25s ease-out; }
-  .imm-head { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
-  .imm-head .badge { font-weight: 700; font-size: 12px; padding: 3px 8px; border-radius: 5px; color: #0f1115; }
-  .imm-head h3 { margin: 0; font-size: 15px; }
-  .imm-head .facts { color: var(--muted); font-size: 12px; flex: 1; }
-  .imm-head button { border: 0; background: transparent; font-size: 22px; color: var(--muted); padding: 0 4px; line-height: 1; }
-  .imm-body { display: grid; grid-template-columns: 1fr 300px; min-height: 0; flex: 1; }
-  .imm-view { position: relative; background: radial-gradient(ellipse at 50% 120%, #2a2f37 0%, #121418 70%);
-    display: flex; align-items: center; justify-content: center; padding: 22px; overflow: auto; min-height: 0; }
-  .facade-wrap { position: relative; display: inline-block; max-width: 100%; transform-style: preserve-3d;
-    box-shadow: 0 18px 40px rgba(0,0,0,.55); }
-  .facade-wrap img { display: block; max-width: 100%; max-height: calc(100vh - 220px); }
-  .facade-wrap svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-  .bk rect { fill: transparent; stroke-width: 2.5; vector-effect: non-scaling-stroke; cursor: pointer; transition: fill .15s; }
-  .bk.Balkon rect { stroke: var(--c-balkon); }
-  .bk.Loggia rect { stroke: var(--c-loggia); }
-  .bk.unsicher rect { stroke: var(--c-unsicher); stroke-dasharray: 5 4; }
-  .bk:hover rect { fill: rgba(255,255,255,.18); }
-  .bk.sel rect { fill: rgba(62,224,143,.28); stroke-width: 4; }
-  .bk.Loggia.sel rect { fill: rgba(76,195,255,.28); }
-  .ground-line { stroke: rgba(255,255,255,.25); stroke-dasharray: 6 6; vector-effect: non-scaling-stroke; }
-  .imm-legend { position: absolute; left: 22px; bottom: 12px; display: flex; gap: 14px; font-size: 12px; color: var(--muted); }
-  .imm-legend span { display: inline-flex; align-items: center; gap: 6px; }
-  .imm-legend i { width: 12px; height: 12px; border-radius: 2px; border: 2px solid; display: inline-block; }
-  .imm-info { border-left: 1px solid var(--line); padding: 16px; overflow-y: auto; font-size: 13px; }
-  .imm-info h4 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); font-weight: 600; }
-  .imm-info .big { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
-  .kv { display: grid; grid-template-columns: auto 1fr; gap: 5px 12px; margin: 10px 0 14px; }
-  .kv dt { color: var(--muted); }
-  .kv dd { margin: 0; font-variant-numeric: tabular-nums; }
-  .module-box { background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-top: 6px; }
-  .module-box .mods { display: flex; gap: 6px; margin: 8px 0; }
-  .module-box .mod { height: 34px; border-radius: 3px; background: repeating-linear-gradient(90deg, #1f3a73 0 10px, #23427f 10px 11px);
-    border: 2px solid #9fb2d6; }
-  .note { color: var(--muted); font-size: 11px; line-height: 1.4; margin-top: 10px; }
-  .hint { color: var(--muted); font-size: 13px; }
-  .pill { display: inline-block; font-size: 11px; padding: 2px 7px; border-radius: 10px; background: var(--panel-2); border: 1px solid var(--line); margin-right: 4px; }
-
-  @media (max-width: 900px) {
-    body { grid-template-columns: 1fr; grid-template-rows: 46vh 1fr; }
-    #side { order: 2; border-right: 0; border-top: 1px solid var(--line); }
-    .imm-body { grid-template-columns: 1fr; }
-    .imm-info { border-left: 0; border-top: 1px solid var(--line); }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    #immCard.anim, #map { transition: none; }
-  }
-  .btn-angebot { display: inline-block; margin-top: 6px; background: #eda100; color: #111; font-weight: 600; text-decoration: none; padding: 7px 12px; border-radius: 8px; }
-  .btn-angebot:hover { background: #ffb820; }
-  .angebot-wrap { position: relative; display: inline-block; margin-top: 10px; }
-  .angebot-wrap .btn-angebot { margin-top: 0; padding: 9px 16px; font-size: 14px; }
-  .unverb { position: absolute; right: -26px; top: -13px; transform: rotate(9deg); background: #fafcf7; color: #1f6b43; border: 1.5px solid #2f7d4f;
-            font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 999px; letter-spacing: .01em; box-shadow: 0 2px 6px rgba(0,0,0,.25); pointer-events: none; }
-  .logo { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; }
-  .logo svg { width: 30px; height: 30px; }
-  .wort { font-family: "Bricolage Grotesque", Figtree, system-ui, sans-serif; font-size: 21px; font-weight: 500; letter-spacing: -.035em; line-height: 1; }
-  .wort b { font-weight: 750; margin-right: .18em; }
+  header.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 28px; max-width: 1240px; margin: 0 auto; }
+  .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--moss); }
+  .brand svg { width: 34px; height: 34px; flex: none; }
+  .brand .wort { font-size: 23px; letter-spacing: -.035em; font-weight: 500; line-height: 1; }
+  .brand .wort b { font-weight: 750; margin-right: .18em; }
   .marke-text { display: grid; gap: 3px; }
-  .claim { font-size: 12px; opacity: .75; font-weight: 400; letter-spacing: 0; line-height: 1.25; font-family: Figtree, system-ui, sans-serif; }
-  #laden .claim { color: #5f7566; opacity: 1; font-size: 12.5px; }
-  #laden .marke svg { width: 34px; height: 34px; }
-  #laden .marke .wort { font-size: 23px; color: #1c3a29; }
+  .claim { font-size: 12.5px; color: var(--fern); line-height: 1.2; }
+  nav.top a { color: var(--fern); text-decoration: none; margin-left: 20px; font-size: 15px; }
+  nav.top a:hover { color: var(--moss); }
 
+  /* ---------- Hero ---------- */
+  .hero { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, .75fr); gap: 40px; align-items: center; padding: 34px 0 30px; }
+  .hero h1 { font-size: clamp(36px, 5vw, 62px); line-height: 1.02; font-weight: 750; margin: 0 0 16px; }
+  .hero h1 em { font-style: normal; color: var(--leaf); }
+  .hero .lead { font-size: 19px; color: var(--fern); max-width: 36em; margin: 0 0 26px; }
+  .suche { position: relative; max-width: 560px; }
+  .suche form { display: flex; gap: 8px; background: var(--paper); border: 1.5px solid var(--line); border-radius: 18px; padding: 7px; box-shadow: 0 10px 30px rgba(28, 58, 41, .08); }
+  .suche form:focus-within { border-color: var(--leaf); }
+  .suche input { flex: 1; min-width: 0; border: 0; background: none; padding: 10px 12px; font-size: 17px; outline: none; }
+  .btn { border: 0; background: var(--leaf); color: #fff; font-weight: 600; border-radius: 12px; padding: 11px 20px; cursor: pointer; white-space: nowrap; }
+  .btn:hover { background: #276b43; }
+  .btn:disabled { opacity: .55; cursor: default; }
+  .btn.zart { background: var(--leaf-soft); color: var(--moss); }
+  .btn.zart:hover { background: #c8dfcc; }
+  .vorschlaege { position: absolute; left: 0; right: 0; top: calc(100% + 6px); background: var(--paper); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 16px 40px rgba(28, 58, 41, .14); list-style: none; margin: 0; padding: 6px; z-index: 20; display: none; }
+  .vorschlaege.offen { display: block; }
+  .vorschlaege li { padding: 9px 12px; border-radius: 9px; cursor: pointer; display: flex; justify-content: space-between; gap: 10px; }
+  .vorschlaege li small { color: var(--fern); }
+  .vorschlaege li[aria-selected="true"], .vorschlaege li:hover { background: var(--leaf-soft); }
+  .vorschlaege li.info { cursor: default; color: var(--fern); font-size: 14px; }
+  .vorschlaege li.info:hover { background: none; }
+  .gebiet { margin: 12px 2px 0; font-size: 13.5px; color: var(--fern); }
+  .kompass { background: var(--paper); border-radius: 28px; padding: 22px 22px 18px; box-shadow: 0 10px 30px rgba(28, 58, 41, .06); }
+  .kompass svg { width: 100%; height: auto; display: block; }
+  .kompass p { margin: 8px 4px 0; font-size: 14.5px; color: var(--fern); text-align: center; }
+  .kompass p b { color: var(--moss); }
+
+  /* ---------- Finder ---------- */
+  .finder { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(330px, 1fr); gap: 18px; margin: 10px 0 36px; height: min(78vh, 760px); min-height: 520px; scroll-margin-top: 12px; }
+  .karte { position: relative; border-radius: 26px; overflow: hidden; background: #cfd8cb; box-shadow: 0 10px 30px rgba(28, 58, 41, .08); }
+  #map { width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; user-select: none; }
+  #map.ziehen { cursor: grabbing; }
+  #map .f { cursor: pointer; }
+  #map .f .halo { stroke: transparent; stroke-linecap: round; }
+  #map .f:hover .halo, #map .f.sel .halo { stroke: rgba(255, 255, 255, .85); }
+  #map .f.sel .halo { stroke: #fff; }
+  #map .f line.l { stroke-linecap: round; pointer-events: none; }
+  #map .pin { pointer-events: none; }
+  .karte .ui { position: absolute; display: flex; gap: 6px; }
+  .karte .zoom { right: 14px; bottom: 14px; flex-direction: column; }
+  .karte .zoom button { width: 38px; height: 38px; border-radius: 12px; border: 0; background: var(--paper); box-shadow: 0 4px 14px rgba(0, 0, 0, .12); cursor: pointer; font-size: 19px; line-height: 1; }
+  .legende { left: 14px; bottom: 14px; background: rgba(250, 252, 247, .94); border-radius: 14px; padding: 8px 12px; font-size: 12.5px; flex-direction: column; gap: 3px !important; box-shadow: 0 4px 14px rgba(0, 0, 0, .1); }
+  .legende span { display: flex; align-items: center; gap: 7px; }
+  .legende i { width: 20px; height: 5px; border-radius: 3px; display: inline-block; }
+  .karte .laedt { position: absolute; inset: 0; display: grid; place-items: center; color: var(--fern); font-size: 15px; }
+  .karte .hinweis-karte { left: 50%; top: 14px; transform: translateX(-50%); background: var(--moss); color: #fff; padding: 7px 14px; border-radius: 999px; font-size: 13.5px; box-shadow: 0 4px 14px rgba(0, 0, 0, .18); transition: opacity .3s; white-space: nowrap; }
+  .karte .hinweis-karte.weg { opacity: 0; pointer-events: none; }
+
+  .panel { background: var(--paper); border-radius: 26px; padding: 22px 22px 18px; overflow: auto; box-shadow: 0 10px 30px rgba(28, 58, 41, .06); display: flex; flex-direction: column; }
+  .schritte { display: flex; gap: 6px; margin: 0 0 16px; padding: 0; list-style: none; font-size: 12.5px; color: var(--fern); }
+  .schritte li { flex: 1; border-top: 3px solid var(--line); padding-top: 6px; }
+  .schritte li.an { border-color: var(--leaf); color: var(--moss); font-weight: 600; }
+  .panel > * { flex: none; }
+  .panel h2 { font-size: 25px; line-height: 1.12; margin: 0 0 8px; font-weight: 750; }
+  .panel .text { color: var(--fern); margin: 0 0 14px; font-size: 15px; }
+  .zurueck { border: 0; background: none; color: var(--fern); cursor: pointer; padding: 0; margin: 0 0 10px; font-size: 14px; align-self: flex-start; }
+  .zurueck:hover { color: var(--moss); }
+  .waende { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .waende button { width: 100%; text-align: left; border: 1.5px solid var(--line); background: #fff; border-radius: 16px; padding: 11px 13px; cursor: pointer; display: grid; grid-template-columns: 44px 1fr auto; gap: 12px; align-items: center; }
+  .waende button:hover { border-color: var(--leaf); }
+  .waende .rose { width: 44px; height: 44px; }
+  .waende b { display: block; font-size: 15.5px; }
+  .waende small { color: var(--fern); font-size: 13px; }
+  .bewertung { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .bewertung.gut { background: var(--sun-soft); color: #8a5b00; }
+  .bewertung.mittel { background: var(--leaf-soft); color: var(--leaf); }
+  .bewertung.schwach { background: #eceee9; color: var(--fern); }
+
+  .wand { position: relative; background: #e3e7e0; border-radius: 16px; overflow: hidden; margin: 0 0 12px; touch-action: none; }
+  .wand img { display: block; width: 100%; height: auto; max-height: 46vh; object-fit: contain; }
+  .wand svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .wand .bk rect { fill: rgba(244, 183, 49, .28); stroke: var(--sun2); stroke-width: 2.5; vector-effect: non-scaling-stroke; cursor: pointer; }
+  .wand .bk:hover rect { fill: rgba(244, 183, 49, .45); }
+  .wand .bk.sel rect { fill: rgba(47, 125, 79, .45); stroke: #fff; stroke-width: 3; }
+  .wand .bk.unsicher rect { stroke-dasharray: 6 4; }
+  .wand.zeichnen { cursor: crosshair; }
+  .wand.zeichnen .bk { opacity: .35; pointer-events: none; }
+  .wand .eigen rect { fill: rgba(47, 125, 79, .35); stroke: var(--leaf); stroke-width: 3; vector-effect: non-scaling-stroke; }
+  .wand .eigen text { fill: var(--moss); font: 700 12px Figtree, sans-serif; paint-order: stroke; stroke: #fff; stroke-width: 3px; stroke-linejoin: round; }
+  .wand .geschoss { stroke: rgba(255, 255, 255, .55); stroke-dasharray: 3 5; vector-effect: non-scaling-stroke; }
+  .wand .boden { stroke: rgba(28, 58, 41, .7); stroke-width: 2; vector-effect: non-scaling-stroke; }
+  .wand-leer { padding: 40px 16px; text-align: center; color: var(--fern); }
+  .info-zeile { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13.5px; color: var(--fern); margin: 0 0 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+  .chip { border: 1.5px solid var(--line); background: #fff; border-radius: 999px; padding: 6px 13px; cursor: pointer; font-size: 14px; }
+  .chip[aria-pressed="true"] { background: var(--moss); border-color: var(--moss); color: #fff; }
+  .regler { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; font-size: 14px; margin: 0 0 12px; }
+  .regler input { accent-color: var(--leaf); }
+  .ergebnis { background: var(--sage); border-radius: 16px; padding: 12px 14px; margin: 0 0 14px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .ergebnis div { display: grid; }
+  .ergebnis b { font-family: "Bricolage Grotesque", Figtree, sans-serif; font-size: 22px; letter-spacing: -.02em; }
+  .ergebnis span { font-size: 12.5px; color: var(--fern); }
+  .aktion { margin-top: auto; padding-top: 6px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .angebot-wrap { position: relative; display: inline-block; }
+  .unverb { position: absolute; top: -11px; right: -14px; transform: rotate(8deg); background: var(--sun2); color: var(--moss); font-size: 11.5px; font-weight: 700; padding: 2px 8px; border-radius: 7px; box-shadow: 0 2px 6px rgba(0, 0, 0, .15); pointer-events: none; }
+  .link { border: 0; background: none; color: var(--leaf); text-decoration: underline; cursor: pointer; padding: 0; font-size: 14.5px; }
+  .fehler { background: #fbeee6; color: #8a3b12; border-radius: 12px; padding: 9px 12px; font-size: 14px; margin: 0 0 12px; }
+  .klein { font-size: 12.5px; color: #8a9a8e; margin: 10px 0 0; }
+  .sp { display: inline-block; width: 15px; height: 15px; border: 2.5px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: dreh .8s linear infinite; vertical-align: -2px; margin-right: 6px; }
+  @keyframes dreh { to { transform: rotate(360deg); } }
+
+  /* ---------- Inhalte ---------- */
+  section.inhalt { padding: 46px 0; border-top: 1px solid var(--line); }
+  section.inhalt h2 { font-size: clamp(28px, 3.4vw, 40px); margin: 0 0 18px; font-weight: 750; line-height: 1.08; }
+  .drei { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; list-style: none; padding: 0; margin: 0; counter-reset: s; }
+  .drei li { background: var(--paper); border-radius: 22px; padding: 20px; counter-increment: s; }
+  .drei li::before { content: counter(s); display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--leaf-soft); color: var(--leaf); font-weight: 700; margin-bottom: 10px; }
+  .drei h3 { margin: 0 0 6px; font-size: 20px; }
+  .drei p { margin: 0; color: var(--fern); font-size: 15px; }
+  .tabelle { width: 100%; max-width: 720px; border-collapse: collapse; background: var(--paper); border-radius: 18px; overflow: hidden; font-size: 15px; }
+  .tabelle th, .tabelle td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--line); }
+  .tabelle th { font-weight: 600; color: var(--fern); font-size: 13.5px; }
+  .tabelle td.zahl, .tabelle th.zahl { text-align: right; font-variant-numeric: tabular-nums; }
+  .zwei { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 34px; align-items: start; }
+  .zwei p { color: var(--fern); }
+  details { background: var(--paper); border-radius: 16px; padding: 14px 18px; margin: 0 0 10px; max-width: 860px; }
+  summary { cursor: pointer; font-weight: 600; font-size: 17px; }
+  details p { color: var(--fern); margin: 10px 0 2px; }
+  footer { padding: 30px 0 40px; color: var(--fern); font-size: 13.5px; border-top: 1px solid var(--line); }
+  footer p { margin: 4px 0; }
+
+  @media (max-width: 920px) {
+    .hero { grid-template-columns: 1fr; gap: 22px; padding-top: 16px; }
+    .kompass { max-width: 420px; }
+    .finder { grid-template-columns: 1fr; height: auto; }
+    .karte { height: 56vh; min-height: 340px; }
+    .drei, .zwei { grid-template-columns: 1fr; }
+    nav.top { display: none; }
+  }
+  @media (max-width: 520px) {
+    .wrap, header.top { padding-left: 16px; padding-right: 16px; }
+    .suche form { flex-direction: column; }
+    .karte .hinweis-karte { white-space: normal; width: 86%; text-align: center; }
+    .kompass { display: none; }
+    .karte .zoom { top: 70px; bottom: auto; }
+    .legende { font-size: 11.5px; }
+    .ergebnis b { font-size: 19px; }
+  }
   /* ---------- Ladebildschirm: Angebot wird erstellt ---------- */
   #laden { position: fixed; inset: 0; z-index: 1000; background: #e9efe5; color: #1c3a29; display: none; place-items: center;
            font-family: Figtree, system-ui, sans-serif; opacity: 0; transition: opacity .35s; }
@@ -183,6 +224,10 @@
   #laden p { margin: 0 0 16px; color: #5f7566; font-size: 15px; min-height: 1.5em; }
   #laden .bar { height: 6px; width: min(320px, 70vw); margin: 0 auto; border-radius: 999px; background: #d3ddd0; overflow: hidden; }
   #laden .bar i { display: block; height: 100%; width: 0; background: #2f7d4f; border-radius: inherit; transition: width .5s ease-out; }
+  #laden .marke svg { width: 34px; height: 34px; flex: none; }
+  #laden .marke .wort { font-size: 23px; letter-spacing: -.035em; font-weight: 500; }
+  #laden .marke .wort b { font-weight: 750; margin-right: .18em; }
+  #laden .marke .claim { font-family: Figtree, sans-serif; font-weight: 400; }
   #laden .marke { position: absolute; top: 22px; left: 28px; font-family: "Bricolage Grotesque", Figtree, sans-serif; font-weight: 650; font-size: 19px; display: flex; gap: 9px; align-items: center; }
   #laden .sonne { animation: sonne-auf 1.8s cubic-bezier(.2,.7,.3,1) forwards; }
   #laden .strahlen { transform-origin: 0 0; animation: drehen 9s linear infinite; }
@@ -203,581 +248,104 @@
   @keyframes fliessen { 0% { offset-distance: 0%; opacity: 0; } 15% { opacity: 1; } 90% { opacity: 1; } 100% { offset-distance: 100%; opacity: 0; } }
   @keyframes blinzeln { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
   @media (prefers-reduced-motion: reduce) { #laden * { animation-duration: .01s !important; animation-iteration-count: 1 !important; } }
+
 </style>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,650;12..96,750&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
-<div id="side">
-  <div class="sec">
-    <div class="logo"><svg viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="14" fill="#1f6b43"/><line x1="24" y1="5.5" x2="24" y2="12" stroke="#f4b731" stroke-width="2.4" stroke-linecap="round"/><circle cx="24" cy="19" r="7.5" fill="#f4b731"/><rect x="22.7" y="25" width="2.6" height="6" fill="#f4b731"/><rect x="8.5" y="29.5" width="31" height="3.2" rx="1.6" fill="#fafcf7"/><g fill="#fafcf7"><rect x="11.5" y="32" width="2.4" height="8"/><rect x="17.3" y="32" width="2.4" height="8"/><rect x="22.8" y="32" width="2.4" height="8"/><rect x="28.3" y="32" width="2.4" height="8"/><rect x="34.1" y="32" width="2.4" height="8"/></g><rect x="6.5" y="39.5" width="35" height="3.2" rx="1.6" fill="#fafcf7"/></svg><span class="marke-text"><span class="wort"><b>balki</b>strom</span><span class="claim">1 Stunde Aufwand. Jahrelang sparen – fürs Konto und fürs Klima.</span></span></div>
-    <h1>Fassaden-Explorer</h1>
-    <div class="sub" id="tileinfo"></div>
-  </div>
-
-  <div class="sec">
-    <h2>Sichtbare Fassaden</h2>
-    <div class="stats">
-      <div class="stat"><b id="sCount">0</b><span>Fassaden</span></div>
-      <div class="stat"><b id="sBk">–</b><span>Balkone/Loggien</span></div>
-      <div class="stat"><b id="sMod">–</b><span>Module möglich</span></div>
-    </div>
-    <div class="sub" id="sInfo" style="margin-top:8px"></div>
-  </div>
-
-  <div class="sec">
-    <h2>Ausrichtung</h2>
-    <div class="rose-wrap">
-      <svg id="rose" viewBox="-70 -70 140 140" aria-label="Windrose zum Filtern der Himmelsrichtungen"></svg>
-      <div class="rose-help">
-        Segment anklicken zum Ein- und Ausblenden.
-        <div class="lg"><span class="sw" style="background:var(--c-SO)"></span>Südost</div>
-        <div class="lg"><span class="sw" style="background:var(--c-S)"></span>Süd</div>
-        <div class="lg"><span class="sw" style="background:var(--c-SW)"></span>Südwest</div>
-      </div>
-    </div>
-    <div class="quick">
-      <button data-q="S">Nur Süd</button>
-      <button data-q="target">SO / S / SW</button>
-      <button data-q="all">Alle</button>
-    </div>
-    <label class="toggle"><input type="checkbox" id="tOthers" checked>Übrige Fassaden grau zeigen</label>
-    <label class="toggle"><input type="checkbox" id="tOnlyBk">Nur Fassaden mit Balkonen</label>
-  </div>
-
-  <div class="sec">
-    <h2>Filter</h2>
-    <div class="ctl">
-      <label>Mindestlänge <b id="vLen"></b></label>
-      <input type="range" id="fLen" min="3" max="40" step="1" value="3">
-    </div>
-    <div class="ctl">
-      <label>Mindesthöhe <b id="vH"></b></label>
-      <input type="range" id="fH" min="3" max="30" step="1" value="3">
-    </div>
-    <div class="ctl">
-      <label>Wandnachweis im Mesh mind. <b id="vEv"></b></label>
-      <input type="range" id="fEv" min="0" max="100" step="5" value="0">
-    </div>
-  </div>
-
-  <div class="sec">
-    <h2>Ebenen</h2>
-    <label class="toggle"><input type="checkbox" id="lOrtho" checked>Luftbild</label>
-    <label class="toggle"><input type="checkbox" id="lMask">Gebäude-/Baummaske</label>
-    <label class="toggle"><input type="checkbox" id="lArrows" checked>Blickrichtung der Fassaden</label>
-    <label class="toggle"><input type="checkbox" id="lBadges" checked>Balkonanzahl auf der Karte</label>
-  </div>
-
-  <div class="sec">
-    <h2>Fassaden <span id="listInfo" style="text-transform:none;letter-spacing:0"></span></h2>
-    <ul id="list"></ul>
-  </div>
-
-  <div class="foot" id="foot"></div>
-</div>
+<header class="top">
+  <a class="brand" href="./" aria-label="balki strom – Startseite"><svg viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="14" fill="#1f6b43"/><line x1="24" y1="5.5" x2="24" y2="12" stroke="#f4b731" stroke-width="2.4" stroke-linecap="round"/><circle cx="24" cy="19" r="7.5" fill="#f4b731"/><rect x="22.7" y="25" width="2.6" height="6" fill="#f4b731"/><rect x="8.5" y="29.5" width="31" height="3.2" rx="1.6" fill="#fafcf7"/><g fill="#fafcf7"><rect x="11.5" y="32" width="2.4" height="8"/><rect x="17.3" y="32" width="2.4" height="8"/><rect x="22.8" y="32" width="2.4" height="8"/><rect x="28.3" y="32" width="2.4" height="8"/><rect x="34.1" y="32" width="2.4" height="8"/></g><rect x="6.5" y="39.5" width="35" height="3.2" rx="1.6" fill="#fafcf7"/></svg><span class="marke-text"><span class="wort"><b>balki</b>strom</span><span class="claim">1 Stunde Aufwand. Jahrelang sparen – fürs Konto und fürs Klima.</span></span></a>
+  <nav class="top" aria-label="Seitenbereiche"><a href="#so-gehts">So geht's</a><a href="#ausrichtung">Himmelsrichtung</a><a href="#fragen">Fragen</a></nav>
+</header>
 
 <main>
-  <svg id="map" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <marker id="ah-S" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#ff5a36"/></marker>
-      <marker id="ah-SO" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#ffb000"/></marker>
-      <marker id="ah-SW" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#ff3ea5"/></marker>
-      <marker id="ah-x" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#c9d1dc"/></marker>
-    </defs>
-    <g id="world">
-      <image id="ortho" preserveAspectRatio="none"/>
-      <image id="mask" preserveAspectRatio="none" style="display:none"/>
-      <g id="others"></g>
-      <g id="targets"></g>
-      <g id="arrows"></g>
-      <g id="badges"></g>
-    </g>
-  </svg>
-  <div class="mapui zoom">
-    <button id="zIn" title="Hineinzoomen">+</button>
-    <button id="zOut" title="Herauszoomen">−</button>
-    <button id="zFit" title="Ganze Kachel" style="font-size:13px">⤢</button>
-  </div>
-  <div class="mapui scale"><i id="scaleBar"></i><span id="scaleTxt"></span></div>
-  <div class="mapui north" title="Norden (Gitternord, UTM)">N</div>
-  <div id="tip"></div>
-
-  <section id="imm" aria-modal="true" role="dialog">
-    <div id="immCard">
-      <div class="imm-head">
-        <span class="badge" id="iBadge"></span>
-        <h3 id="iTitle"></h3>
-        <span class="facts" id="iFacts"></span>
-        <button id="iClose" title="Zurück zur Karte (Esc)">×</button>
-      </div>
-      <div class="imm-body">
-        <div class="imm-view" id="iView">
-          <div class="facade-wrap" id="iWrap">
-            <img id="iImg" alt="Frontalansicht der Fassade aus dem 3D-Mesh">
-            <svg id="iSvg" preserveAspectRatio="none"></svg>
-          </div>
-          <div class="imm-legend">
-            <span><i style="border-color:var(--c-balkon)"></i>Balkon</span>
-            <span><i style="border-color:var(--c-loggia)"></i>Loggia</span>
-            <span><i style="border-color:var(--c-unsicher);border-style:dashed"></i>unsicher</span>
-          </div>
+  <div class="wrap">
+    <section class="hero" aria-labelledby="titel">
+      <div>
+        <h1 id="titel">Lohnt sich ein Balkonkraftwerk auf <em>Ihrem</em> Balkon?</h1>
+        <p class="lead">Adresse eingeben, Balkon antippen. Wir rechnen Sonne und Schatten aus dem 3D-Stadtmodell Berlin durch – und zeigen, was Sie sparen. Kostenlos, ohne Anmeldung.</p>
+        <div class="suche">
+          <form id="sucheForm" role="search" autocomplete="off">
+            <label for="adresse" class="sr" style="position:absolute;left:-9999px">Ihre Adresse</label>
+            <input id="adresse" type="search" placeholder="Straße und Hausnummer" aria-autocomplete="list" aria-controls="vorschlaege" aria-expanded="false" enterkeyhint="search">
+            <button class="btn" type="submit">Balkon finden</button>
+          </form>
+          <ul class="vorschlaege" id="vorschlaege" role="listbox" aria-label="Adressvorschläge"></ul>
         </div>
-        <div class="imm-info" id="iInfo"></div>
+        <p class="gebiet" id="gebiet">Derzeit für ein Testgebiet in Berlin verfügbar – weitere Kieze folgen.</p>
       </div>
+      <figure class="kompass" aria-label="Welche Himmelsrichtung lohnt sich?">
+        <svg viewBox="-110 -110 220 220" id="kompass" role="img" aria-label="Kompass: Süd, Südost und Südwest lohnen sich am meisten"></svg>
+        <p><b>Süd, Südost, Südwest</b> lohnen sich am meisten.<br>Ost und West bringen etwa ein Drittel weniger.</p>
+      </figure>
+    </section>
+
+    <section class="finder" id="finder" aria-label="Balkon finden">
+      <div class="karte">
+        <svg id="map" xmlns="http://www.w3.org/2000/svg" aria-label="Luftbild mit Hauswänden"></svg>
+        <div class="laedt" id="karteLaedt">Karte wird geladen …</div>
+        <div class="ui hinweis-karte" id="hinweisKarte">Tippen Sie auf Ihr Haus oder suchen Sie oben Ihre Adresse</div>
+        <div class="ui legende" aria-hidden="true">
+          <span><i style="background:var(--sun2)"></i>Süd, Südost, Südwest – lohnt sich besonders</span>
+          <span><i style="background:var(--mittel)"></i>Ost, West – lohnt sich auch</span>
+          <span><i style="background:var(--schwach)"></i>Nord – eher nicht</span>
+        </div>
+        <div class="ui zoom"><button id="zIn" aria-label="Hineinzoomen">+</button><button id="zOut" aria-label="Herauszoomen">−</button></div>
+      </div>
+      <div class="panel" id="panel" aria-live="polite"></div>
+    </section>
+  </div>
+
+  <section class="inhalt" id="so-gehts">
+    <div class="wrap">
+      <h2>So geht's – in drei Schritten zum Angebot</h2>
+      <ol class="drei">
+        <li><h3>Adresse eingeben</h3><p>Wir zeigen Ihr Haus im Luftbild und markieren die Hauswände, die viel Sonne bekommen.</p></li>
+        <li><h3>Balkon antippen</h3><p>Auf der Ansicht Ihrer Hauswand sehen Sie die Balkone. Nicht dabei? Zeichnen Sie Ihren einfach selbst ein.</p></li>
+        <li><h3>Ersparnis sehen</h3><p>Wir rechnen Stunde für Stunde, wann Nachbarhäuser und Bäume Schatten werfen – und schlagen ein passendes Balkonkraftwerk vor.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="inhalt" id="ausrichtung">
+    <div class="wrap zwei">
+      <div>
+        <h2>Welche Himmelsrichtung lohnt sich?</h2>
+        <p>Am Balkon hängen die Module meist senkrecht am Geländer. Dann bringt Süd am meisten, Südost und Südwest fast genauso viel. Ost- und Westbalkone liefern weniger, dafür morgens bzw. abends – genau dann, wenn viele Haushalte Strom brauchen. Deshalb nutzen sie einen größeren Teil davon selbst.</p>
+        <p>Viel wichtiger als die genaue Richtung ist oft der Schatten: Ein Haus gegenüber oder ein großer Baum kann die Hälfte des Ertrags kosten. Genau das rechnen wir für jeden Balkon einzeln.</p>
+      </div>
+      <table class="tabelle">
+        <caption style="caption-side:bottom;text-align:left;font-size:12.5px;color:#8a9a8e;padding-top:8px">Zwei Module mit je 450 Watt, senkrecht und ohne Schatten, Berlin. Eigene Simulation (Referenzjahr), gerundet.</caption>
+        <thead><tr><th>Balkon zeigt nach</th><th class="zahl">Strom im Jahr</th><th class="zahl">im Vergleich zu Süd</th></tr></thead>
+        <tbody>
+          <tr><td>Süd</td><td class="zahl">≈ 630 kWh</td><td class="zahl">100 %</td></tr>
+          <tr><td>Südost / Südwest</td><td class="zahl">≈ 580 kWh</td><td class="zahl">92 %</td></tr>
+          <tr><td>Ost / West</td><td class="zahl">≈ 440 kWh</td><td class="zahl">70 %</td></tr>
+          <tr><td>um 30° zur Sonne geneigt (Süd)</td><td class="zahl">≈ 870 kWh</td><td class="zahl">138 %</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="inhalt" id="fragen">
+    <div class="wrap">
+      <h2>Häufige Fragen</h2>
+      <details><summary>Wie viel Strom macht ein Balkonkraftwerk in Berlin?</summary><p>Zwei Module senkrecht am Südbalkon erzeugen ohne Schatten rund 600 kWh im Jahr, um 30° geneigt eher 800 bis 870 kWh. Nachbarhäuser und Bäume können davon viel wegnehmen – deshalb rechnen wir jeden Balkon einzeln mit dem 3D-Stadtmodell.</p></details>
+      <details><summary>Wie viel des Stroms nutze ich selbst?</summary><p>Typisch 30 bis 60 %. Kühlschrank, Router und Standby laufen immer, dazu kommt, was tagsüber läuft. Wer tagsüber zu Hause ist oder Wasch- und Spülmaschine mittags laufen lässt, nutzt deutlich mehr selbst. Ein kleiner Speicher hebt den Anteil auf 70 bis 90 %. Wir rechnen das minutengenau mit einem typischen Haushalt Ihrer Größe.</p></details>
+      <details><summary>Muss ich ein Balkonkraftwerk anmelden?</summary><p>Ja, aber nur kurz online im Marktstammdatenregister der Bundesnetzagentur – das dauert etwa fünf Minuten. Die frühere zusätzliche Anmeldung beim Netzbetreiber entfällt. Erlaubt sind bis zu 800 Watt Wechselrichterleistung.</p></details>
+      <details><summary>Darf ich als Mieterin oder Mieter ein Balkonkraftwerk anbringen?</summary><p>Steckersolargeräte gelten seit Oktober 2024 als privilegierte Maßnahme. Vermieter und Eigentümergemeinschaften müssen zustimmen, dürfen aber noch über die Art der Anbringung mitreden. Fragen Sie vorher kurz schriftlich nach.</p></details>
+      <details><summary>Fällt Mehrwertsteuer an?</summary><p>Nein. Seit 2023 gilt für Photovoltaikanlagen an Wohngebäuden – auch für Balkonkraftwerke – ein Mehrwertsteuersatz von 0 %.</p></details>
+      <details><summary>Was passiert mit meiner Adresse?</summary><p>Die Adresssuche läuft komplett in Ihrem Browser. Wir speichern weder Ihre Adresse noch Ihre IP-Adresse und setzen keine Tracking-Cookies.</p></details>
+      <details><summary>Mein Balkon wird nicht gefunden. Was nun?</summary><p>Das 3D-Modell stammt aus Luftbildern; manche Balkone sind darin schwer zu erkennen. Zeichnen Sie Ihren Balkon dann einfach selbst auf der Hauswand ein und wählen Sie die Geländerart – die Rechnung mit Sonne und Schatten ist danach genauso genau.</p></details>
     </div>
   </section>
 </main>
 
-<script src="data.js"></script>
-<script src="balkone.js" onerror="window.BALKONE = window.BALKONE || {}"></script>
-<script src="ertrag.js" onerror="window.ERTRAG = null"></script>
-<script src="angebote.js" onerror="window.ANGEBOTE = []"></script>
-<script>
-(() => {
-  const D = window.FASSADEN;
-  if (!D) { document.body.innerHTML = '<p style="padding:2em">data.js fehlt. Bitte zuerst die Pipeline ausführen.</p>'; return; }
-  const BK = window.BALKONE || {};
-  const M = D.meta;
-  const [xmin, ymin, xmax, ymax] = M.bounds;
-  const R = M.ortho.res;
-  const OW = M.ortho.w, OH = M.ortho.h;
-  const SECT = ['N','NO','O','SO','S','SW','W','NW'];
-  const NAMES = {N:'Nord',NO:'Nordost',O:'Ost',SO:'Südost',S:'Süd',SW:'Südwest',W:'West',NW:'Nordwest'};
-  const css = getComputedStyle(document.documentElement);
-  const COL = c => ({S: css.getPropertyValue('--c-S'), SO: css.getPropertyValue('--c-SO'), SW: css.getPropertyValue('--c-SW')}[c] || css.getPropertyValue('--c-other')).trim();
-  const isTargetCls = c => M.target_classes.includes(c);
-  const fmt = (v, d = 0) => (v ?? 0).toLocaleString('de-DE', {maximumFractionDigits: d, minimumFractionDigits: d});
-  const toPx = p => [(p[0] - xmin) / R, (ymax - p[1]) / R];
-  const $ = id => document.getElementById(id);
-
-  // ---------- Annahmen für Module und Ertrag ----------
-  const MODUL = {w: 1.72, h: 1.13, wp: 430, gap: 0.04};       // Standardmodul quer am Geländer
-  const KLEIN = {w: 1.15, wp: 250};                           // kleines Modul für schmale Balkone
-  const MAX_MODULE = 2;                                        // 800-W-Wechselrichter: 2 Module sinnvoll
-  const STROMPREIS = 0.37, EIGENVERBRAUCH = 0.6;
-  // spezifischer Jahresertrag senkrechter Module in Berlin (kWh/kWp), abhängig von der Abweichung von Süd
-  const ertragFaktor = az => { const d = Math.abs(((az - 180 + 540) % 360) - 180) * Math.PI / 180;
-    return 700 * (1 - 0.35 * (1 - Math.cos(d))); };
-
-  function modulVorschlag(b, az) {
-    const fit = Math.floor((b.breite_m + MODUL.gap) / (MODUL.w + MODUL.gap));
-    let n = Math.min(fit, MAX_MODULE), wp, text;
-    if (n >= 1) { wp = n * MODUL.wp; text = `${n} × Standardmodul (${fmt(MODUL.w, 2)} × ${fmt(MODUL.h, 2)} m, je ${MODUL.wp} Wp)`; }
-    else if (b.breite_m >= KLEIN.w + 0.05) { n = 1; wp = KLEIN.wp; text = `1 × kleines Modul (ca. ${fmt(KLEIN.w, 2)} m breit, ~${KLEIN.wp} Wp)`; }
-    else { return {n: 0, fit: 0, wp: 0, kwh: 0, eur: 0, text: 'zu schmal für ein Standardmodul'}; }
-    const kwh = wp / 1000 * ertragFaktor(az);
-    return {n, fit, wp, kwh, eur: kwh * EIGENVERBRAUCH * STROMPREIS, text};
-  }
-
-  const state = {
-    on: new Set(['S']), others: true, onlyBk: false,
-    minLen: 3, minH: 3, minEv: 0, sel: null, hover: null,
-  };
-
-  // ---------- Kopf / Fuß ----------
-  const nEval = Object.keys(BK).length;
-  $('tileinfo').textContent =
-    `Kachel ${M.tile} · ${fmt(xmax - xmin)} × ${fmt(ymax - ymin)} m · ${fmt(M.center_ll[0], 4)}° N, ${fmt(M.center_ll[1], 4)}° O`;
-  $('foot').innerHTML =
-    `Quelle: ${M.source}. Fassaden automatisch aus dem Mesh abgeleitet (${M.generated}). ` +
-    `${nEval ? `${nEval} Fassaden mit Claude auf Balkone ausgewertet. ` : ''}` +
-    `Maße aus Bildmaßstab, Genauigkeit ca. ±0,3–0,5 m. Ertrag: grobe Schätzung für senkrechte Module ohne Verschattung.`;
-
-  // ---------- Karte ----------
-  const svg = $('map');
-  const NS = 'http://www.w3.org/2000/svg';
-  const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
-  const ortho = $('ortho');
-  ortho.setAttribute('href', M.ortho.file); ortho.setAttribute('width', OW); ortho.setAttribute('height', OH);
-  const mask = $('mask');
-  mask.setAttribute('href', M.mask.file);
-  mask.setAttribute('width', M.mask.w * M.mask.res / R); mask.setAttribute('height', M.mask.h * M.mask.res / R);
-
-  const gT = $('targets'), gO = $('others'), gA = $('arrows'), gB = $('badges');
-  const byId = new Map();
-  for (const f of D.facades) {
-    const [ax, ay] = toPx(f.a), [bx, by] = toPx(f.b);
-    f._px = {ax, ay, bx, by, mx: (ax + bx) / 2, my: (ay + by) / 2};
-    f._bk = BK[String(f.id)] || null;
-    f._nbk = f._bk ? f._bk.balkone.filter(b => b.typ !== 'unsicher').length : null;
-    f._nmod = f._bk ? f._bk.balkone.filter(b => b.typ !== 'unsicher').reduce((s, b) => s + modulVorschlag(b, f.az).n, 0) : 0;
-    const g = el('g', {class: 'f', 'data-id': f.id});
-    f._halo = el('line', {class: 'halo', x1: ax, y1: ay, x2: bx, y2: by}, g);
-    f._main = el('line', {class: 'main', x1: ax, y1: ay, x2: bx, y2: by}, g);
-    el('line', {x1: ax, y1: ay, x2: bx, y2: by, stroke: 'transparent', 'stroke-width': 14, 'vector-effect': 'non-scaling-stroke'}, g);
-    f._g = g;
-    const L = 3.5 / R;
-    f._arrow = el('line', {class: 'arrow', x1: f._px.mx, y1: f._px.my,
-      x2: f._px.mx + f.n[0] * L, y2: f._px.my - f.n[1] * L,
-      stroke: COL(f.cls), 'stroke-width': 2.5, 'vector-effect': 'non-scaling-stroke', 'marker-end': `url(#ah-${isTargetCls(f.cls) ? f.cls : 'x'})`});
-    if (f._nbk) {
-      const off = 7 / R;
-      const b = el('g', {class: 'badge-bk', 'data-id': f.id, transform: `translate(${f._px.mx + f.n[0] * off} ${f._px.my - f.n[1] * off})`});
-      el('circle', {r: 2.6 / R}, b);
-      const t = el('text', {'font-size': 3.2 / R}, b); t.textContent = f._nbk;
-      f._badge = b;
-    }
-    byId.set(f.id, f);
-  }
-
-  // ---------- Windrose ----------
-  const rose = $('rose');
-  const wedge = (i) => {
-    const a0 = (i * 45 - 22.5 - 90) * Math.PI / 180, a1 = (i * 45 + 22.5 - 90) * Math.PI / 180;
-    const r0 = 22, r1 = 66;
-    const p = (r, a) => `${(r * Math.cos(a)).toFixed(2)} ${(r * Math.sin(a)).toFixed(2)}`;
-    return `M${p(r0, a0)} L${p(r1, a0)} A${r1} ${r1} 0 0 1 ${p(r1, a1)} L${p(r0, a1)} A${r0} ${r0} 0 0 0 ${p(r0, a0)}Z`;
-  };
-  const roseParts = SECT.map((c, i) => {
-    const path = el('path', {d: wedge(i)}, rose);
-    const a = (i * 45 - 90) * Math.PI / 180;
-    const t = el('text', {x: 44 * Math.cos(a), y: 44 * Math.sin(a)}, rose);
-    t.textContent = c;
-    el('title', {}, path).textContent = NAMES[c];
-    path.addEventListener('click', () => { state.on.has(c) ? state.on.delete(c) : state.on.add(c); render(); });
-    return {c, path, t};
-  });
-  el('circle', {r: 18, fill: 'var(--panel-2)'}, rose);
-  const roseCount = el('text', {y: 0, style: 'fill:var(--text);font-size:11px'}, rose);
-
-  // ---------- Steuerelemente ----------
-  const bindRange = (id, out, key, conv, label) => {
-    const inp = $(id);
-    const upd = () => { state[key] = conv(+inp.value); $(out).textContent = label(+inp.value); render(); };
-    inp.addEventListener('input', upd);
-    $(out).textContent = label(+inp.value);
-    state[key] = conv(+inp.value);
-  };
-  bindRange('fLen', 'vLen', 'minLen', v => v, v => `${v} m`);
-  bindRange('fH', 'vH', 'minH', v => v, v => `${v} m`);
-  bindRange('fEv', 'vEv', 'minEv', v => v / 100, v => `${v} %`);
-  $('tOthers').addEventListener('change', e => { state.others = e.target.checked; render(); });
-  $('tOnlyBk').addEventListener('change', e => { state.onlyBk = e.target.checked; render(); });
-  $('lOrtho').addEventListener('change', e => { ortho.style.display = e.target.checked ? '' : 'none'; });
-  $('lMask').addEventListener('change', e => { mask.style.display = e.target.checked ? '' : 'none'; });
-  $('lArrows').addEventListener('change', e => { gA.style.display = e.target.checked ? '' : 'none'; });
-  $('lBadges').addEventListener('change', e => { gB.style.display = e.target.checked ? '' : 'none'; });
-  document.querySelectorAll('[data-q]').forEach(b => b.addEventListener('click', () => {
-    state.on = new Set(b.dataset.q === 'all' ? SECT : b.dataset.q === 'S' ? ['S'] : M.target_classes); render();
-  }));
-
-  const passes = f => f.len >= state.minLen && f.h >= state.minH && f.ev >= state.minEv && (!state.onlyBk || f._nbk > 0);
-
-  // ---------- Rendern ----------
-  function render() {
-    gT.textContent = ''; gO.textContent = ''; gA.textContent = ''; gB.textContent = '';
-    let n = 0, nbk = 0, nmod = 0, nev = 0;
-    const shown = [];
-    for (const f of D.facades) {
-      const ok = passes(f), active = state.on.has(f.cls);
-      f._shown = false;
-      if (ok && active) {
-        f._g.setAttribute('class', 'f' + (f.id === state.sel ? ' sel' : ''));
-        f._main.setAttribute('stroke', COL(f.cls));
-        f._main.setAttribute('stroke-width', isTargetCls(f.cls) ? 4 : 3);
-        f._halo.setAttribute('stroke-width', isTargetCls(f.cls) ? 7 : 6);
-        gT.appendChild(f._g); gA.appendChild(f._arrow);
-        if (f._badge) gB.appendChild(f._badge);
-        f._shown = true;
-        n++; shown.push(f);
-        if (f._bk) { nev++; nbk += f._nbk; nmod += f._nmod; }
-      } else if (ok && state.others && !state.onlyBk) {
-        f._g.setAttribute('class', 'f other' + (f.id === state.sel ? ' sel' : ''));
-        f._main.setAttribute('stroke-width', 1.5);
-        f._halo.setAttribute('stroke-width', 3.5);
-        gO.appendChild(f._g);
-        f._shown = true;
-      }
-    }
-    $('sCount').textContent = fmt(n);
-    $('sBk').textContent = nev ? fmt(nbk) : '–';
-    $('sMod').textContent = nev ? fmt(nmod) : '–';
-    $('sInfo').textContent = nev ? `${nev} von ${n} sichtbaren Fassaden ausgewertet` : 'Noch keine Balkonauswertung für diese Auswahl';
-    for (const p of roseParts) {
-      const on = state.on.has(p.c);
-      p.path.setAttribute('fill', on ? (isTargetCls(p.c) ? COL(p.c) : '#c9d1dc') : '#262c35');
-      p.t.setAttribute('class', on ? '' : 'off');
-    }
-    roseCount.textContent = n;
-    shown.sort((a, b) => (b._nbk ?? -1) - (a._nbk ?? -1) || b.area - a.area);
-    const ul = $('list'); ul.textContent = '';
-    $('listInfo').textContent = shown.length > 60 ? `(60 von ${shown.length})` : `(${shown.length})`;
-    for (const f of shown.slice(0, 60)) {
-      const li = document.createElement('li');
-      if (f.id === state.sel) li.className = 'on';
-      const bk = f._bk ? `<span class="bk">${f._nbk} Balk.</span> · ` : '';
-      li.innerHTML = `<span class="dot" style="background:${COL(f.cls)}"></span>` +
-        `<span>#${f.id} ${NAMES[f.cls]}${f.kind === 'stufe' ? ' <span class="pill">Höhensprung</span>' : ''}</span>` +
-        `<span class="meta">${bk}${fmt(f.len)} m</span>`;
-      li.addEventListener('click', () => openFacade(f.id, true));
-      ul.appendChild(li);
-    }
-  }
-
-  // ---------- Pan & Zoom ----------
-  let view = {x: 0, y: 0, w: OW, h: OH};
-  const apply = () => { svg.setAttribute('viewBox', `${view.x} ${view.y} ${view.w} ${view.h}`); updateScale(); };
-  function fit() {
-    const r = svg.getBoundingClientRect();
-    const s = Math.max(OW / r.width, OH / r.height) * 1.02;
-    view = {w: r.width * s, h: r.height * s, x: (OW - r.width * s) / 2, y: (OH - r.height * s) / 2};
-    apply();
-  }
-  function zoomAt(cx, cy, k) {
-    const nw = Math.min(Math.max(view.w * k, 60), OW * 4);
-    const kk = nw / view.w;
-    view.x = cx - (cx - view.x) * kk; view.y = cy - (cy - view.y) * kk;
-    view.w *= kk; view.h *= kk; apply();
-  }
-  const toWorld = (clientX, clientY) => {
-    const r = svg.getBoundingClientRect();
-    return [view.x + (clientX - r.left) / r.width * view.w, view.y + (clientY - r.top) / r.height * view.h];
-  };
-  const toClient = (wx, wy) => {
-    const r = svg.parentElement.getBoundingClientRect();
-    return [(wx - view.x) / view.w * r.width, (wy - view.y) / view.h * r.height];
-  };
-  svg.addEventListener('wheel', e => {
-    e.preventDefault();
-    const [wx, wy] = toWorld(e.clientX, e.clientY);
-    zoomAt(wx, wy, Math.exp(e.deltaY * (e.ctrlKey ? 0.01 : 0.0015)));
-  }, {passive: false});
-  let drag = null;
-  svg.addEventListener('pointerdown', e => {
-    drag = {x: e.clientX, y: e.clientY, vx: view.x, vy: view.y, moved: false};
-    svg.setPointerCapture(e.pointerId);
-  });
-  svg.addEventListener('pointermove', e => {
-    if (drag) {
-      const r = svg.getBoundingClientRect();
-      const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
-      if (Math.abs(dx) + Math.abs(dy) > 3) { drag.moved = true; svg.classList.add('dragging'); }
-      view.x = drag.vx - dx / r.width * view.w; view.y = drag.vy - dy / r.height * view.h; apply();
-      hideTip(); return;
-    }
-    const g = e.target.closest && (e.target.closest('.f') || e.target.closest('.badge-bk'));
-    setHover(g ? +g.dataset.id : null, e);
-  });
-  svg.addEventListener('pointerup', e => {
-    svg.classList.remove('dragging');
-    if (drag && !drag.moved) {
-      const hit = document.elementsFromPoint(e.clientX, e.clientY).find(n => n.closest && (n.closest('.f') || n.closest('.badge-bk')));
-      if (hit) openFacade(+(hit.closest('.f') || hit.closest('.badge-bk')).dataset.id, false);
-    }
-    drag = null;
-  });
-  svg.addEventListener('pointerleave', () => setHover(null));
-  $('zIn').addEventListener('click', () => zoomAt(view.x + view.w / 2, view.y + view.h / 2, 0.6));
-  $('zOut').addEventListener('click', () => zoomAt(view.x + view.w / 2, view.y + view.h / 2, 1 / 0.6));
-  $('zFit').addEventListener('click', fit);
-  window.addEventListener('resize', () => { const r = svg.getBoundingClientRect(); view.h = view.w * r.height / r.width; apply(); });
-
-  function flyTo(f) {
-    const r = svg.getBoundingClientRect();
-    const span = Math.max(Math.abs(f._px.bx - f._px.ax), Math.abs(f._px.by - f._px.ay), 30 / R);
-    const w = Math.max(span * 2.2, 70 / R), h = w * r.height / r.width;
-    view = {x: f._px.mx - w / 2, y: f._px.my - h / 2, w, h};
-    apply();
-  }
-
-  // ---------- Tooltip ----------
-  const tip = $('tip');
-  function hideTip() { tip.style.display = 'none'; }
-  function setHover(id, e) {
-    if (state.hover !== null && state.hover !== id) { const p = byId.get(state.hover); if (p) p._g.classList.remove('hover'); }
-    state.hover = id;
-    if (id === null) { hideTip(); return; }
-    const f = byId.get(id);
-    f._g.classList.add('hover');
-    const r = svg.parentElement.getBoundingClientRect();
-    const bk = f._bk ? ` · <b style="color:var(--c-balkon)">${f._nbk} Balkone</b>` : '';
-    tip.innerHTML = `<b style="color:${COL(f.cls)}">${NAMES[f.cls]}</b> · ${fmt(f.az)}° · ${fmt(f.len)} m · ${fmt(f.h)} m hoch${bk}`;
-    tip.style.display = 'block';
-    tip.style.left = Math.min(e.clientX - r.left + 14, r.width - tip.offsetWidth - 8) + 'px';
-    tip.style.top = (e.clientY - r.top + 14) + 'px';
-  }
-
-  // ---------- Maßstab ----------
-  function updateScale() {
-    const r = svg.getBoundingClientRect();
-    const pxPerM = r.width / (view.w * R);
-    let m = 1;
-    for (const v of [1, 2, 5, 10, 20, 25, 50, 100, 200, 500]) if (v * pxPerM <= 130) m = v;
-    $('scaleBar').style.width = (m * pxPerM) + 'px';
-    $('scaleTxt').textContent = `${m} m`;
-  }
-
-  // ---------- Eintauch-Ansicht ----------
-  const imm = $('imm'), card = $('immCard');
-  let openId = null, selBk = null, opened = false;
-
-  function startTransform(f) {
-    const r = imm.getBoundingClientRect();
-    const [cx, cy] = toClient(f._px.mx, f._px.my);
-    const dx = cx - r.width / 2, dy = cy - r.height / 2;
-    return `translate(-50%, -50%) translate(${dx}px, ${dy}px) rotateX(78deg) scale(.18)`;
-  }
-
-  function openFacade(id, fly) {
-    const f = byId.get(id);
-    if (!f) return;
-    state.sel = id; render();
-    if (fly) flyTo(f);
-    openId = id; selBk = null; opened = false;
-    fillCard(f);
-    imm.classList.add('open');
-    svg.classList.add('sunk');
-    card.classList.remove('anim', 'tilt');
-    card.style.opacity = '0';
-    card.style.transform = startTransform(f);
-    card.getBoundingClientRect();
-    requestAnimationFrame(() => {
-      card.classList.add('anim');
-      card.style.opacity = '1';
-      card.style.transform = 'translate(-50%, -50%)';
-      setTimeout(() => { opened = true; card.classList.remove('anim'); card.classList.add('tilt'); }, 980);
-    });
-  }
-
-  function closeFacade() {
-    if (openId === null) return;
-    const f = byId.get(openId);
-    opened = false;
-    card.classList.remove('tilt'); card.classList.add('anim');
-    card.style.transform = startTransform(f);
-    card.style.opacity = '0';
-    svg.classList.remove('sunk');
-    setTimeout(() => { imm.classList.remove('open'); card.classList.remove('anim'); }, 700);
-    openId = null;
-  }
-  $('iClose').addEventListener('click', closeFacade);
-  imm.addEventListener('pointerdown', e => { if (e.target === imm) closeFacade(); });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFacade(); });
-  imm.addEventListener('mousemove', e => {
-    if (!opened) return;
-    const r = imm.getBoundingClientRect();
-    const x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
-    card.style.transform = `translate(-50%, -50%) rotateY(${x * 3.5}deg) rotateX(${-y * 2.5}deg)`;
-  });
-  imm.addEventListener('mouseleave', () => { if (opened) card.style.transform = 'translate(-50%, -50%)'; });
-
-  function fillCard(f) {
-    $('iBadge').textContent = f.cls; $('iBadge').style.background = COL(f.cls);
-    $('iTitle').textContent = `Fassade #${f.id} · ${NAMES[f.cls]}`;
-    $('iFacts').textContent = `${fmt(f.az)}° · ${fmt(f.len, 1)} m breit · ${fmt(f.h, 1)} m hoch` +
-      (f.kind === 'stufe' ? ' · Wand über Nachbardach' : '') + ` · Wandnachweis ${fmt(f.ev * 100)} %`;
-    const img = $('iImg'), s = $('iSvg');
-    s.textContent = '';
-    if (!f.img) { img.removeAttribute('src'); $('iInfo').innerHTML = '<p class="hint">Für diese Fassade gibt es kein Bild.</p>'; return; }
-    img.onload = () => drawBalkone(f);
-    img.src = f.img;
-    if (img.complete && img.naturalWidth) drawBalkone(f);
-    showFacadeInfo(f);
-  }
-
-  function drawBalkone(f) {
-    const img = $('iImg'), s = $('iSvg');
-    const W = img.naturalWidth, H = img.naturalHeight;
-    s.setAttribute('viewBox', `0 0 ${W} ${H}`);
-    s.textContent = '';
-    if (f.img_ztop != null && f.img_res) {
-      const yg = (f.img_ztop - f.ground) / f.img_res;
-      if (yg > 0 && yg < H) el('line', {class: 'ground-line', x1: 0, y1: yg, x2: W, y2: yg}, s);
-    }
-    if (!f._bk) return;
-    f._bk.balkone.forEach((b, i) => {
-      const g = el('g', {class: `bk ${b.typ}`, 'data-i': i}, s);
-      const [x0, y0, x1, y1] = b.box;
-      el('rect', {x: x0, y: y0, width: Math.max(2, x1 - x0), height: Math.max(2, y1 - y0), rx: 3}, g);
-      el('title', {}, g).textContent = `${b.typ}, ca. ${fmt(b.breite_m, 1)} m breit`;
-      g.addEventListener('click', ev => { ev.stopPropagation(); selectBalkon(f, i); });
-    });
-  }
-
-  function showFacadeInfo(f) {
-    const box = $('iInfo');
-    if (!f._bk) {
-      box.innerHTML = `<h4>Noch nicht ausgewertet</h4><p class="hint">Diese Fassade wurde noch nicht auf Balkone untersucht. ` +
-        `Auswertung mit <code>balkone_claude.py submit --ids ${f.id}</code>.</p>`;
-      return;
-    }
-    const bks = f._bk.balkone, sicher = bks.filter(b => b.typ !== 'unsicher');
-    const byFloor = {};
-    sicher.forEach(b => { byFloor[b.geschoss] = (byFloor[b.geschoss] || 0) + 1; });
-    const kwh = sicher.reduce((s, b) => s + modulVorschlag(b, f.az).kwh, 0);
-    box.innerHTML =
-      `<h4>Fassade</h4><div class="big">${sicher.length}</div><div class="hint">Balkone/Loggien erkannt` +
-      `${bks.length - sicher.length ? `, dazu ${bks.length - sicher.length} unsicher` : ''}</div>` +
-      `<dl class="kv"><dt>Geschosse</dt><dd>${f._bk.geschosse ?? '–'}</dd>` +
-      `<dt>Bildqualität</dt><dd>${f._bk.bildqualitaet ?? '–'}</dd>` +
-      `<dt>Module möglich</dt><dd>${f._nmod}</dd>` +
-      `<dt>Ertrag gesamt</dt><dd>≈ ${fmt(kwh)} kWh/Jahr</dd></dl>` +
-      (f._bk.anmerkung ? `<p class="note">Modell: ${f._bk.anmerkung}</p>` : '') +
-      (sicher.length ? `<p class="hint">Balkon im Bild anklicken für Maße und Modulvorschlag.</p>` :
-        `<p class="hint">Auf dieser Fassade wurden keine Balkone gefunden.</p>`) +
-      `<p class="note">Ausgewertet mit ${f._bk.model} am ${f._bk.datum}. Graue Flächen im Bild = keine Daten (meist Bäume).</p>`;
-  }
-
-  function selectBalkon(f, i) {
-    selBk = i;
-    document.querySelectorAll('#iSvg .bk').forEach(g => g.classList.toggle('sel', +g.dataset.i === i));
-    const b = f._bk.balkone[i];
-    const mv = modulVorschlag(b, f.az);
-    const sim = window.ERTRAG && ERTRAG.balkone[String(f.id)] && ERTRAG.balkone[String(f.id)][String(i)];
-    const simOk = sim && sim.passt ? sim : null;
-    const angebot = (window.ANGEBOTE || []).some(a => a.id === `${f.id}_${i}`) ? `${f.id}_${i}` : null;
-    const mods = mv.n ? Array.from({length: mv.n}, () =>
-      `<div class="mod" style="width:${Math.round((mv.wp / mv.n < 400 ? KLEIN.w : MODUL.w) / Math.max(b.breite_m, MODUL.w) * 100)}%"></div>`).join('') : '';
-    $('iInfo').innerHTML =
-      `<h4>${b.typ}${b.geschoss != null ? ` · ${b.geschoss === 0 ? 'Erdgeschoss' : b.geschoss + '. OG'}` : ''}</h4>` +
-      `<div class="big">≈ ${fmt(b.breite_m, 1)} m</div><div class="hint">Breite der Brüstung bzw. Öffnung</div>` +
-      `<dl class="kv">` +
-      `<dt>Höhe im Bild</dt><dd>≈ ${fmt(b.hoehe_m, 1)} m</dd>` +
-      (b.unterkante_m != null ? `<dt>Unterkante</dt><dd>≈ ${fmt(b.unterkante_m, 1)} m über ${f.kind === 'stufe' ? 'Nachbardach' : 'Gelände'}</dd>` : '') +
-      `<dt>Ausrichtung</dt><dd>${NAMES[f.cls]} (${fmt(f.az)}°)</dd>` +
-      `<dt>Sicherheit</dt><dd>${fmt(b.sicherheit * 100)} %</dd>` +
-      `<dt>Genauigkeit</dt><dd>± 0,3–0,5 m</dd></dl>` +
-      `<div class="module-box"><b>Modulvorschlag</b>` +
-      (mv.n ? `<div class="mods" style="width:100%">${mods}</div><div>${mv.text}</div>` +
-        `<dl class="kv"><dt>Leistung</dt><dd>${fmt(mv.wp)} Wp${mv.fit > MAX_MODULE ? ` (Platz für ${mv.fit})` : ''}</dd>` +
-        (simOk ? `<dt>Ertrag</dt><dd>≈ ${fmt(simOk.kwh)} kWh/Jahr</dd>` +
-               `<dt>Verschattung</dt><dd>− ${fmt(simOk.verlust * 100)} % (frei: ${fmt(simOk.kwh_frei)} kWh)</dd>` +
-               `<dt>Ersparnis</dt><dd>≈ ${fmt(simOk.kwh * EIGENVERBRAUCH * STROMPREIS)} €/Jahr</dd></dl>`
-             : `<dt>Ertrag</dt><dd>≈ ${fmt(mv.kwh)} kWh/Jahr</dd>` +
-               `<dt>Ersparnis</dt><dd>≈ ${fmt(mv.eur)} €/Jahr</dd></dl>`) +
-        (angebot ? `<p class="angebot-wrap"><button class="btn-angebot" id="iAngebot">Angebot erstellen</button><span class="unverb">unverbindlich</span></p>` : '') :
-        `<p class="hint">${mv.text}.</p>`) +
-      `</div>` +
-      `<p class="note">Annahmen: Module senkrecht am Geländer, ${fmt(EIGENVERBRAUCH * 100)} % Eigenverbrauch, ` +
-      `${fmt(STROMPREIS * 100)} ct/kWh, max. ${MAX_MODULE} Module (800-W-Wechselrichter). ` +
-      (simOk ? `Ertrag stündlich simuliert mit Verschattung durch Gebäude und Bäume aus dem 3D-Modell${simOk.rand ? ' (Balkon nahe Kachelrand, Horizont unvollständig)' : ''}.` : 'Verschattung noch nicht berücksichtigt (pipeline/angebot.py ausführen).') + `</p>` +
-      `<p><button id="iBack">← Fassade</button></p>`;
-    if ($('iAngebot')) $('iAngebot').addEventListener('click', () => angebotErstellen(angebot));
-    $('iBack').addEventListener('click', () => {
-      document.querySelectorAll('#iSvg .bk').forEach(g => g.classList.remove('sel'));
-      showFacadeInfo(f);
-    });
-  }
-
-
-  // ---------- Angebot erstellen: Ladebildschirm, Daten vorladen, dann zur Angebotsseite ----------
-  window.addEventListener('pageshow', () => { $('laden').classList.remove('zeigen', 'sichtbar'); $('ladenBar').style.width = '0'; });
-  function angebotErstellen(id) {
-    const L = $('laden');
-    L.classList.add('zeigen');
-    requestAnimationFrame(() => L.classList.add('sichtbar'));
-    const schritte = ['Wir vermessen Ihren Balkon …', 'Wir berechnen Sonne und Schatten …', 'Wir wählen passende Solarmodule aus …', 'Ihr Angebot ist fertig.'];
-    schritte.forEach((t, i) => setTimeout(() => { $('ladenText').textContent = t; $('ladenBar').style.width = ((i + 1) / schritte.length * 100) + '%'; }, i * 900));
-    const daten = Promise.all([`angebot/${id}/daten.json`, `angebot/${id}/modell.json`, 'angebot/lastprofil.json']
-      .map(u => fetch(u).then(r => { if (!r.ok) throw new Error(u); return r.arrayBuffer(); })));
-    const mindestens = new Promise(r => setTimeout(r, matchMedia('(prefers-reduced-motion: reduce)').matches ? 1800 : 3300));
-    Promise.all([daten, mindestens]).then(() => { location.href = `angebot/?id=${id}`; })
-      .catch(() => { $('ladenText').textContent = 'Das Angebot konnte nicht geladen werden. Bitte pipeline/angebot.py --alle-angebote ausführen.'; });
-  }
-  render();
-  fit();
-})();
-</script>
+<footer>
+  <div class="wrap">
+    <p>Alle Werte sind Schätzungen auf Basis unserer Modelle (3D-Stadtmodell Berlin, Wetter-Referenzjahr, Verbrauchsmodell eines typischen Haushalts). Keine Rechts- oder Anlageberatung.</p>
+    <p id="quellen">Geodaten: Geoportal Berlin, 3D-Meshmodell.</p>
+  </div>
+</footer>
 
 <div id="laden" role="dialog" aria-live="polite" aria-label="Angebot wird erstellt">
   <div class="marke"><svg viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="14" fill="#1f6b43"/><line x1="24" y1="5.5" x2="24" y2="12" stroke="#f4b731" stroke-width="2.4" stroke-linecap="round"/><circle cx="24" cy="19" r="7.5" fill="#f4b731"/><rect x="22.7" y="25" width="2.6" height="6" fill="#f4b731"/><rect x="8.5" y="29.5" width="31" height="3.2" rx="1.6" fill="#fafcf7"/><g fill="#fafcf7"><rect x="11.5" y="32" width="2.4" height="8"/><rect x="17.3" y="32" width="2.4" height="8"/><rect x="22.8" y="32" width="2.4" height="8"/><rect x="28.3" y="32" width="2.4" height="8"/><rect x="34.1" y="32" width="2.4" height="8"/></g><rect x="6.5" y="39.5" width="35" height="3.2" rx="1.6" fill="#fafcf7"/></svg><span class="marke-text"><span class="wort"><b>balki</b>strom</span><span class="claim">1 Stunde Aufwand. Jahrelang sparen – fürs Konto und fürs Klima.</span></span></div>
@@ -859,5 +427,429 @@
     <div class="bar"><i id="ladenBar"></i></div>
   </div>
 </div>
+
+
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const NS = 'http://www.w3.org/2000/svg';
+  const el = (tag, attrs = {}, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
+  const fmt = (v, d = 0) => (v ?? 0).toLocaleString('de-DE', {maximumFractionDigits: d, minimumFractionDigits: d});
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+  const NAMEN = {N: 'Norden', NO: 'Nordosten', O: 'Osten', SO: 'Südosten', S: 'Süden', SW: 'Südwesten', W: 'Westen', NW: 'Nordwesten'};
+  // Ertrag senkrechter Module relativ zu Süd (eigene Simulation, unverschattet, Berlin)
+  const relErtrag = az => { const d = Math.abs(((az - 180 + 540) % 360) - 180); return Math.max(0.25, 1 - 0.0000372 * d * d - 0.00006 * d); };
+  const stufe = f => ['S', 'SO', 'SW'].includes(f.cls) ? 'gut' : (['O', 'W'].includes(f.cls) ? 'mittel' : 'schwach');
+  const STUFE_TEXT = {gut: 'lohnt sich besonders', mittel: 'lohnt sich auch', schwach: 'eher wenig Sonne'};
+  const FARBE = {gut: '#f4b731', mittel: '#8fb89a', schwach: '#b9c2b7'};
+  const GELAENDER = [['staebe', 'Stäbe / Gitter'], ['glas', 'Glas'], ['mauer', 'Mauer / Brüstung'], ['blech', 'Blech / Platte']];
+
+  // ---------------------------------------------------------------- Kompass im Hero
+  (() => {
+    const s = $('kompass');
+    const sek = ['N', 'NO', 'O', 'SO', 'S', 'SW', 'W', 'NW'];
+    sek.forEach((c, i) => {
+      const a0 = (i * 45 - 22.5 - 90) * Math.PI / 180, a1 = (i * 45 + 22.5 - 90) * Math.PI / 180;
+      const r0 = 38, r1 = 96;
+      const st = ['S', 'SO', 'SW'].includes(c) ? 'gut' : (['O', 'W'].includes(c) ? 'mittel' : 'schwach');
+      el('path', {d: `M${r0 * Math.cos(a0)} ${r0 * Math.sin(a0)} L${r1 * Math.cos(a0)} ${r1 * Math.sin(a0)} A${r1} ${r1} 0 0 1 ${r1 * Math.cos(a1)} ${r1 * Math.sin(a1)} L${r0 * Math.cos(a1)} ${r0 * Math.sin(a1)} A${r0} ${r0} 0 0 0 ${r0 * Math.cos(a0)} ${r0 * Math.sin(a0)}Z`,
+        fill: FARBE[st], stroke: '#fafcf7', 'stroke-width': 3}, s);
+      const am = (i * 45 - 90) * Math.PI / 180;
+      el('text', {x: 68 * Math.cos(am), y: 68 * Math.sin(am) + 5, 'text-anchor': 'middle', 'font-size': 15, 'font-weight': 700,
+        fill: st === 'gut' ? '#1c3a29' : '#fafcf7', 'font-family': 'Figtree, sans-serif'}, s).textContent = c;
+    });
+    el('circle', {r: 30, fill: '#fafcf7'}, s);
+    const sun = el('g', {}, s);
+    el('circle', {r: 11, fill: '#f4b731'}, sun);
+    for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4; el('line', {x1: 15 * Math.cos(a), y1: 15 * Math.sin(a), x2: 20 * Math.cos(a), y2: 20 * Math.sin(a), stroke: '#f4b731', 'stroke-width': 2.5, 'stroke-linecap': 'round'}, sun); }
+  })();
+
+  // ---------------------------------------------------------------- Daten nachladen
+  const ladeSkript = src => new Promise(res => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = res; document.head.appendChild(s); });
+  let datenP = null;
+  function daten() {
+    if (!datenP) datenP = Promise.all(['data.js', 'balkone.js', 'ertrag.js', 'angebote.js'].map(ladeSkript)).then(() => {
+      window.BALKONE = window.BALKONE || {};
+      window.ANGEBOTE = window.ANGEBOTE || [];
+      return window.FASSADEN;
+    });
+    return datenP;
+  }
+  let apiP = null;
+  const api = () => apiP || (apiP = fetch('api/status', {cache: 'no-store'}).then(r => r.ok ? r.json() : null).catch(() => null));
+  let adrP = null;
+  const adressen = () => adrP || (adrP = fetch('adressen.json').then(r => r.ok ? r.json() : null).catch(() => null));
+  new IntersectionObserver((e, o) => { if (e.some(x => x.isIntersecting)) { o.disconnect(); start(); } }, {rootMargin: '300px'}).observe($('finder'));
+  $('adresse').addEventListener('focus', () => { adressen(); daten(); }, {once: true});
+
+  // ---------------------------------------------------------------- Karte
+  const svg = $('map');
+  let D, M, R, xmin, ymin, xmax, ymax, OW, OH, byId = new Map(), gF, gPin;
+  let view = {x: 0, y: 0, w: 1, h: 1};
+  const st = {schritt: 1, f: null, bk: null, wand: [], adresse: null, zeichnen: false, box: null, gelaender: null, geladen: false};
+
+  let startP = null;
+  function start() {
+    if (startP) return startP;
+    startP = daten().then(d => {
+      if (!d) { $('karteLaedt').textContent = 'Kartendaten fehlen.'; return; }
+      D = d; M = D.meta; R = M.ortho.res; [xmin, ymin, xmax, ymax] = M.bounds; OW = M.ortho.w; OH = M.ortho.h;
+      const img = el('image', {href: M.ortho.file, x: 0, y: 0, width: OW, height: OH, preserveAspectRatio: 'none'}, svg);
+      img.addEventListener('load', () => $('karteLaedt').remove(), {once: true});
+      gF = el('g', {}, svg); gPin = el('g', {class: 'pin'}, svg);
+      const ord = {schwach: 0, mittel: 1, gut: 2};
+      [...D.facades].sort((a, b) => ord[stufe(a)] - ord[stufe(b)]).forEach(f => {
+        byId.set(f.id, f);
+        const [ax, ay] = px(f.a), [bx, by] = px(f.b);
+        f._m = [(ax + bx) / 2, (ay + by) / 2];
+        const s = stufe(f), w = s === 'gut' ? 5.5 : (s === 'mittel' ? 4 : 2.6);
+        const g = el('g', {class: 'f', 'data-id': f.id}, gF);
+        el('line', {class: 'halo', x1: ax, y1: ay, x2: bx, y2: by, 'stroke-width': w + 9}, g);
+        el('line', {class: 'l', x1: ax, y1: ay, x2: bx, y2: by, stroke: FARBE[s], 'stroke-width': w}, g);
+        el('title', {}, g).textContent = `Hauswand nach ${NAMEN[f.cls]}`;
+        f._g = g;
+      });
+      fit(); st.geladen = true; render();
+      if (st.adresse) zeigeAdresse(st.adresse);
+    });
+    return startP;
+  }
+  const px = p => [(p[0] - xmin) / R, (ymax - p[1]) / R];
+  let pinP = null;
+  const apply = () => { svg.setAttribute('viewBox', `${view.x} ${view.y} ${view.w} ${view.h}`); if (pinP) setzePin(pinP); };
+  function fit() {
+    const r = svg.getBoundingClientRect(), s = Math.max(OW / r.width, OH / r.height);
+    view = {w: r.width * s, h: r.height * s, x: (OW - r.width * s) / 2, y: (OH - r.height * s) / 2}; apply();
+  }
+  function zoomAuf(cx, cy, breiteM) {
+    const r = svg.getBoundingClientRect(), w = breiteM / R, h = w * r.height / r.width;
+    view = {x: cx - w / 2, y: cy - h / 2, w, h}; apply();
+  }
+  function zoomAt(cx, cy, k) {
+    const nw = Math.min(Math.max(view.w * k, 40 / R), OW * 1.6), kk = nw / view.w;
+    view.x = cx - (cx - view.x) * kk; view.y = cy - (cy - view.y) * kk; view.w *= kk; view.h *= kk; apply();
+  }
+  const toWorld = (x, y) => { const r = svg.getBoundingClientRect(); return [view.x + (x - r.left) / r.width * view.w, view.y + (y - r.top) / r.height * view.h]; };
+  svg.addEventListener('wheel', e => { if (!st.geladen) return; e.preventDefault(); const [wx, wy] = toWorld(e.clientX, e.clientY); zoomAt(wx, wy, Math.exp(e.deltaY * (e.ctrlKey ? 0.01 : 0.0015))); }, {passive: false});
+  const zeiger = new Map(); let drag = null, pinch = null;
+  svg.addEventListener('pointerdown', e => {
+    if (!st.geladen) return;
+    zeiger.set(e.pointerId, [e.clientX, e.clientY]); svg.setPointerCapture(e.pointerId);
+    if (zeiger.size === 1) drag = {x: e.clientX, y: e.clientY, vx: view.x, vy: view.y, moved: false};
+    if (zeiger.size === 2) { const [a, b] = [...zeiger.values()]; pinch = {d: Math.hypot(a[0] - b[0], a[1] - b[1]), w: view.w}; drag = null; }
+  });
+  svg.addEventListener('pointermove', e => {
+    if (!zeiger.has(e.pointerId)) return;
+    zeiger.set(e.pointerId, [e.clientX, e.clientY]);
+    if (pinch && zeiger.size === 2) {
+      const [a, b] = [...zeiger.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]);
+      const [wx, wy] = toWorld((a[0] + b[0]) / 2, (a[1] + b[1]) / 2);
+      zoomAt(wx, wy, (pinch.w * pinch.d / d) / view.w); return;
+    }
+    if (!drag) return;
+    const r = svg.getBoundingClientRect(), dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    if (Math.abs(dx) + Math.abs(dy) > 4) { drag.moved = true; svg.classList.add('ziehen'); }
+    view.x = drag.vx - dx / r.width * view.w; view.y = drag.vy - dy / r.height * view.h; apply();
+  });
+  const ende = e => {
+    zeiger.delete(e.pointerId); svg.classList.remove('ziehen');
+    if (zeiger.size < 2) pinch = null;
+    if (drag && !drag.moved && e.type === 'pointerup') {
+      const hit = document.elementsFromPoint(e.clientX, e.clientY).find(n => n.closest && n.closest('.f'));
+      if (hit) waehleWand(+hit.closest('.f').dataset.id, false);
+      else { const [wx, wy] = toWorld(e.clientX, e.clientY); umgebung([xmin + wx * R, ymax - wy * R], null); }
+    }
+    drag = null;
+  };
+  svg.addEventListener('pointerup', ende); svg.addEventListener('pointercancel', ende);
+  $('zIn').addEventListener('click', () => st.geladen && zoomAt(view.x + view.w / 2, view.y + view.h / 2, 0.6));
+  $('zOut').addEventListener('click', () => st.geladen && zoomAt(view.x + view.w / 2, view.y + view.h / 2, 1 / 0.6));
+  window.addEventListener('resize', () => { if (!st.geladen) return; const r = svg.getBoundingClientRect(); view.h = view.w * r.height / r.width; apply(); });
+
+  function markiere() {
+    for (const f of byId.values()) f._g.classList.toggle('sel', st.f === f.id || (st.schritt === 2 && st.wand.includes(f.id)));
+  }
+  function setzePin(p) {
+    gPin.textContent = ''; pinP = p;
+    if (!p) return;
+    const [x, y] = px(p), s = view.w / Math.max(1, svg.getBoundingClientRect().width) * 0.85;   // feste Größe auf dem Bildschirm
+    const g = el('g', {transform: `translate(${x} ${y}) scale(${s})`}, gPin);
+    el('path', {d: 'M0 0 C -9 -14 -16 -20 -16 -30 A16 16 0 1 1 16 -30 C 16 -20 9 -14 0 0Z', fill: '#1c3a29', stroke: '#fff', 'stroke-width': 2.5}, g);
+    el('circle', {cx: 0, cy: -30, r: 6, fill: '#f4b731'}, g);
+  }
+
+  // ---------------------------------------------------------------- Adresssuche
+  const norm = s => s.toLowerCase().replace(/ß/g, 'ss').replace(/str\.?(\s|$)/g, 'strasse$1').replace(/straße/g, 'strasse')
+    .replace(/[äöü]/g, c => ({ä: 'ae', ö: 'oe', ü: 'ue'}[c])).replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+  const liste = $('vorschlaege'), inp = $('adresse');
+  let treffer = [], aktiv = -1;
+  async function suche(q) {
+    const A = await adressen();
+    const n = norm(q);
+    if (!n) return [];
+    if (!A) return null;
+    if (!A._idx) A._idx = A.adressen.map(a => [norm(`${a.s} ${a.n} ${a.p}`), a]);
+    const teile = n.split(' ');
+    return A._idx.filter(([t]) => teile.every(w => t.split(' ').some(x => x.startsWith(w)))).slice(0, 7).map(x => x[1]);
+  }
+  function zeigeVorschlaege(t, q) {
+    liste.textContent = ''; aktiv = -1;
+    if (t === null) liste.innerHTML = '<li class="info">Die Adresssuche ist hier noch nicht eingerichtet. Tippen Sie Ihr Haus einfach auf der Karte an.</li>';
+    else if (!t.length && q) liste.innerHTML = '<li class="info">Keine passende Adresse im Testgebiet gefunden. Tippen Sie Ihr Haus auf der Karte an.</li>';
+    else t.forEach((a, i) => {
+      const li = document.createElement('li'); li.setAttribute('role', 'option'); li.id = 'v' + i;
+      li.innerHTML = `<span>${esc(a.s)} ${esc(a.n)}</span><small>${esc(a.p)} Berlin</small>`;
+      li.addEventListener('mousedown', ev => { ev.preventDefault(); nimm(a); });
+      liste.appendChild(li);
+    });
+    const offen = liste.children.length > 0 && !!q;
+    liste.classList.toggle('offen', offen); inp.setAttribute('aria-expanded', offen);
+  }
+  let tmr;
+  inp.addEventListener('input', () => { clearTimeout(tmr); tmr = setTimeout(async () => { treffer = await suche(inp.value); zeigeVorschlaege(treffer, inp.value.trim()); }, 90); });
+  inp.addEventListener('keydown', e => {
+    const lis = [...liste.querySelectorAll('li[role=option]')];
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault(); if (!lis.length) return;
+      aktiv = (aktiv + (e.key === 'ArrowDown' ? 1 : -1) + lis.length) % lis.length;
+      lis.forEach((l, i) => l.setAttribute('aria-selected', i === aktiv)); inp.setAttribute('aria-activedescendant', lis[aktiv].id);
+    } else if (e.key === 'Escape') { liste.classList.remove('offen'); }
+  });
+  inp.addEventListener('blur', () => setTimeout(() => liste.classList.remove('offen'), 120));
+  $('sucheForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const t = treffer && treffer.length ? treffer : await suche(inp.value);
+    if (t && t.length) nimm(t[Math.max(0, aktiv)]);
+    else { zeigeVorschlaege(t, inp.value.trim() || ' '); $('finder').scrollIntoView({behavior: 'smooth'}); }
+  });
+  function nimm(a) {
+    inp.value = `${a.s} ${a.n}`; liste.classList.remove('offen');
+    st.adresse = a; $('finder').scrollIntoView({behavior: 'smooth', block: 'start'});
+    start().then(() => zeigeAdresse(a));
+  }
+  function zeigeAdresse(a) {
+    if (!st.geladen) return;
+    umgebung([a.x, a.y], `${a.s} ${a.n}`);
+  }
+
+  // ---------------------------------------------------------------- Hauswände rund um einen Punkt
+  function umgebung(p, titel) {
+    const [cx, cy] = px(p);
+    const nahe = [];
+    for (const f of byId.values()) {
+      const ax = f.a[0], ay = f.a[1], bx = f.b[0], by = f.b[1];
+      const vx = bx - ax, vy = by - ay, t = Math.max(0, Math.min(1, ((p[0] - ax) * vx + (p[1] - ay) * vy) / (vx * vx + vy * vy || 1)));
+      const d = Math.hypot(ax + t * vx - p[0], ay + t * vy - p[1]);
+      if (d < 28 && f.len >= 3) nahe.push([d, f]);
+    }
+    nahe.sort((a, b) => a[0] - b[0]);
+    // je Himmelsrichtung nur die nächste und größte Wand, sortiert nach Eignung
+    const jeRichtung = new Map();
+    for (const [d, f] of nahe) { const k = f.cls; if (!jeRichtung.has(k) || (d < 14 && f.len > jeRichtung.get(k).len * 1.3)) jeRichtung.set(k, f); }
+    const waende = [...jeRichtung.values()].sort((a, b) => relErtrag(b.az) - relErtrag(a.az)).slice(0, 6);
+    st.schritt = 2; st.f = null; st.wand = waende.map(f => f.id); st.punkt = p; st.titel = titel;
+    zoomAuf(cx, cy, 110); setzePin(p); $('hinweisKarte').classList.add('weg');
+    markiere(); render();
+  }
+
+  function waehleWand(id, fly = true) {
+    const f = byId.get(id); if (!f) return;
+    st.schritt = 3; st.f = id; st.bk = null; st.zeichnen = false; st.box = null; st.fehler = null; st.analyse = false;
+    if (fly) zoomAuf(f._m[0], f._m[1], Math.max(70, f.len * 3));
+    $('hinweisKarte').classList.add('weg');
+    markiere(); render();
+    api().then(a => {          // aktuellen Stand vom Server (Analysen anderer Nutzer)
+      if (!a) return;
+      fetch(`api/fassade/${id}`).then(r => r.ok ? r.json() : null).then(j => {
+        if (!j || !j.analysiert || st.f !== id) return;
+        BALKONE[String(id)] = {geschosse: j.geschosse, bildqualitaet: j.bildqualitaet, balkone: j.balkone};
+        for (const b of j.balkone) if (b.angebot && !ANGEBOTE.some(x => x.id === b.angebot)) ANGEBOTE.push({id: b.angebot});
+        if (st.schritt === 3 && !st.zeichnen) render();
+      }).catch(() => {});
+    });
+  }
+
+  // ---------------------------------------------------------------- Panel
+  const SCHRITTE = ['Adresse', 'Hauswand', 'Balkon', 'Angebot'];
+  function kopf(n) { return `<ol class="schritte">${SCHRITTE.map((s, i) => `<li class="${i < n ? 'an' : ''}">${s}</li>`).join('')}</ol>`; }
+  function roseIcon(f) {
+    const s = stufe(f), a = (f.az - 90) * Math.PI / 180;
+    return `<svg class="rose" viewBox="-22 -22 44 44" aria-hidden="true"><circle r="20" fill="#e9efe5"/><text y="-11" text-anchor="middle" font-size="7" fill="#5f7566" font-family="Figtree">N</text>` +
+      `<path d="M0 0 L${18 * Math.cos(a - .4)} ${18 * Math.sin(a - .4)} A18 18 0 0 1 ${18 * Math.cos(a + .4)} ${18 * Math.sin(a + .4)}Z" fill="${FARBE[s]}"/><circle r="3" fill="#1c3a29"/></svg>`;
+  }
+  function render() {
+    const P = $('panel');
+    if (!st.geladen) { P.innerHTML = kopf(0) + '<h2>Wo ist Ihr Balkon?</h2><p class="text">Karte wird geladen …</p>'; return; }
+    if (st.schritt === 1) {
+      P.innerHTML = kopf(1) + `<h2>Wo ist Ihr Balkon?</h2><p class="text">Suchen Sie oben Ihre Adresse oder tippen Sie Ihr Haus auf der Karte an. ` +
+        `Gelb markierte Hauswände bekommen besonders viel Sonne.</p>` +
+        `<p class="text">Tipp: Ein Balkon nach <b>Süden</b>, <b>Südosten</b> oder <b>Südwesten</b> lohnt sich fast immer – wenn kein Haus gegenüber zu nah steht.</p>` +
+        `<div class="aktion"><button class="btn zart" id="zuSuche">Adresse eingeben</button></div>`;
+      $('zuSuche').addEventListener('click', () => { window.scrollTo({top: 0, behavior: 'smooth'}); setTimeout(() => inp.focus(), 350); });
+      return;
+    }
+    if (st.schritt === 2) {
+      const ws = st.wand.map(id => byId.get(id));
+      P.innerHTML = kopf(2) + `<button class="zurueck" id="zur">← andere Adresse</button>` +
+        `<h2>${st.titel ? esc(st.titel) : 'Ihr Haus'}</h2>` +
+        (ws.length ? `<p class="text">In welche Richtung zeigt Ihr Balkon? Wählen Sie die Hauswand, an der er hängt.</p><ul class="waende">` +
+          ws.map(f => `<li><button data-id="${f.id}">${roseIcon(f)}<span><b>nach ${NAMEN[f.cls]}</b><small>${fmt(f.len)} m breit · ${f.h > 3 ? `ca. ${Math.max(1, Math.round(f.h / 3))} Geschosse` : ''}</small></span>` +
+            `<span class="bewertung ${stufe(f)}">${STUFE_TEXT[stufe(f)]}</span></button></li>`).join('') + '</ul>' +
+          `<p class="klein">Nicht dabei? Tippen Sie die Hauswand direkt auf der Karte an.</p>`
+          : `<p class="text">Hier haben wir keine Hauswand gefunden. Tippen Sie etwas näher an Ihr Haus oder direkt auf eine farbige Linie.</p>`);
+      $('zur').addEventListener('click', () => { st.schritt = 1; st.wand = []; setzePin(null); markiere(); render(); });
+      P.querySelectorAll('.waende button').forEach(b => b.addEventListener('click', () => waehleWand(+b.dataset.id)));
+      return;
+    }
+    renderWand(P);
+  }
+
+  function renderWand(P) {
+    const f = byId.get(st.f), e = BALKONE[String(f.id)], s = stufe(f);
+    const bks = e ? e.balkone || [] : null;
+    const gesehen = bks ? bks.filter(b => b.typ !== 'unsicher' || b.sicherheit >= 0.3) : [];
+    let html = kopf(st.bk != null || st.box ? 3 : 3) + `<button class="zurueck" id="zur">← ${st.wand.length ? 'andere Hauswand' : 'zur Karte'}</button>` +
+      `<h2>Hauswand nach ${NAMEN[f.cls]}</h2>` +
+      `<p class="info-zeile"><span class="bewertung ${s}">${STUFE_TEXT[s]}</span><span>${fmt(relErtrag(f.az) * 100)} % des Ertrags einer Südwand</span></p>`;
+    if (st.fehler) html += `<div class="fehler">${esc(st.fehler)}</div>`;
+    html += `<div class="wand${st.zeichnen ? ' zeichnen' : ''}" id="wand">` + (f.img ? `<img id="wImg" src="${f.img}" alt="Ansicht der Hauswand aus dem 3D-Stadtmodell"><svg id="wSvg" preserveAspectRatio="xMidYMid meet"></svg>` : '<div class="wand-leer">Für diese Wand haben wir keine Ansicht.</div>') + `</div>`;
+    if (st.zeichnen) {
+      const breite = st.box ? Math.abs(st.box[2] - st.box[0]) * f.img_res : null;
+      html += `<p class="text">${st.box ? `Ihr Balkon: <b>${fmt(breite, 1)} m</b> breit. Passt das? Sie können neu ziehen oder die Breite anpassen.` : 'Ziehen Sie mit dem Finger oder der Maus ein Rechteck über Ihren Balkon – von Geländer-Ecke zu Geländer-Ecke. Die gestrichelten Linien zeigen ungefähr die Geschosse.'}</p>`;
+      if (st.box) html += `<label class="regler"><span>Breite</span><input type="range" id="bBreite" min="1" max="${Math.min(10, f.len).toFixed(1)}" step="0.1" value="${breite.toFixed(1)}"><b id="bBreiteT">${fmt(breite, 1)} m</b></label>` +
+        `<p class="text" style="margin-bottom:6px">Wie sieht Ihr Geländer aus?</p><div class="chips" id="gel">${GELAENDER.map(([k, t]) => `<button class="chip" data-k="${k}" aria-pressed="${st.gelaender === k}">${t}</button>`).join('')}</div>`;
+      html += `<div class="aktion">` + (st.box ? `<span class="angebot-wrap"><button class="btn" id="rechnen" ${st.gelaender ? '' : 'disabled'}>Ersparnis berechnen</button><span class="unverb">unverbindlich</span></span>` : '') +
+        `<button class="link" id="abbr">Abbrechen</button></div>`;
+    } else if (st.bk != null && bks && bks[st.bk]) {
+      const b = bks[st.bk], sim = window.ERTRAG && ERTRAG.balkone[String(f.id)] && ERTRAG.balkone[String(f.id)][String(st.bk)];
+      html += `<p class="text"><b>${b.typ === 'Loggia' ? 'Loggia' : 'Balkon'}${b.geschoss != null ? `, ${b.geschoss === 0 ? 'Erdgeschoss' : b.geschoss + '. Stock'}` : ''}</b> – ca. ${fmt(b.breite_m, 1)} m breit.</p>`;
+      if (sim && sim.passt) html += `<div class="ergebnis"><div><b>${fmt(sim.kwh)}</b><span>kWh Strom im Jahr (senkrecht)</span></div><div><b>${fmt(sim.verlust * 100)} %</b><span>Verlust durch Schatten</span></div><div><b>${fmt(sim.sonne)}</b><span>Sonnenstunden</span></div></div>`;
+      html += `<div class="aktion"><span class="angebot-wrap"><button class="btn" id="angebot">Angebot ansehen</button><span class="unverb">unverbindlich</span></span><button class="link" id="anders">anderer Balkon</button></div>`;
+    } else {
+      if (bks === null) {
+        html += `<p class="text">Diese Hauswand haben wir noch nicht nach Balkonen durchsucht.</p><div class="aktion">` +
+          (st.api ? `<button class="btn" id="suchen" ${st.analyse ? 'disabled' : ''}>${st.analyse ? '<span class="sp"></span>Wir suchen Balkone …' : 'Balkone suchen'}</button>` : '') +
+          `<button class="${st.api ? 'link' : 'btn'}" id="selbst">Balkon selbst einzeichnen</button></div>`;
+      } else if (gesehen.length) {
+        html += `<p class="text">Wir haben <b>${gesehen.length} ${gesehen.length === 1 ? 'Balkon' : 'Balkone'}</b> gefunden. Tippen Sie Ihren an.</p>` +
+          `<div class="aktion"><button class="link" id="selbst">Mein Balkon ist nicht dabei</button></div>`;
+      } else {
+        html += `<p class="text">Auf dieser Ansicht haben wir keine Balkone erkannt. Das 3D-Modell stammt aus Luftbildern – manche Balkone sind darin schwer zu sehen.</p>` +
+          `<div class="aktion"><button class="btn" id="selbst">Balkon selbst einzeichnen</button></div>`;
+      }
+    }
+    P.innerHTML = html;
+    $('zur').addEventListener('click', () => { if (st.wand.length) { st.schritt = 2; st.f = null; } else { st.schritt = 1; st.f = null; } markiere(); render(); });
+    const img = $('wImg');
+    if (img) { img.onload = () => zeichneWand(f); if (img.complete && img.naturalWidth) zeichneWand(f); }
+    const on = (id, fn) => { const x = $(id); if (x) x.addEventListener('click', fn); };
+    on('selbst', () => { st.zeichnen = true; st.bk = null; st.box = null; st.fehler = null; render(); });
+    on('abbr', () => { st.zeichnen = false; st.box = null; render(); });
+    on('anders', () => { st.bk = null; render(); });
+    on('suchen', () => analysiere(f));
+    on('angebot', () => angebot({fassade: f.id, balkon: st.bk}, `${f.id}_${st.bk}`));
+    on('rechnen', () => angebot({fassade: f.id, box: st.box.map(Math.round), gelaender: st.gelaender}, null));
+    if ($('gel')) $('gel').querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => { st.gelaender = c.dataset.k; render(); }));
+    if ($('bBreite')) $('bBreite').addEventListener('input', ev => {
+      const w = +ev.target.value / f.img_res, m = (st.box[0] + st.box[2]) / 2;
+      st.box[0] = Math.max(0, m - w / 2); st.box[2] = m + w / 2;
+      $('bBreiteT').textContent = fmt(+ev.target.value, 1) + ' m'; zeichneWand(f);
+    });
+  }
+
+  function zeichneWand(f) {
+    const img = $('wImg'), s = $('wSvg'); if (!img || !s) return;
+    const W = img.naturalWidth, H = img.naturalHeight;
+    s.setAttribute('viewBox', `0 0 ${W} ${H}`); s.textContent = '';
+    if (f.img_ztop != null && f.img_res) {
+      const yg = (f.img_ztop - f.ground) / f.img_res;
+      if (st.zeichnen) for (let z = 3; z < f.h; z += 3) { const y = yg - z / f.img_res; if (y > 0) el('line', {class: 'geschoss', x1: 0, y1: y, x2: W, y2: y}, s); }
+      if (yg > 0 && yg < H) el('line', {class: 'boden', x1: 0, y1: yg, x2: W, y2: yg}, s);
+    }
+    const e = BALKONE[String(f.id)];
+    if (e && e.balkone) e.balkone.forEach((b, i) => {
+      if (b.typ === 'unsicher' && (b.sicherheit ?? 0) < 0.3) return;
+      const g = el('g', {class: `bk ${b.typ}${st.bk === i ? ' sel' : ''}`, tabindex: 0, role: 'button', 'aria-label': `${b.typ}, ca. ${fmt(b.breite_m, 1)} Meter breit`}, s);
+      const [x0, y0, x1, y1] = b.box;
+      el('rect', {x: x0, y: y0, width: Math.max(4, x1 - x0), height: Math.max(4, y1 - y0), rx: 3}, g);
+      const pick = () => { if (st.zeichnen) return; st.bk = i; render(); };
+      g.addEventListener('click', pick); g.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); pick(); } });
+    });
+    if (st.box) {
+      const [x0, y0, x1, y1] = st.box, g = el('g', {class: 'eigen'}, s);
+      el('rect', {x: Math.min(x0, x1), y: Math.min(y0, y1), width: Math.abs(x1 - x0), height: Math.abs(y1 - y0), rx: 3}, g);
+      el('text', {x: (x0 + x1) / 2, y: Math.min(y0, y1) - 6, 'text-anchor': 'middle'}, g).textContent = `${fmt(Math.abs(x1 - x0) * f.img_res, 1)} m`;
+    }
+    if (st.zeichnen) zeichnenAktiv(f, s, W, H);
+  }
+
+  function zeichnenAktiv(f, s, W, H) {
+    const wand = $('wand');
+    if (wand._an) return; wand._an = true;
+    const lok = ev => { const m = s.getScreenCTM().inverse(), q = new DOMPoint(ev.clientX, ev.clientY).matrixTransform(m); return [Math.max(0, Math.min(W, q.x)), Math.max(0, Math.min(H, q.y))]; };
+    let p0 = null;
+    wand.addEventListener('pointerdown', ev => { p0 = lok(ev); wand.setPointerCapture(ev.pointerId); ev.preventDefault(); });
+    wand.addEventListener('pointermove', ev => { if (!p0) return; const p = lok(ev); st.box = [p0[0], p0[1], p[0], p[1]]; zeichneWand(f); });
+    wand.addEventListener('pointerup', ev => {
+      if (!p0) return; const p = lok(ev);
+      let b = [Math.min(p0[0], p[0]), Math.min(p0[1], p[1]), Math.max(p0[0], p[0]), Math.max(p0[1], p[1])];
+      if (b[2] - b[0] < 0.8 / f.img_res) {          // nur getippt: 3 m breiten Balkon um den Punkt legen
+        const w = Math.min(3, f.len * 0.8) / f.img_res, h = 1.1 / f.img_res;
+        b = [Math.max(0, p[0] - w / 2), Math.max(0, p[1] - h / 2), Math.min(W, p[0] + w / 2), Math.min(H, p[1] + h / 2)];
+      }
+      if (b[3] - b[1] < 0.6 / f.img_res) b[3] = Math.min(H, b[1] + 1.0 / f.img_res);
+      st.box = b; p0 = null; render();
+    });
+  }
+
+  async function analysiere(f) {
+    st.analyse = true; st.fehler = null; render();
+    try {
+      const r = await fetch(`api/fassade/${f.id}/analyse`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{}'});
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.fehler || 'Das hat nicht geklappt.');
+      BALKONE[String(f.id)] = {geschosse: j.geschosse, bildqualitaet: j.bildqualitaet, balkone: j.balkone};
+    } catch (err) { st.fehler = err.message || 'Das hat nicht geklappt.'; }
+    st.analyse = false; if (st.f === f.id) render();
+  }
+
+  // ---------------------------------------------------------------- Angebot (mit Ladebildschirm)
+  async function angebot(anfrage, bekannt) {
+    st.fehler = null;
+    let id = bekannt && ANGEBOTE.some(a => a.id === bekannt) ? bekannt : null;
+    const idP = id ? Promise.resolve(id) : (async () => {
+      const a = await api();
+      if (!a) throw new Error('Für diesen Balkon brauchen wir unseren Server – der läuft hier gerade nicht.');
+      const r = await fetch('api/angebot', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(anfrage)});
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.fehler || 'Das hat nicht geklappt.');
+      return j.id;
+    })();
+    angebotErstellen(idP);
+  }
+  window.addEventListener('pageshow', () => { $('laden').classList.remove('zeigen', 'sichtbar'); $('ladenBar').style.width = '0'; });
+  function angebotErstellen(idP) {
+    const L = $('laden');
+    L.classList.add('zeigen');
+    requestAnimationFrame(() => L.classList.add('sichtbar'));
+    const schritte = ['Wir vermessen Ihren Balkon …', 'Wir berechnen Sonne und Schatten …', 'Wir wählen passende Solarmodule aus …', 'Ihr Angebot ist fertig.'];
+    const uhren = schritte.map((t, i) => setTimeout(() => { $('ladenText').textContent = t; $('ladenBar').style.width = ((i + 1) / schritte.length * 100) + '%'; }, i * 900));
+    const mindestens = new Promise(r => setTimeout(r, matchMedia('(prefers-reduced-motion: reduce)').matches ? 1800 : 3300));
+    const holen = u => fetch(u).then(r => { if (!r.ok) throw new Error('Das Angebot konnte nicht geladen werden.'); return r.arrayBuffer(); });
+    idP.then(id => Promise.all([holen(`angebot/${id}/daten.json`), holen(`angebot/${id}/modell.json`), holen('angebot/lastgang.js'), mindestens]).then(() => id))
+      .then(id => { location.href = `angebot/?id=${encodeURIComponent(id)}`; })
+      .catch(err => {
+        uhren.forEach(clearTimeout);
+        L.classList.remove('sichtbar'); setTimeout(() => L.classList.remove('zeigen'), 350);
+        $('ladenBar').style.width = '0';
+        st.fehler = err.message || 'Das hat nicht geklappt.'; render();
+      });
+  }
+
+  api().then(a => { st.api = !!(a && a.analyse); if (st.schritt === 3) render(); });
+  render();
+})();
+</script>
 </body>
 </html>
