@@ -166,6 +166,9 @@
   .logo svg { width: 30px; height: 30px; }
   .wort { font-family: "Bricolage Grotesque", Figtree, system-ui, sans-serif; font-size: 21px; font-weight: 500; letter-spacing: -.035em; line-height: 1; }
   .wort b { font-weight: 750; margin-right: .18em; }
+  .marke-text { display: grid; gap: 3px; }
+  .claim { font-size: 12px; opacity: .75; font-weight: 400; letter-spacing: 0; line-height: 1.25; font-family: Figtree, system-ui, sans-serif; }
+  #laden .claim { color: #5f7566; opacity: 1; font-size: 12.5px; }
   #laden .marke svg { width: 34px; height: 34px; }
   #laden .marke .wort { font-size: 23px; color: #1c3a29; }
 
@@ -206,7 +209,7 @@
 <body>
 <div id="side">
   <div class="sec">
-    <div class="logo"><svg viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="14" fill="#1f6b43"/><line x1="24" y1="5.5" x2="24" y2="12" stroke="#f4b731" stroke-width="2.4" stroke-linecap="round"/><circle cx="24" cy="19" r="7.5" fill="#f4b731"/><rect x="22.7" y="25" width="2.6" height="6" fill="#f4b731"/><rect x="8.5" y="29.5" width="31" height="3.2" rx="1.6" fill="#fafcf7"/><g fill="#fafcf7"><rect x="11.5" y="32" width="2.4" height="8"/><rect x="17.3" y="32" width="2.4" height="8"/><rect x="22.8" y="32" width="2.4" height="8"/><rect x="28.3" y="32" width="2.4" height="8"/><rect x="34.1" y="32" width="2.4" height="8"/></g><rect x="6.5" y="39.5" width="35" height="3.2" rx="1.6" fill="#fafcf7"/></svg><span class="wort"><b>balki</b>strom</span></div>
+    <div class="logo"><svg viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="14" fill="#1f6b43"/><line x1="24" y1="5.5" x2="24" y2="12" stroke="#f4b731" stroke-width="2.4" stroke-linecap="round"/><circle cx="24" cy="19" r="7.5" fill="#f4b731"/><rect x="22.7" y="25" width="2.6" height="6" fill="#f4b731"/><rect x="8.5" y="29.5" width="31" height="3.2" rx="1.6" fill="#fafcf7"/><g fill="#fafcf7"><rect x="11.5" y="32" width="2.4" height="8"/><rect x="17.3" y="32" width="2.4" height="8"/><rect x="22.8" y="32" width="2.4" height="8"/><rect x="28.3" y="32" width="2.4" height="8"/><rect x="34.1" y="32" width="2.4" height="8"/></g><rect x="6.5" y="39.5" width="35" height="3.2" rx="1.6" fill="#fafcf7"/></svg><span class="marke-text"><span class="wort"><b>balki</b>strom</span><span class="claim">1 Stunde Aufwand. Jahrelang sparen – fürs Konto und fürs Klima.</span></span></div>
     <h1>Fassaden-Explorer</h1>
     <div class="sub" id="tileinfo"></div>
   </div>
@@ -777,7 +780,7 @@
 </script>
 
 <div id="laden" role="dialog" aria-live="polite" aria-label="Angebot wird erstellt">
-  <div class="marke"><svg viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="14" fill="#1f6b43"/><line x1="24" y1="5.5" x2="24" y2="12" stroke="#f4b731" stroke-width="2.4" stroke-linecap="round"/><circle cx="24" cy="19" r="7.5" fill="#f4b731"/><rect x="22.7" y="25" width="2.6" height="6" fill="#f4b731"/><rect x="8.5" y="29.5" width="31" height="3.2" rx="1.6" fill="#fafcf7"/><g fill="#fafcf7"><rect x="11.5" y="32" width="2.4" height="8"/><rect x="17.3" y="32" width="2.4" height="8"/><rect x="22.8" y="32" width="2.4" height="8"/><rect x="28.3" y="32" width="2.4" height="8"/><rect x="34.1" y="32" width="2.4" height="8"/></g><rect x="6.5" y="39.5" width="35" height="3.2" rx="1.6" fill="#fafcf7"/></svg><span class="wort"><b>balki</b>strom</span></div>
+  <div class="marke"><svg viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="14" fill="#1f6b43"/><line x1="24" y1="5.5" x2="24" y2="12" stroke="#f4b731" stroke-width="2.4" stroke-linecap="round"/><circle cx="24" cy="19" r="7.5" fill="#f4b731"/><rect x="22.7" y="25" width="2.6" height="6" fill="#f4b731"/><rect x="8.5" y="29.5" width="31" height="3.2" rx="1.6" fill="#fafcf7"/><g fill="#fafcf7"><rect x="11.5" y="32" width="2.4" height="8"/><rect x="17.3" y="32" width="2.4" height="8"/><rect x="22.8" y="32" width="2.4" height="8"/><rect x="28.3" y="32" width="2.4" height="8"/><rect x="34.1" y="32" width="2.4" height="8"/></g><rect x="6.5" y="39.5" width="35" height="3.2" rx="1.6" fill="#fafcf7"/></svg><span class="marke-text"><span class="wort"><b>balki</b>strom</span><span class="claim">1 Stunde Aufwand. Jahrelang sparen – fürs Konto und fürs Klima.</span></span></div>
   <div class="box">
     <svg viewBox="0 0 640 380" aria-hidden="true">
       <defs>
