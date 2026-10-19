@@ -1,9 +1,11 @@
 {
-  "_hinweis": "Partnerlinks (Affiliate) je Set aus dem Katalog in angebot.html eintragen. Platzhalter: {subid} = Angebot-ID und Set (für die Zuordnung der Provision), {angebot}, {set}. Leer = Knopf sammelt nur unverbindliche Anfragen.",
+  "_hinweis": "Partnerlinks (Affiliate) je Set-ID aus dem Katalog in angebot.html eintragen. Platzhalter: {subid} = Angebot-ID und Set (für die Zuordnung der Provision), {angebot}, {set}. Leer = Knopf führt direkt zur Produktseite des Shops (ohne Provision).",
   "partner": "",
   "standard": "",
   "sets": {
-    "k0": "", "k1": "", "k2": "", "k3": "", "k4": "", "k5": "",
-    "k6": "", "k7": "", "k8": ""
+    "kk-single-xl": "",
+    "kk-duo-xl": "",
+    "kk-duo-bc": "",
+    "kk-duo-xl-speicher": ""
   }
 }

@@ -395,7 +395,7 @@ def handler_fuer(app, begrenzer, vertraue_proxy):
                 if not begrenzer.erlaubt(self.ip(), "lesen"):
                     return self.fehler(429, "Zu viele Anfragen.")
                 ang, st, pk = daten.get("angebot"), daten.get("set"), daten.get("paket")
-                if not (isinstance(ang, str) and ANGEBOT_ID.match(ang) and isinstance(st, str) and re.match(r"^k\d{1,2}$", st)
+                if not (isinstance(ang, str) and ANGEBOT_ID.match(ang) and isinstance(st, str) and re.match(r"^[a-z0-9-]{1,40}$", st)
                         and pk in ("schnupper", "einfach", "optimiert", "smart")):
                     return self.fehler(400, "Ungültige Anfrage.")
                 with app.datei_lock:

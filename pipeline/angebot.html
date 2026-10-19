@@ -103,6 +103,8 @@
   .opt .sub { font-size: 14px; color: var(--fern); grid-column: 2; }
   .opt .tech { grid-column: 2; font-size: 12.5px; color: #8a9a8e; }
   .opt .price { grid-row: 1 / span 3; grid-column: 3; text-align: right; font-size: 24px; font-weight: 650; letter-spacing: -.01em; line-height: 1.1; }
+  .opt .price .mwst0 { display: inline-block; vertical-align: middle; margin: -3px 7px 0 0; font-family: Figtree, sans-serif; font-size: 11px; font-weight: 700;
+                       letter-spacing: 0; color: var(--moss); background: #f8e3a8; border-radius: 6px; padding: 2px 6px; line-height: 1.3; }
   .opt .price small { display: block; font-family: Figtree, sans-serif; font-size: 13px; font-weight: 500; color: var(--leaf); letter-spacing: 0; }
 
   .house { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; color: var(--fern); margin-bottom: 18px; }
@@ -133,6 +135,8 @@
   .opt { grid-template-columns: 78px 1fr auto !important; padding: 10px 16px 10px 10px; }
   .opt .bild { grid-row: 1 / span 3; width: 78px; height: 58px; border-radius: 12px; background: #eef3ea; display: grid; place-items: center; }
   .opt .bild svg { width: 70px; height: 52px; }
+  .opt .bild img { width: 100%; height: 100%; object-fit: contain; border-radius: 10px; background: #fff; }
+  .opt .produkt { color: var(--leaf); white-space: nowrap; font-size: 12.5px; }
   .opt[aria-checked="true"] .bild { background: #e3efe1; }
   .opt .dot { display: none; }
   .opt .desc { grid-column: 2; font-size: 13.5px; color: var(--fern); line-height: 1.35; }
@@ -346,7 +350,7 @@
       <li><span class="dauer">2–5 Werktage</span><b>Lieferung</b>Alles kommt passend für Ihr Geländer bis an die Haustür.</li>
       <li><span class="dauer">ca. 45 Minuten</span><b>Montage</b>Halterung ans Geländer, Module einhängen, Stecker in die Steckdose.</li>
       <li><span class="dauer">ca. 5 Minuten</span><b>Online anmelden</b>Kurzer Eintrag im Marktstammdatenregister – das ist Pflicht, aber einfach. Wir zeigen Ihnen, wie.</li>
-      <li class="ziel"><span class="dauer">20+ Jahre</span><b>Sonnenstrom genießen</b>Ab jetzt läuft Ihr Zähler langsamer – jeden sonnigen Tag.</li>
+      <li class="ziel"><span class="dauer">10+ Jahre</span><b>Sonnenstrom genießen</b>Ab jetzt läuft Ihr Zähler langsamer – jeden sonnigen Tag. Gute Module halten oft deutlich länger.</li>
     </ol>
     <div class="cta"><button class="btn" id="order2">Unverbindlich anfragen</button><span class="partnerhinweis" hidden>Partnerlink: Wir erhalten ggf. eine Provision – Ihr Preis ändert sich nicht.</span></div>
     <p class="hinweis">* Geschätzt auf Basis unserer Modelle (3D-Stadtmodell, Wetter-Referenzjahr, minutengenaues Verbrauchsmodell eines typischen Haushalts). Die tatsächliche Ersparnis kann je nach Nutzung, Wetter, Strompreis und Montage abweichen. Zeitangaben sind Erfahrungswerte.</p>
@@ -373,20 +377,28 @@ const eur = x => nf(Math.round(x)) + ' €';
 const RAD = Math.PI / 180;
 const el = (tag, attrs = {}, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
 
-// ---------------------------------------------------------------- Produktkatalog (Mockup)
-// Beispielpreise aus aktuellen Marktangeboten (Okt. 2026), Hersteller bewusst anonymisiert.
+// ---------------------------------------------------------------- Produktkatalog (Probe: echte Sets eines Shops)
+// Stand 19.10.2026, Preise für Privatkunden inkl. 0 % MwSt. laut Shop; Halterung = Shop-Option "Gitterbalkon".
+// Bilder werden vom Shop geladen (für den Livebetrieb: Bilder/Feed aus dem Partnerprogramm verwenden).
+// Beschreibungen sind eigene Kurztexte. breite = Modulbreite quer am Geländer (m).
+const SHOP = 'kleines kraftwerk';
 const KATALOG = [
-  {id: 'k0', typ: 'set', module: 1, wp: 410, breite: 1.72, bauart: 'Solarmodul', wr: 'kleiner Wechselrichter mit Stecker', preis: 159},
-  {id: 'k1', typ: 'set', module: 1, wp: 430, breite: 1.72, bauart: 'Full-Black-Modul', wr: '800-W-Wechselrichter mit WLAN', preis: 229},
-  {id: 'k2', typ: 'set', module: 2, wp: 430, breite: 1.72, bauart: 'Full-Black-Module', wr: '800-W-Wechselrichter mit WLAN', preis: 349},
-  {id: 'k3', typ: 'set', module: 2, wp: 450, breite: 1.76, bauart: 'bifaziale Glas-Glas-Module', wr: '800-W-Wechselrichter mit WLAN', preis: 389},
-  {id: 'k4', typ: 'set', module: 2, wp: 500, breite: 1.96, bauart: 'bifaziale XL-Module', wr: '800-W-Wechselrichter', preis: 329},
-  {id: 'k5', typ: 'set', module: 4, wp: 500, breite: 1.96, bauart: 'bifaziale XL-Module', wr: '2000-W-Wechselrichter', preis: 579},
-  {id: 'k6', typ: 'speicher', module: 2, wp: 450, breite: 1.76, bauart: 'bifaziale Glas-Glas-Module', kwh: 2.1, wr: 'Speicher mit integriertem Wechselrichter und App', preis: 849},
-  {id: 'k7', typ: 'speicher', module: 2, wp: 500, breite: 1.96, bauart: 'Hochleistungsmodule', kwh: 2.7, wr: 'Speicher mit App und Notstromsteckdose', preis: 1199},
-  {id: 'k8', typ: 'speicher', module: 4, wp: 500, breite: 1.96, bauart: 'bifaziale Module', kwh: 1.9, wr: 'Speicher mit integriertem Mikrowechselrichter', preis: 945},
-  {id: 'h1', typ: 'halterung', neigbar: false, preis: 29, text: 'Geländerhalterung'},
-  {id: 'h2', typ: 'halterung', neigbar: true, preis: 59, text: 'neigbare Geländerhalterung (0–45°)'},
+  {id: 'kk-single-xl', typ: 'set', module: 1, wp: 500, breite: 1.96, bauart: 'bifaziales Glas-Glas-Modul (TOPCon)', wr: 'Hoymiles HiFlow 800 mit WLAN',
+   preis: 179, halterung: 59, titel: 'Single XL – 500 Wp',
+   url: 'https://kleineskraftwerk.de/products/single-xl-500wp-bifaziales-balkonkraftwerk-mit-800w-wechselrichter',
+   bild: 'https://cdn.shopify.com/s/files/1/0650/8884/8113/files/kleines_kraftwerk_Single_XL_-_500Wp_bifaziales_Balkonkraftwerk_HF_800_WB_OH.jpg?v=1780417641'},
+  {id: 'kk-duo-xl', typ: 'set', module: 2, wp: 500, breite: 1.96, bauart: 'bifaziale Glas-Glas-Module (TOPCon)', wr: 'Hoymiles HiFlow 800 mit WLAN',
+   preis: 269, halterung: 99, titel: 'Duo XL – 1000 Wp',
+   url: 'https://kleineskraftwerk.de/products/duo-xl-1000wp-bifaziales-balkonkraftwerk-hf-800-wb-wechselrichter',
+   bild: 'https://cdn.shopify.com/s/files/1/0650/8884/8113/files/kleines_kraftwerk_Duo_XL_-_1000Wp_bifaziales_Balkonkraftwerk_HF_800_WB_OH.jpg?v=1780417893'},
+  {id: 'kk-duo-bc', typ: 'set', module: 2, wp: 480, breite: 1.80, bauart: 'bifaziale Glas-Glas-Module (Back-Contact)', wr: 'Hoymiles HiFlow 800 Pro mit WLAN',
+   preis: 329, halterung: 99, titel: 'Duo (BC) – 960 Wp',
+   url: 'https://kleineskraftwerk.de/products/kleines-kraftwerk-duo-bc-960wp-bifaziales-balkonkraftwerk',
+   bild: 'https://cdn.shopify.com/s/files/1/0650/8884/8113/files/kleines_kraftwerk_Duo_BC_-_960Wp_bifaziales_Balkonkraftwerk_HMS-800-2WB_HiFlow_Pro_OH_544f6247-3b41-4a0a-80f8-2be53b06a391.jpg?v=1778516424'},
+  {id: 'kk-duo-xl-speicher', typ: 'speicher', module: 2, wp: 500, breite: 1.96, bauart: 'bifaziale Glas-Glas-Module (TOPCon)', kwh: 2.7,
+   wr: 'Anker SOLIX Solarbank 3 Pro mit App und Smart Meter', preis: 1189, halterung: 99, titel: 'Duo XL mit Speicher (Solarbank 3 Pro)',
+   url: 'https://kleineskraftwerk.de/products/kleines-kraftwerk-duo-xl-1000wp-balkonkraftwerk-mit-speicher-solarbank-3-pro',
+   bild: 'https://cdn.shopify.com/s/files/1/0650/8884/8113/files/kleineskraftwerkDuoXL-1000WpBalkonkraftwerkmitSpeicherAnkerSOLIXSolarbank3Pro_OH_cd023f0d-a65b-4967-8cfe-7f6e9d019f4a.jpg?v=1792049588'},
 ];
 const MWST = 0.19, STROM_PLUS = 0.02, DEGRADATION = 0.005, ETF = 0.07, JAHRE = 20;
 const SPEICHER_STANDBY_W = 6, SPEICHER_ETA = 0.92;
@@ -403,14 +415,13 @@ const OPT = D.optimiert ? {...D.optimiert, pv: Float64Array.from(D.optimiert.stu
 // ---------------------------------------------------------------- Matching: Katalog -> drei Ausstattungen
 const platz = D.breite_m;                                   // nutzbare Geländerbreite
 const passt = k => k.module * k.breite + (k.module - 1) * 0.04 <= platz + 0.05 && k.module <= 2;
-const halter = n => KATALOG.find(k => k.typ === 'halterung' && k.neigbar === n);
 const sets = KATALOG.filter(k => k.typ === 'set' && passt(k));
 const speicher = KATALOG.filter(k => k.typ === 'speicher' && passt(k));
 const vSenk = VARS.find(v => v.n === 2) || VARS[VARS.length - 1];
 // 1) einfach & effektiv: günstigstes passendes Set mit möglichst vielen Modulen, senkrecht
 const s1 = sets.filter(k => k.module === Math.min(2, vSenk.n)).sort((a, b) => a.preis - b.preis)[0] || sets[0];
 // 2) optimiert: leistungsstärkstes passendes Set, neigbare Halterung (30° ausgestellt)
-const s2 = sets.filter(k => k.module === (OPT ? OPT.n : 2)).sort((a, b) => b.wp - a.wp || a.preis - b.preis)[0] || s1;
+const s2 = sets.filter(k => k.module === (OPT ? OPT.n : 2)).sort((a, b) => b.wp * b.module - a.wp * a.module || a.preis - b.preis)[0] || s1;
 // 3) smart mit Speicher: günstigster passender Speicher
 const s3 = speicher.sort((a, b) => a.preis - b.preis)[0];
 function skaliere(v, wp) { const f = wp / (v.wp / v.n); return {...v, pv: v.pv.map(x => Math.min(800, x * f)), kwh: v.kwh * f, wp: wp * v.n}; }
@@ -418,19 +429,22 @@ const PAKETE = [];
 // 0) zum Reinschnuppern: das günstigste Set mit einem Modul – kleiner Einstieg ins Hobby
 const s0 = KATALOG.filter(k => k.typ === 'set' && k.module === 1 && passt(k)).sort((a, b) => a.preis - b.preis)[0];
 const v1 = VARS.find(v => v.n === 1);
-if (s0 && v1 && (!s1 || s1.module > 1)) PAKETE.push({key: 'schnupper', name: 'Zum Reinschnuppern', set: s0, halter: halter(false),
+if (s0 && v1 && (!s1 || s1.module > 1)) PAKETE.push({key: 'schnupper', name: 'Zum Reinschnuppern', set: s0,
   v: skaliere(v1, s0.wp), neigung: 0, speicherKwh: 0,
-  desc: `Ein Modul mit Stecker – der günstigste Einstieg. Erweitern geht später.`});
-if (s1) PAKETE.push({key: 'einfach', name: 'Einfach & effektiv', set: s1, halter: halter(false),
+  desc: `Ein ${s0.bauart} mit Stecker – der günstigste Einstieg. Ein zweites Modul passt später an denselben Wechselrichter.`});
+if (s1) PAKETE.push({key: 'einfach', name: 'Einfach & effektiv', set: s1,
   v: skaliere(VARS.find(v => v.n === s1.module) || vSenk, s1.wp), neigung: 0, speicherKwh: 0,
   desc: `${s1.module} ${s1.bauart}, ${s1.wr}, senkrecht am Geländer.`});
-if (s2 && OPT) PAKETE.push({key: 'optimiert', name: 'Optimiert', set: s2, halter: halter(true),
+if (s2 && OPT) PAKETE.push({key: 'optimiert', name: 'Optimiert', set: s2,
   v: skaliere(OPT, s2.wp), neigung: OPT.neigung, speicherKwh: 0,
-  desc: `Stärkere ${s2.bauart}, um ${OPT.neigung}° zur Sonne geneigt – deutlich mehr Ertrag.`});
-if (s3 && OPT) PAKETE.push({key: 'smart', name: 'Smart mit Speicher', set: s3, halter: halter(true),
+  desc: `${s2.module} ${s2.bauart}, um ${OPT.neigung}° zur Sonne geneigt – deutlich mehr Ertrag.`});
+if (s3 && OPT) PAKETE.push({key: 'smart', name: 'Smart mit Speicher', set: s3,
   v: skaliere(OPT, s3.wp), neigung: OPT.neigung, speicherKwh: s3.kwh,
-  desc: `Geneigte Module plus ${nf(s3.kwh, 1)}-kWh-Speicher mit App – Sonnenstrom auch am Abend.`});
-for (const p of PAKETE) { p.preis = p.set.preis + p.halter.preis * p.set.module; p.mwst = p.preis * MWST; }
+  desc: `Geneigte Module plus ${nf(s3.kwh, 1)}-kWh-Speicher (${s3.wr}) – Sonnenstrom auch am Abend.`});
+for (const p of PAKETE) { p.preis = p.set.preis + p.set.halterung; p.mwst = p.preis * MWST; }
+// gleiches Set senkrecht und geneigt kostet gleich viel -> nur die geneigte (ertragreichere) Variante zeigen
+{ const e = PAKETE.find(p => p.key === 'einfach'), o = PAKETE.find(p => p.key === 'optimiert');
+  if (e && o && e.set === o.set) PAKETE.splice(PAKETE.indexOf(e), 1); }
 
 let verbrauch = 2500, personen = 2, zuhause = 0.4, preis = 0.37;
 
@@ -497,10 +511,10 @@ function renderOpts() {
   for (const p of PAKETE) {
     const b = document.createElement('button');
     b.className = 'opt'; b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', p === sel);
-    b.innerHTML = `<span class="bild">${produktBild(p)}</span>
+    b.innerHTML = `<span class="bild">${p.set.bild ? `<img src="${p.set.bild}" alt="${SHOP} ${p.set.titel}" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(document.createRange().createContextualFragment(this.dataset.alt))" data-alt='${produktBild(p)}'>` : produktBild(p)}</span>
       <span class="name">${p.name}${p.empfehlung ? '<span class="tag">lohnt sich am meisten</span>' : ''}</span>
-      <span class="price">${eur(p.preis)}<small>spart ${eur(p.spart)} im Jahr</small><small class="mwst">rechnet sich nach ${jahreText(p.jahre)}</small></span>
-      <span class="desc">${p.desc}</span>
+      <span class="price"><span class="mwst0" title="Seit 2023 gilt für Balkonkraftwerke 0 % Mehrwertsteuer – Sie sparen ${eur(p.mwst)}.">0 % MwSt.</span>${eur(p.preis)}<small>spart ${eur(p.spart)} im Jahr</small><small class="mwst">rechnet sich nach ${jahreText(p.jahre)}</small></span>
+      <span class="desc">${p.desc} <a class="produkt" href="${p.set.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${SHOP} ${p.set.titel} ↗</a></span>
       <span class="tech">${nf(p.v.wp)} Watt · ca. ${nf(Math.round(p.v.kwh / 10) * 10)} kWh Strom im Jahr</span>`;
     b.addEventListener('click', () => { sel = p; renderOpts(); placeModules(); setSun(); });
     box.appendChild(b);
@@ -597,8 +611,7 @@ $('preis').addEventListener('input', e => { preis = (+e.target.value || 37) / 10
 // Links stehen in partner.json (je Set); ohne Link sammelt der Knopf nur eine Anfrage.
 const PARTNER = await fetch('partner.json').then(r => r.ok ? r.json() : null).catch(() => null);
 function partnerLink(p) {
-  if (!PARTNER) return null;
-  const roh = (PARTNER.sets || {})[p.set.id] || PARTNER.standard;
+  const roh = (PARTNER && ((PARTNER.sets || {})[p.set.id] || PARTNER.standard)) || p.set.url;
   if (!roh || !/^https:\/\//.test(roh)) return null;
   const subid = `${D.id}-${p.set.id}`;
   return roh.replaceAll('{subid}', encodeURIComponent(subid)).replaceAll('{angebot}', encodeURIComponent(D.id)).replaceAll('{set}', encodeURIComponent(p.set.id));
@@ -608,10 +621,11 @@ function renderBestellen() {
   const link = partnerLink(sel);
   for (const x of ['order', 'order2']) {
     if (angefragt && !link) continue;
-    $(x).textContent = link ? `Zum Angebot${PARTNER.partner ? ' bei ' + PARTNER.partner : ''}` : 'Unverbindlich anfragen';
+    $(x).textContent = link ? `Zum Angebot bei ${(PARTNER && PARTNER.partner) || SHOP}` : 'Unverbindlich anfragen';
     $(x).disabled = false;
   }
-  for (const x of document.querySelectorAll('.partnerhinweis')) x.hidden = !link;
+  const provision = !!(PARTNER && ((PARTNER.sets || {})[sel.set.id] || PARTNER.standard));
+  for (const x of document.querySelectorAll('.partnerhinweis')) x.hidden = !provision;
 }
 for (const bId of ['order', 'order2']) $(bId).addEventListener('click', () => {
   const link = partnerLink(sel);
