@@ -76,10 +76,10 @@
   nav.top a:hover { color: var(--moss); }
 
   /* ---------- Hero ---------- */
-  .hero { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, .75fr); gap: 40px; align-items: center; padding: 34px 0 30px; }
-  .hero h1 { font-size: clamp(36px, 5vw, 62px); line-height: 1.02; font-weight: 750; margin: 0 0 16px; }
+  .hero { padding: 18px 0 22px; max-width: 760px; }
+  .hero h1 { font-size: clamp(32px, 4.2vw, 52px); line-height: 1.04; font-weight: 750; margin: 0 0 12px; }
   .hero h1 em { font-style: normal; color: var(--leaf); }
-  .hero .lead { font-size: 19px; color: var(--fern); max-width: 36em; margin: 0 0 26px; }
+  .hero .lead { font-size: 18px; color: var(--fern); max-width: 36em; margin: 0 0 20px; }
   .suche { position: relative; max-width: 560px; }
   .suche form { display: flex; gap: 8px; background: var(--paper); border: 1.5px solid var(--line); border-radius: 18px; padding: 7px; box-shadow: 0 10px 30px rgba(28, 58, 41, .08); }
   .suche form:focus-within { border-color: var(--leaf); }
@@ -97,10 +97,6 @@
   .vorschlaege li.info { cursor: default; color: var(--fern); font-size: 14px; }
   .vorschlaege li.info:hover { background: none; }
   .gebiet { margin: 12px 2px 0; font-size: 13.5px; color: var(--fern); }
-  .kompass { background: var(--paper); border-radius: 28px; padding: 22px 22px 18px; box-shadow: 0 10px 30px rgba(28, 58, 41, .06); }
-  .kompass svg { width: 100%; height: auto; display: block; }
-  .kompass p { margin: 8px 4px 0; font-size: 14.5px; color: var(--fern); text-align: center; }
-  .kompass p b { color: var(--moss); }
 
   /* ---------- Finder ---------- */
   .finder { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(330px, 1fr); gap: 18px; margin: 10px 0 36px; height: min(78vh, 760px); min-height: 520px; scroll-margin-top: 12px; }
@@ -116,9 +112,14 @@
   .karte .ui { position: absolute; display: flex; gap: 6px; }
   .karte .zoom { right: 14px; bottom: 14px; flex-direction: column; }
   .karte .zoom button { width: 38px; height: 38px; border-radius: 12px; border: 0; background: var(--paper); box-shadow: 0 4px 14px rgba(0, 0, 0, .12); cursor: pointer; font-size: 19px; line-height: 1; }
-  .legende { left: 14px; bottom: 14px; background: rgba(250, 252, 247, .94); border-radius: 14px; padding: 8px 12px; font-size: 12.5px; flex-direction: column; gap: 3px !important; box-shadow: 0 4px 14px rgba(0, 0, 0, .1); }
-  .legende span { display: flex; align-items: center; gap: 7px; }
-  .legende i { width: 20px; height: 5px; border-radius: 3px; display: inline-block; }
+  .legende { left: 14px; bottom: 14px; background: rgba(250, 252, 247, .95); border: 0; border-radius: 16px; padding: 6px 12px 6px 6px; font-size: 13px; align-items: center; gap: 8px !important; box-shadow: 0 4px 14px rgba(0, 0, 0, .12); cursor: pointer; text-align: left; max-width: calc(100% - 80px); }
+  .legende svg { width: 38px; height: 41px; flex: none; }
+  .legende .lang { display: none; flex-direction: column; gap: 3px; font-size: 12.5px; }
+  .legende .lang span { display: flex; align-items: center; gap: 7px; }
+  .legende .lang small { color: var(--fern); font-size: 11.5px; margin-top: 2px; }
+  .legende[aria-expanded="true"] .kurz { display: none; }
+  .legende[aria-expanded="true"] .lang { display: flex; }
+  .legende i { width: 18px; height: 5px; border-radius: 3px; display: inline-block; flex: none; }
   .karte .laedt { position: absolute; inset: 0; display: grid; place-items: center; color: var(--fern); font-size: 15px; }
   .karte .hinweis-karte { left: 50%; top: 14px; transform: translateX(-50%); background: var(--moss); color: #fff; padding: 7px 14px; border-radius: 999px; font-size: 13.5px; box-shadow: 0 4px 14px rgba(0, 0, 0, .18); transition: opacity .3s; white-space: nowrap; }
   .karte .hinweis-karte.weg { opacity: 0; pointer-events: none; }
@@ -132,6 +133,15 @@
   .panel .text { color: var(--fern); margin: 0 0 14px; font-size: 15px; }
   .zurueck { border: 0; background: none; color: var(--fern); cursor: pointer; padding: 0; margin: 0 0 10px; font-size: 14px; align-self: flex-start; }
   .zurueck:hover { color: var(--moss); }
+  .vorschau { list-style: none; margin: 0 0 10px; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; }
+  .vorschau button { width: 100%; border: 2px solid var(--line); background: #fff; border-radius: 16px; padding: 0; cursor: pointer; overflow: hidden; text-align: left; position: relative; }
+  .vorschau button:hover, .vorschau button:focus-visible, .vorschau button.hl { border-color: var(--leaf); }
+  .vorschau img { display: block; width: 100%; height: 118px; object-fit: contain; background: #e3e7e0; }
+  .vorschau .nr { position: absolute; top: 6px; left: 6px; width: 24px; height: 24px; border-radius: 50%; background: var(--moss); color: #fff; font-weight: 700; font-size: 13px; display: grid; place-items: center; }
+  .vorschau .unten { display: flex; align-items: center; gap: 6px; padding: 6px 8px; font-size: 12px; color: var(--fern); }
+  .vorschau .punkt { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+  #map .nummer { pointer-events: none; }
+  #map .f.hl .halo { stroke: #fff; }
   .waende { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
   .waende button { width: 100%; text-align: left; border: 1.5px solid var(--line); background: #fff; border-radius: 16px; padding: 11px 13px; cursor: pointer; display: grid; grid-template-columns: 44px 1fr auto; gap: 12px; align-items: center; }
   .waende button:hover { border-color: var(--leaf); }
@@ -197,8 +207,7 @@
   footer p { margin: 4px 0; }
 
   @media (max-width: 920px) {
-    .hero { grid-template-columns: 1fr; gap: 22px; padding-top: 16px; }
-    .kompass { max-width: 420px; }
+    .hero { padding-top: 8px; }
     .finder { grid-template-columns: 1fr; height: auto; }
     .karte { height: 56vh; min-height: 340px; }
     .drei, .zwei { grid-template-columns: 1fr; }
@@ -208,10 +217,11 @@
     .wrap, header.top { padding-left: 16px; padding-right: 16px; }
     .suche form { flex-direction: column; }
     .karte .hinweis-karte { white-space: normal; width: 86%; text-align: center; }
-    .kompass { display: none; }
     .karte .zoom { top: 70px; bottom: auto; }
-    .legende { font-size: 11.5px; }
     .ergebnis b { font-size: 19px; }
+    .vorschau { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .vorschau img { height: 96px; }
+    .vorschau .unten { font-size: 11px; padding: 5px 6px; }
   }
   /* ---------- Ladebildschirm: Angebot wird erstellt ---------- */
   #laden { position: fixed; inset: 0; z-index: 1000; background: #e9efe5; color: #1c3a29; display: none; place-items: center;
@@ -273,10 +283,6 @@
         </div>
         <p class="gebiet" id="gebiet">Derzeit für ein Testgebiet in Berlin verfügbar – weitere Kieze folgen.</p>
       </div>
-      <figure class="kompass" aria-label="Welche Himmelsrichtung lohnt sich?">
-        <svg viewBox="-110 -110 220 220" id="kompass" role="img" aria-label="Kompass: Süd, Südost und Südwest lohnen sich am meisten"></svg>
-        <p><b>Süd, Südost, Südwest</b> lohnen sich am meisten.<br>Ost und West bringen etwa ein Drittel weniger.</p>
-      </figure>
     </section>
 
     <section class="finder" id="finder" aria-label="Balkon finden">
@@ -284,11 +290,14 @@
         <svg id="map" xmlns="http://www.w3.org/2000/svg" aria-label="Luftbild mit Hauswänden"></svg>
         <div class="laedt" id="karteLaedt">Karte wird geladen …</div>
         <div class="ui hinweis-karte" id="hinweisKarte">Tippen Sie auf Ihr Haus oder suchen Sie oben Ihre Adresse</div>
-        <div class="ui legende" aria-hidden="true">
-          <span><i style="background:var(--sun2)"></i>Süd, Südost, Südwest – lohnt sich besonders</span>
-          <span><i style="background:var(--mittel)"></i>Ost, West – lohnt sich auch</span>
-          <span><i style="background:var(--schwach)"></i>Nord – eher nicht</span>
-        </div>
+        <button class="ui legende" id="legende" aria-expanded="false" aria-label="Was bedeuten die Farben?">
+          <svg id="miniKompass" viewBox="-26 -30 52 56" aria-hidden="true"></svg>
+          <span class="kurz"><b>Gelb</b> = viel Sonne</span>
+          <span class="lang"><span><i style="background:var(--sun2)"></i><b>Süd, Südost, Südwest</b> – lohnt sich am meisten</span>
+            <span><i style="background:var(--mittel)"></i><b>Ost, West</b> – etwa ein Drittel weniger</span>
+            <span><i style="background:var(--schwach)"></i><b>Nord</b> – wenig Sonne</span>
+            <small>Die Linien sind die Hauswände. Die Farbe zeigt, wohin die Wand zeigt.</small></span>
+        </button>
         <div class="ui zoom"><button id="zIn" aria-label="Hineinzoomen">+</button><button id="zOut" aria-label="Herauszoomen">−</button></div>
       </div>
       <div class="panel" id="panel" aria-live="polite"></div>
@@ -442,28 +451,23 @@
   const relErtrag = az => { const d = Math.abs(((az - 180 + 540) % 360) - 180); return Math.max(0.25, 1 - 0.0000372 * d * d - 0.00006 * d); };
   const stufe = f => ['S', 'SO', 'SW'].includes(f.cls) ? 'gut' : (['O', 'W'].includes(f.cls) ? 'mittel' : 'schwach');
   const STUFE_TEXT = {gut: 'lohnt sich besonders', mittel: 'lohnt sich auch', schwach: 'eher wenig Sonne'};
+  const STUFE_KURZ = {gut: 'viel Sonne', mittel: 'mittel', schwach: 'wenig Sonne'};
   const FARBE = {gut: '#f4b731', mittel: '#8fb89a', schwach: '#b9c2b7'};
   const GELAENDER = [['staebe', 'Stäbe / Gitter'], ['glas', 'Glas'], ['mauer', 'Mauer / Brüstung'], ['blech', 'Blech / Platte']];
 
-  // ---------------------------------------------------------------- Kompass im Hero
+  // ---------------------------------------------------------------- Mini-Kompass in der Kartenlegende
   (() => {
-    const s = $('kompass');
-    const sek = ['N', 'NO', 'O', 'SO', 'S', 'SW', 'W', 'NW'];
-    sek.forEach((c, i) => {
-      const a0 = (i * 45 - 22.5 - 90) * Math.PI / 180, a1 = (i * 45 + 22.5 - 90) * Math.PI / 180;
-      const r0 = 38, r1 = 96;
+    const s = $('miniKompass');
+    ['N', 'NO', 'O', 'SO', 'S', 'SW', 'W', 'NW'].forEach((c, i) => {
+      const a0 = (i * 45 - 22.5 - 90) * Math.PI / 180, a1 = (i * 45 + 22.5 - 90) * Math.PI / 180, r0 = 7, r1 = 20;
       const st = ['S', 'SO', 'SW'].includes(c) ? 'gut' : (['O', 'W'].includes(c) ? 'mittel' : 'schwach');
       el('path', {d: `M${r0 * Math.cos(a0)} ${r0 * Math.sin(a0)} L${r1 * Math.cos(a0)} ${r1 * Math.sin(a0)} A${r1} ${r1} 0 0 1 ${r1 * Math.cos(a1)} ${r1 * Math.sin(a1)} L${r0 * Math.cos(a1)} ${r0 * Math.sin(a1)} A${r0} ${r0} 0 0 0 ${r0 * Math.cos(a0)} ${r0 * Math.sin(a0)}Z`,
-        fill: FARBE[st], stroke: '#fafcf7', 'stroke-width': 3}, s);
-      const am = (i * 45 - 90) * Math.PI / 180;
-      el('text', {x: 68 * Math.cos(am), y: 68 * Math.sin(am) + 5, 'text-anchor': 'middle', 'font-size': 15, 'font-weight': 700,
-        fill: st === 'gut' ? '#1c3a29' : '#fafcf7', 'font-family': 'Figtree, sans-serif'}, s).textContent = c;
+        fill: FARBE[st], stroke: '#fafcf7', 'stroke-width': 1.2}, s);
     });
-    el('circle', {r: 30, fill: '#fafcf7'}, s);
-    const sun = el('g', {}, s);
-    el('circle', {r: 11, fill: '#f4b731'}, sun);
-    for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4; el('line', {x1: 15 * Math.cos(a), y1: 15 * Math.sin(a), x2: 20 * Math.cos(a), y2: 20 * Math.sin(a), stroke: '#f4b731', 'stroke-width': 2.5, 'stroke-linecap': 'round'}, sun); }
+    el('text', {x: 0, y: -22.5, 'text-anchor': 'middle', 'font-size': 7, 'font-weight': 700, fill: '#1c3a29', 'font-family': 'Figtree, sans-serif'}, s).textContent = 'N';
+    el('circle', {r: 4, fill: '#f4b731'}, s);
   })();
+  $('legende').addEventListener('click', () => { const b = $('legende'), o = b.getAttribute('aria-expanded') !== 'true'; b.setAttribute('aria-expanded', o); });
 
   // ---------------------------------------------------------------- Daten nachladen
   const ladeSkript = src => new Promise(res => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = res; document.head.appendChild(s); });
@@ -485,7 +489,7 @@
 
   // ---------------------------------------------------------------- Karte
   const svg = $('map');
-  let D, M, R, xmin, ymin, xmax, ymax, OW, OH, byId = new Map(), gF, gPin;
+  let D, M, R, xmin, ymin, xmax, ymax, OW, OH, byId = new Map(), gF, gPin, gNr;
   let view = {x: 0, y: 0, w: 1, h: 1};
   const st = {analyseRichtungen: ['S', 'SO', 'SW'], schritt: 1, f: null, bk: null, wand: [], adresse: null, zeichnen: false, box: null, gelaender: null, geladen: false};
 
@@ -497,7 +501,7 @@
       D = d; M = D.meta; R = M.ortho.res; [xmin, ymin, xmax, ymax] = M.bounds; OW = M.ortho.w; OH = M.ortho.h;
       const img = el('image', {href: M.ortho.file, x: 0, y: 0, width: OW, height: OH, preserveAspectRatio: 'none'}, svg);
       img.addEventListener('load', () => $('karteLaedt').remove(), {once: true});
-      gF = el('g', {}, svg); gPin = el('g', {class: 'pin'}, svg);
+      gF = el('g', {}, svg); gNr = el('g', {class: 'nummer'}, svg); gPin = el('g', {class: 'pin'}, svg);
       const ord = {schwach: 0, mittel: 1, gut: 2};
       [...D.facades].sort((a, b) => ord[stufe(a)] - ord[stufe(b)]).forEach(f => {
         byId.set(f.id, f);
@@ -517,7 +521,7 @@
   }
   const px = p => [(p[0] - xmin) / R, (ymax - p[1]) / R];
   let pinP = null;
-  const apply = () => { svg.setAttribute('viewBox', `${view.x} ${view.y} ${view.w} ${view.h}`); if (pinP) setzePin(pinP); };
+  const apply = () => { svg.setAttribute('viewBox', `${view.x} ${view.y} ${view.w} ${view.h}`); if (pinP) setzePin(pinP); if (gNr) nummern(); };
   function fit() {
     const r = svg.getBoundingClientRect(), s = Math.max(OW / r.width, OH / r.height);
     view = {w: r.width * s, h: r.height * s, x: (OW - r.width * s) / 2, y: (OH - r.height * s) / 2}; apply();
@@ -540,7 +544,13 @@
     if (zeiger.size === 2) { const [a, b] = [...zeiger.values()]; pinch = {d: Math.hypot(a[0] - b[0], a[1] - b[1]), w: view.w}; drag = null; }
   });
   svg.addEventListener('pointermove', e => {
-    if (!zeiger.has(e.pointerId)) return;
+    if (!zeiger.has(e.pointerId)) {
+      if (st.schritt === 2) {
+        const g = e.target.closest && e.target.closest('.f');
+        document.querySelectorAll('.vorschau button').forEach(b => b.classList.toggle('hl', !!g && b.dataset.id === g.dataset.id));
+      }
+      return;
+    }
     zeiger.set(e.pointerId, [e.clientX, e.clientY]);
     if (pinch && zeiger.size === 2) {
       const [a, b] = [...zeiger.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]);
@@ -567,8 +577,21 @@
   $('zOut').addEventListener('click', () => st.geladen && zoomAt(view.x + view.w / 2, view.y + view.h / 2, 1 / 0.6));
   window.addEventListener('resize', () => { if (!st.geladen) return; const r = svg.getBoundingClientRect(); view.h = view.w * r.height / r.width; apply(); });
 
+  function nummern() {
+    gNr.textContent = '';
+    if (st.schritt !== 2) return;
+    const s = view.w / Math.max(1, svg.getBoundingClientRect().width);
+    st.wand.forEach((id, k) => {
+      const f = byId.get(id);
+      const x = f._m[0] + f.n[0] * 2.2 / R, y = f._m[1] - f.n[1] * 2.2 / R;      // etwas vor die Wand
+      const g = el('g', {transform: `translate(${x} ${y}) scale(${s})`}, gNr);
+      el('circle', {r: 12, fill: '#1c3a29', stroke: '#fff', 'stroke-width': 2.5}, g);
+      el('text', {y: 4.5, 'text-anchor': 'middle', 'font-size': 13, 'font-weight': 700, fill: '#fff', 'font-family': 'Figtree, sans-serif'}, g).textContent = k + 1;
+    });
+  }
   function markiere() {
     for (const f of byId.values()) f._g.classList.toggle('sel', st.f === f.id || (st.schritt === 2 && st.wand.includes(f.id)));
+    nummern();
   }
   function setzePin(p) {
     gPin.textContent = ''; pinP = p;
@@ -641,15 +664,15 @@
       const ax = f.a[0], ay = f.a[1], bx = f.b[0], by = f.b[1];
       const vx = bx - ax, vy = by - ay, t = Math.max(0, Math.min(1, ((p[0] - ax) * vx + (p[1] - ay) * vy) / (vx * vx + vy * vy || 1)));
       const d = Math.hypot(ax + t * vx - p[0], ay + t * vy - p[1]);
-      if (d < 28 && f.len >= 3) nahe.push([d, f]);
+      if (d < 30 && f.len >= 2.5) nahe.push([d, f]);
     }
     nahe.sort((a, b) => a[0] - b[0]);
-    // je Himmelsrichtung nur die nächste und größte Wand, sortiert nach Eignung
-    const jeRichtung = new Map();
-    for (const [d, f] of nahe) { const k = f.cls; if (!jeRichtung.has(k) || (d < 14 && f.len > jeRichtung.get(k).len * 1.3)) jeRichtung.set(k, f); }
-    const waende = [...jeRichtung.values()].sort((a, b) => relErtrag(b.az) - relErtrag(a.az)).slice(0, 6);
+    // die nächsten Wände mit Ansicht; sehr kurze Wandstücke nur, wenn sonst wenig da ist
+    let waende = nahe.filter(([d, f]) => f.img && f.len >= 4).map(x => x[1]);
+    if (waende.length < 3) waende = nahe.filter(([d, f]) => f.img).map(x => x[1]);
+    waende = waende.slice(0, 8);
     st.schritt = 2; st.f = null; st.wand = waende.map(f => f.id); st.punkt = p; st.titel = titel;
-    zoomAuf(cx, cy, 110); setzePin(p); $('hinweisKarte').classList.add('weg');
+    zoomAuf(cx, cy, 75); setzePin(p); $('hinweisKarte').classList.add('weg');
     markiere(); render();
   }
 
@@ -684,7 +707,6 @@
     if (st.schritt === 1) {
       P.innerHTML = kopf(1) + `<h2>Wo ist Ihr Balkon?</h2><p class="text">Suchen Sie oben Ihre Adresse oder tippen Sie Ihr Haus auf der Karte an. ` +
         `Gelb markierte Hauswände bekommen besonders viel Sonne.</p>` +
-        `<p class="text">Tipp: Ein Balkon nach <b>Süden</b>, <b>Südosten</b> oder <b>Südwesten</b> lohnt sich fast immer – wenn kein Haus gegenüber zu nah steht.</p>` +
         `<div class="aktion"><button class="btn zart" id="zuSuche">Adresse eingeben</button></div>`;
       $('zuSuche').addEventListener('click', () => { window.scrollTo({top: 0, behavior: 'smooth'}); setTimeout(() => inp.focus(), 350); });
       return;
@@ -693,13 +715,18 @@
       const ws = st.wand.map(id => byId.get(id));
       P.innerHTML = kopf(2) + `<button class="zurueck" id="zur">← andere Adresse</button>` +
         `<h2>${st.titel ? esc(st.titel) : 'Ihr Haus'}</h2>` +
-        (ws.length ? `<p class="text">In welche Richtung zeigt Ihr Balkon? Wählen Sie die Hauswand, an der er hängt.</p><ul class="waende">` +
-          ws.map(f => `<li><button data-id="${f.id}">${roseIcon(f)}<span><b>nach ${NAMEN[f.cls]}</b><small>${fmt(f.len)} m breit · ${f.h > 3 ? `ca. ${Math.max(1, Math.round(f.h / 3))} Geschosse` : ''}</small></span>` +
-            `<span class="bewertung ${stufe(f)}">${STUFE_TEXT[stufe(f)]}</span></button></li>`).join('') + '</ul>' +
-          `<p class="klein">Nicht dabei? Tippen Sie die Hauswand direkt auf der Karte an.</p>`
+        (ws.length ? `<p class="text">An welcher Hauswand hängt Ihr Balkon? Tippen Sie sie auf der Karte an – oder hier auf das passende Bild. Die Nummern stehen auch auf der Karte.</p><ul class="vorschau">` +
+          ws.map((f, k) => `<li><button data-id="${f.id}" aria-label="Hauswand ${k + 1}, ${STUFE_TEXT[stufe(f)]}"><span class="nr">${k + 1}</span>` +
+            `<img src="${f.img}" alt="" loading="lazy"><span class="unten"><i class="punkt" style="background:${FARBE[stufe(f)]}"></i>${STUFE_KURZ[stufe(f)]}</span></button></li>`).join('') + '</ul>' +
+          `<p class="klein">Die Bilder sind Ansichten aus dem 3D-Stadtmodell – Fenster und Balkone helfen beim Wiedererkennen. Nicht dabei? Tippen Sie die Hauswand direkt auf der Karte an.</p>`
           : `<p class="text">Hier haben wir keine Hauswand gefunden. Tippen Sie etwas näher an Ihr Haus oder direkt auf eine farbige Linie.</p>`);
       $('zur').addEventListener('click', () => { st.schritt = 1; st.wand = []; setzePin(null); markiere(); render(); });
-      P.querySelectorAll('.waende button').forEach(b => b.addEventListener('click', () => waehleWand(+b.dataset.id)));
+      P.querySelectorAll('.vorschau button').forEach(b => {
+        const f = byId.get(+b.dataset.id);
+        b.addEventListener('click', () => waehleWand(f.id));
+        b.addEventListener('mouseenter', () => f._g.classList.add('hl'));
+        b.addEventListener('mouseleave', () => f._g.classList.remove('hl'));
+      });
       return;
     }
     renderWand(P);
