@@ -83,6 +83,7 @@ class App:
     def __init__(self, tile_dir, webapp, wetter=None):
         self.webapp = os.path.realpath(webapp)
         self.R = A.Rechner(tile_dir, webapp, wetter)
+        self.R.bereite_ordner()                # aktuelle Angebotsseite (angebot.html, lastgang.js) bei jedem Start bereitstellen
         self.rechnen = threading.Lock()        # numpy-Rechnung: eine nach der anderen
         self.claude_sem = threading.Semaphore(3)
         self.live_path = os.path.join(webapp, "_cache", "balkone_live.json")
