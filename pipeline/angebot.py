@@ -286,15 +286,22 @@ def balkon_geometrie(f, b, P, baum, n_module=None):
     qb = baum[near]
     u = (Q[:, :2] - L0) @ t
     o = (Q[:, :2] - L0) @ n
-    s = (u > s0 + 0.2) & (u < s1 - 0.2) & (Q[:, 2] > zb) & (Q[:, 2] < zt) & (o > -0.5) & (o < 4.0) & ~qb
+    # Balkonkörper inkl. Platte darunter und Brüstungsoberkante: alles, was vor der Wand liegt
+    s = (u > s0 + 0.2) & (u < s1 - 0.2) & (Q[:, 2] > zb - 0.4) & (Q[:, 2] < zt + 0.2) & (o > -0.5) & (o < 4.0) & ~qb
     default = {"Balkon": 1.2, "Loggia": 0.1}.get(b.get("typ"), 0.5)
+    rand = 0.05
     if f.get("img_quelle") == "schema" or b.get("tiefe_m"):
         # Gebäudemodell ohne Balkone (LoD2): Tiefe aus der Eingabe oder typischer Wert
         tiefe = float(b.get("tiefe_m") or default)
+    elif s.sum() >= 30:
+        # Vorderkante des Balkons: fast der äußerste Punkt (robust gegen einzelne Ausreißer),
+        # Module hängen mit etwas Abstand außen davor – nie im Balkon
+        tiefe = float(np.percentile(o[s], 97))
+        rand = 0.15
     else:
-        tiefe = float(np.percentile(o[s], 90)) if s.sum() >= 20 else default
+        tiefe = default
     tiefe = float(np.clip(tiefe, 0.05, 3.5))
-    off = tiefe + 0.05
+    off = tiefe + rand
 
     mv = modul_vorschlag(b["breite_m"])
     if mv is None:
@@ -801,10 +808,31 @@ class Rechner:
                               x0=self.xmin, y1=self.ymax)
 
     def geo_wolke(self, f):
-        """Punkte für die Balkongeometrie: Mesh bei Fotoansicht aus dem Mesh, sonst Schatten-Punktwolke."""
-        if self.mesh and f.get("img_quelle") == "mesh":
-            return self.Pm, self.tri_baum
-        return self.P, self.baum
+        """Punkte für die Balkongeometrie: Mesh bei Fotoansicht aus dem Mesh, sonst Schatten-Punktwolke.
+        Für das Mesh werden die Dreiecke rund um die Wand dicht abgetastet (alle 12 cm), damit Brüstung
+        und Balkonplatte sicher getroffen werden – die Mittelpunkte großer Dreiecke allein sind zu grob."""
+        if not (self.mesh and f.get("img_quelle") == "mesh"):
+            return self.P, self.baum
+        if not hasattr(self, "_mesh_lokal"):
+            self._mesh_lokal = {}
+        if f["id"] in self._mesh_lokal:
+            return self._mesh_lokal[f["id"]]
+        a, b = np.array(f["a"], float), np.array(f["b"], float)
+        lo, hi = np.minimum(a, b) - 6, np.maximum(a, b) + 6
+        c = self.Pm
+        sel = np.nonzero((c[:, 0] > lo[0]) & (c[:, 0] < hi[0]) & (c[:, 1] > lo[1]) & (c[:, 1] < hi[1]))[0]
+        T = self.V[self.F[sel]]
+        area = 0.5 * np.linalg.norm(np.cross(T[:, 1] - T[:, 0], T[:, 2] - T[:, 0]), axis=1)
+        k = np.clip(np.ceil(area / 0.12 ** 2), 1, 3000).astype(np.int64)
+        idx = np.repeat(np.arange(len(sel)), k)
+        rng = np.random.default_rng(0)
+        r1, r2 = np.sqrt(rng.random(len(idx))), rng.random(len(idx))
+        Q = T[idx, 0] * (1 - r1)[:, None] + T[idx, 1] * (r1 * (1 - r2))[:, None] + T[idx, 2] * (r1 * r2)[:, None]
+        out = (np.vstack([Q, T.reshape(-1, 3)]), np.r_[self.tri_baum[sel][idx], np.repeat(self.tri_baum[sel], 3)])
+        if len(self._mesh_lokal) > 200:
+            self._mesh_lokal.clear()
+        self._mesh_lokal[f["id"]] = out
+        return out
 
     def simuliere(self, fid, b, P=None, baum=None):
         """Ein Balkon (Box im Fassadenbild) -> (Geometrie, Ergebnis, Azimut, Randlage) oder None.
