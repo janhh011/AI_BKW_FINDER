@@ -32,7 +32,7 @@ import time
 import numpy as np
 import pandas as pd
 import pvlib
-from PIL import Image
+from PIL import Image, ImageFilter
 from pyproj import Geod, Transformer
 
 Image.MAX_IMAGE_PIXELS = None
@@ -506,7 +506,12 @@ def luftbild_ausschnitt(out, P0, ortho, groesse):
         bg.paste(im.crop((max(0, box[0]), max(0, box[1]), min(im.width, box[2]), min(im.height, box[3]))),
                  (max(0, -box[0]), max(0, -box[1])))
         c = bg
-    c.save(os.path.join(out, "luftbild.jpg"), quality=80)
+    # ruhiger Untergrund im Stil eines Architekturmodells: entsättigt, weich, leicht ins Salbeigrün gezogen
+    a = np.asarray(c.filter(ImageFilter.GaussianBlur(1.2))).astype(float)
+    grau = a.mean(axis=2, keepdims=True)
+    a = 0.45 * a + 0.55 * grau
+    a = a * 0.55 + np.array([214, 222, 207], float) * 0.45
+    Image.fromarray(np.clip(a, 0, 255).astype(np.uint8)).save(os.path.join(out, "luftbild.jpg"), quality=80)
     return dict(file="luftbild.jpg", groesse=round(groesse, 2))
 
 
@@ -533,8 +538,31 @@ def lod2_gebaeude(lod2, P0, z0, R):
     return out
 
 
+def illustriere(a, maske):
+    """Mesh-Foto als ruhige Illustration: Flächen glätten, Farben Richtung Sand ziehen, nur deutliche
+    Kanten (Fenster, Balkone) als weiche dunkle Linien. Versteckt die Schmelzkanten des Meshs."""
+    import cv2
+    h, w = a.shape[:2]
+    x = cv2.resize(a, (max(1, w // 2), max(1, h // 2)), interpolation=cv2.INTER_AREA)
+    x = cv2.edgePreservingFilter(x, flags=1, sigma_s=30, sigma_r=0.3)
+    x = cv2.bilateralFilter(x, 7, 40, 7)
+    x = cv2.resize(x, (w, h), interpolation=cv2.INTER_CUBIC).astype(float)
+    x = x * 0.78 + np.array([240, 235, 225], float) * 0.22
+    g = cv2.cvtColor(cv2.resize(a, (max(1, w // 2), max(1, h // 2)), interpolation=cv2.INTER_AREA), cv2.COLOR_RGB2GRAY)
+    g = cv2.GaussianBlur(g, (3, 3), 0)
+    k = (cv2.adaptiveThreshold(g, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 21, 10) == 0).astype(np.uint8)
+    n, lab, st, _ = cv2.connectedComponentsWithStats(k, 8)
+    k = np.isin(lab, np.nonzero(st[:, 4] >= 25)[0][1:]).astype(np.uint8)
+    k = cv2.resize(k, (w, h), interpolation=cv2.INTER_NEAREST)
+    x[k > 0] *= 0.62
+    x = np.clip(x, 0, 255).astype(np.uint8)
+    x[~maske] = 236
+    return x
+
+
 def fassaden_foto(out, f, web, P0, z0):
-    """Mesh-Fotoansicht der eigenen Hauswand als Bild mit transparentem Hintergrund + Ecken im Modell."""
+    """Eigene Hauswand für die 3D-Ansicht: Mesh-Foto als Illustration, zugeschnitten auf den
+    LoD2-Umriss der Wand (keine ausgefransten Mesh-Ränder), Hintergrund transparent."""
     if f.get("img_quelle") != "mesh" or not web:
         return None
     p = os.path.join(web, f["img"])
@@ -542,8 +570,25 @@ def fassaden_foto(out, f, web, P0, z0):
         return None
     im = Image.open(p).convert("RGB")
     a = np.asarray(im)
-    alpha = np.where((np.abs(a.astype(int) - 236).max(axis=2) <= 4), 0, 255).astype(np.uint8)
-    Image.fromarray(np.dstack([a, alpha])).save(os.path.join(out, "fassade.webp"), quality=80)
+    maske = np.abs(a.astype(int) - 236).max(axis=2) > 4
+    ps = os.path.join(web, f.get("img_schema") or "")
+    if f.get("img_schema") and os.path.exists(ps):
+        sch = Image.open(ps).convert("RGB")
+        if sch.size != im.size:
+            sch = sch.resize(im.size, Image.NEAREST)
+        sa = np.asarray(sch).astype(int)
+        wand = (np.abs(sa - np.array([244, 238, 226])).max(axis=2) <= 12) | \
+               (np.abs(sa - np.array([200, 204, 196])).max(axis=2) <= 12)
+        import cv2
+        wand = cv2.dilate(wand.astype(np.uint8), np.ones((5, 5), np.uint8)) > 0
+        luecke = wand & ~maske
+        a = illustriere(a, maske & wand)
+        a[luecke] = (238, 232, 221)                # Lücken im Mesh: Wandfarbe statt Loch
+        maske = wand                               # sauberer Umriss aus dem LoD2-Modell
+    else:
+        a = illustriere(a, maske)
+    alpha = np.where(maske, 255, 0).astype(np.uint8)
+    Image.fromarray(np.dstack([a, alpha])).save(os.path.join(out, "fassade.webp"), quality=82)
     res = f["img_res"]
     left = np.array(f["img_left"], float) + np.array(f["n"], float) * 0.06    # knapp vor die Wand
     t = np.array(f["img_t"], float)
@@ -552,6 +597,31 @@ def fassaden_foto(out, f, web, P0, z0):
     ecken = [[*left, zt], [*r, zt], [*r, zb], [*left, zb]]
     return dict(file="fassade.webp", ecken=[[round(float(x - P0[0]), 3), round(float(y - P0[1]), 3), round(float(z - z0), 3)]
                                             for x, y, z in ecken])
+
+
+def wand_ansicht(out, f, web, b, geo, max_w=1000):
+    """Dieselbe Wandansicht, auf der der Nutzer seinen Balkon gewählt hat, mit Balkon und Modulen in Pixeln."""
+    if not web or not f.get("img"):
+        return None
+    p = os.path.join(web, f["img"])
+    if not os.path.exists(p):
+        return None
+    im = Image.open(p).convert("RGB")
+    k = min(1.0, max_w / im.width)
+    if k < 1.0:
+        im = im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS)
+    im.save(os.path.join(out, "wand.jpg"), quality=84)
+    res = f["img_res"]
+    L0 = np.array(f["img_left"], float)
+    t = np.array(f["img_t"], float)
+    module = []
+    for m in geo["module"]:
+        e = m["ecken"]
+        u = (e[:, :2] - L0) @ t / res * k
+        y = (f["img_ztop"] - e[:, 2]) / res * k
+        module.append([round(float(u.min()), 1), round(float(y.min()), 1), round(float(u.max()), 1), round(float(y.max()), 1)])
+    return dict(file="wand.jpg", w=im.width, h=im.height, box=[round(v * k, 1) for v in b["box"]], module=module,
+                quelle=f.get("img_quelle", "mesh"))
 
 
 def exportiere_modell(out, P0, z0, f, balkone, P, baum, aktiv_bi=None, geo_wolke=None, ortho=None, lod2=None):
@@ -879,7 +949,8 @@ class Rechner:
             jahr_basis=JAHR, wetter=self.wquelle, globalstrahlung=round(self.ghi_y),
             annahmen=dict(verluste=VERLUSTE, gamma=GAMMA, wr_ac=WR_AC, wr_eta=WR_ETA, albedo=ALBEDO,
                           tau_belaubt=TAU_BELAUBT, tau_kahl=TAU_KAHL),
-            szene=sz, modell=modell, fassade_foto=fassaden_foto(out, f, self.webapp, P0, z0), quelle=self.meta.get("source"), erstellt=time.strftime("%Y-%m-%d %H:%M"),
+            szene=sz, modell=modell, fassade_foto=fassaden_foto(out, f, self.webapp, P0, z0),
+            wand_ansicht=wand_ansicht(out, f, self.webapp, b, geo), quelle=self.meta.get("source"), erstellt=time.strftime("%Y-%m-%d %H:%M"),
         )
         if extra:
             daten.update(extra)

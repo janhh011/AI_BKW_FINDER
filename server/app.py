@@ -279,6 +279,19 @@ class App:
         if f.get("frei_ab") is not None and z_unten < f["frei_ab"] - 0.5:
             raise ValueError("Dieser Teil der Wand grenzt an ein Nachbarhaus oder ein tieferes Dach. "
                              "Bitte den Balkon im hellen, freien Teil der Wand einzeichnen.")
+        # Balkon muss auf der Wand liegen (nicht in der Luft neben einem Gebäudeteil)
+        sp = f.get("img_schema") or (f["img"] if f.get("img_quelle") == "schema" else None)
+        if sp and os.path.exists(os.path.join(self.webapp, sp)):
+            with Image.open(os.path.join(self.webapp, sp)) as sim:
+                sch = sim.convert("RGB")
+                if sch.size != (W, H):
+                    sch = sch.resize((W, H), Image.NEAREST)
+                xs = range(int(min(x0, x1)), int(max(x0, x1)), max(1, int(abs(x1 - x0) / 20)))
+                yu = min(H - 1, int(max(y0, y1)) - 2)
+                treffer = [sch.getpixel((x, yu)) for x in xs]
+                auf = sum(1 for r, g, b in treffer if abs(r - 244) < 14 and abs(g - 238) < 14 and abs(b - 226) < 14)
+                if treffer and auf / len(treffer) < 0.5:
+                    raise ValueError("Der Balkon liegt nicht auf der Hauswand. Bitte direkt auf der hellen Wandfläche einzeichnen.")
         b = A.balkon_aus_eingabe(f, box, gelaender=GELAENDER.get(gelaender))
         h = hashlib.sha1(json.dumps([fid, b["box"], gelaender]).encode()).hexdigest()[:10]
         key = f"{fid}_u{h}"

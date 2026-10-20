@@ -58,6 +58,17 @@
   .sunbox .t b { font-weight: 600; }
   .sunbox .ctl { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
   .chip { border: 1px solid var(--line); background: var(--paper); border-radius: 999px; padding: 3px 11px; font-size: 13px; cursor: pointer; color: var(--fern); }
+  /* Wandansicht als Bild im Bild: daran erkennt man sein Haus */
+  .wandbild { position: absolute; left: 16px; top: 16px; width: min(42%, var(--klein, 300px)); margin: 0; z-index: 3; cursor: zoom-in;
+              background: rgba(250, 252, 247, .94); border-radius: 16px; padding: 8px 8px 6px; box-shadow: 0 8px 28px rgba(28, 58, 41, .16);
+              transition: width .35s ease; }
+  .wandbild.gross { width: calc(100% - 32px); max-width: 720px; cursor: zoom-out; }
+  .wandbild .wb-rahmen { position: relative; border-radius: 10px; overflow: hidden; background: #eceee9; }
+  .wandbild img { display: block; width: 100%; height: auto; }
+  .wandbild svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .wandbild figcaption { font-size: 12px; color: var(--fern); padding: 5px 2px 0; }
+  .wandbild figcaption b { color: var(--moss); }
+  .wandbild:not([hidden]) ~ .korr { top: auto; bottom: 150px; }
   .chip[aria-pressed="true"] { background: var(--moss); border-color: var(--moss); color: #fff; }
   .look { position: absolute; right: 16px; top: 16px; }
   .korr { position: absolute; left: 16px; top: 16px; font-size: 12px; background: rgba(250, 252, 247, .85); }
@@ -270,6 +281,10 @@
     <section class="stage" id="stage" aria-label="3D-Ansicht Ihres Balkons">
       <div class="loading" id="loading">Ihr Balkon wird geladen …</div>
       <button class="chip look" id="look" aria-pressed="false">Foto-Ansicht</button>
+      <figure class="wandbild" id="wandbild" hidden>
+        <div class="wb-rahmen"><img id="wbImg" alt="Ihre Hauswand mit dem gewählten Balkon"><svg id="wbSvg" preserveAspectRatio="none"></svg></div>
+        <figcaption>Ihre Hauswand <span id="wbHinweis">· antippen zum Vergrößern</span></figcaption>
+      </figure>
       <button class="chip korr" id="korr" hidden>Baum stimmt nicht?</button>
       <div class="korrbar" id="korrbar" hidden role="group" aria-label="Bäume korrigieren">
         <span id="korrText">Tippen Sie auf Bäume, die es so nicht gibt – wir rechnen ohne sie neu.</span>
@@ -722,7 +737,7 @@ renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadow
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 stage.prepend(renderer.domElement);
 const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(0xe9efe5, 60, 125);
+scene.fog = new THREE.Fog(0xe9efe5, 95, 210);
 const camera = new THREE.PerspectiveCamera(30, 1, 0.5, 600);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true; controls.enablePan = false; controls.minDistance = 12; controls.maxDistance = 90; controls.maxPolarAngle = Math.PI * 0.5;
@@ -778,7 +793,7 @@ function sichtPruefen(dt) {
   }
   for (const [id, teile] of sichtFrei.haeuser) for (const t of teile) {
     const m = (haeuser.has(id) || einzeln.has(t)) ? geistHaus : sichtFrei.hausMat;
-    if (t.material !== m) t.material = m;
+    if (t.material !== m) { t.material = m; for (const k of t.children) k.visible = m !== geistHaus; }
   }
   // Bäume im Vordergrund (zwischen Kamera und Balkon, nahe der Blickachse) ebenfalls ausblenden – sie verdecken sonst die halbe Ansicht
   {
@@ -855,7 +870,7 @@ async function loadModell() {
       // Boden: CircleGeometry-UVs laufen über das umschließende Quadrat (Radius M.radius * 1.15)
       const tb = tx.clone(); const r = M.radius * 1.15;
       tb.repeat.set(2 * r / S, 2 * r / S); tb.offset.set(0.5 - r / S, 0.5 - r / S); tb.needsUpdate = true;
-      bodenMat.map = tb; bodenMat.color.set(0x6e6e6e); bodenMat.needsUpdate = true;   // Licht ist sehr hell -> Foto abdunkeln
+      bodenMat.map = tb; bodenMat.color.set(0x8c8c8c); bodenMat.needsUpdate = true;   // Licht ist sehr hell -> Foto abdunkeln
       // Dächer: ExtrudeGeometry nutzt die Grundriss-Koordinaten (x, y in m) als UV der Deckflächen
       const td = tx.clone(); td.repeat.set(1 / S, 1 / S); td.offset.set(0.5, 0.5); td.needsUpdate = true;
       if (!(M.gebaeude && M.gebaeude.length)) hausMat = [new THREE.MeshLambertMaterial({map: td, color: 0x8a8a8a}), wandMat];
@@ -869,6 +884,8 @@ async function loadModell() {
   if (M.gebaeude && M.gebaeude.length) {
     // Echte Gebäudeformen aus dem amtlichen LoD2-Modell: Wände hell, Dächer in ihrer Farbe aus dem Luftbild
     hausMat = new THREE.MeshLambertMaterial({vertexColors: true, side: THREE.DoubleSide});
+    const kantenMat = new THREE.LineBasicMaterial({color: 0x4f5e53, transparent: true, opacity: 0.32});
+    const WAND = new THREE.Color(0xf1ece3), DACH_MISCH = new THREE.Color(0xb7ada0);
     M.gebaeude.forEach((G, gi) => {
       const pos = [], col = [];
       for (const [typ, farbe, flach] of G.f) {
@@ -884,8 +901,12 @@ async function loadModell() {
         if (e1.lengthSq() < 1e-10) continue;
         e1.normalize(); const e2 = n.clone().cross(e1);
         const flat = P.map(p => { const d = p.clone().sub(P[0]); return new THREE.Vector2(d.dot(e1), d.dot(e2)); });
-        const c = new THREE.Color(farbe);
-        for (const t of THREE.ShapeUtils.triangulateShape(flat, [])) for (const k of t) { pos.push(P[k].x, P[k].y, P[k].z); col.push(c.r, c.g, c.b); }
+        // Architekturmodell: Wände sandhell, Dächer in gedämpfter Luftbildfarbe; unten etwas dunkler (wirkt wie Umgebungsverschattung)
+        const c = typ === 0 ? WAND.clone() : new THREE.Color(farbe).lerp(DACH_MISCH, 0.45);
+        for (const t of THREE.ShapeUtils.triangulateShape(flat, [])) for (const k of t) {
+          const ao = typ === 0 ? 0.74 + 0.26 * Math.min(1, P[k].y / 9) : 1;
+          pos.push(P[k].x, P[k].y, P[k].z); col.push(c.r * ao, c.g * ao, c.b * ao);
+        }
       }
       if (!pos.length) return;
       const g = new THREE.BufferGeometry();
@@ -894,6 +915,8 @@ async function loadModell() {
       g.computeVertexNormals(); g.computeBoundingBox();
       const mesh = new THREE.Mesh(g, hausMat); mesh.castShadow = true; mesh.receiveShadow = true;
       mesh.userData = {poly: G.boden.length ? G.boden : [[0, 0]], z0: 0, z1: G.h, box: g.boundingBox, haus: gi};
+      const kanten = new THREE.LineSegments(new THREE.EdgesGeometry(g, 25), kantenMat);
+      kanten.raycast = () => {}; mesh.add(kanten);
       modellGroup.add(mesh); bloecke.push(mesh); haeuser.set(gi, [mesh]);
     });
   } else {
@@ -943,7 +966,7 @@ async function loadModell() {
       g.setAttribute('position', new THREE.Float32BufferAttribute([...E[0], ...E[1], ...E[2], ...E[0], ...E[2], ...E[3]], 3));
       g.setAttribute('uv', new THREE.Float32BufferAttribute([0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0], 2));
       g.computeVertexNormals();
-      const foto = new THREE.Mesh(g, new THREE.MeshLambertMaterial({map: tx, color: 0xa8a8a8, alphaTest: 0.5, side: THREE.DoubleSide}));
+      const foto = new THREE.Mesh(g, new THREE.MeshLambertMaterial({map: tx, color: 0xb4b4b4, alphaTest: 0.5, side: THREE.DoubleSide}));
       foto.receiveShadow = true; modellGroup.add(foto);
     }
   }
@@ -989,6 +1012,19 @@ async function loadFoto() {
     res(); }, undefined, res))));
   fotoMesh = new THREE.Mesh(geo, mats); fotoMesh.castShadow = true; fotoMesh.receiveShadow = true;
   scene.add(fotoMesh);
+}
+// Wandansicht: dieselbe Ansicht wie beim Auswählen, Balkon und Module eingezeichnet
+if (D.wand_ansicht) {
+  const W = D.wand_ansicht, fig = $('wandbild'), svgW = $('wbSvg');
+  $('wbImg').src = `${id}/${W.file}`;
+  svgW.setAttribute('viewBox', `0 0 ${W.w} ${W.h}`);
+  const ns = 'http://www.w3.org/2000/svg', mk = (tag, a) => { const e = document.createElementNS(ns, tag); for (const k in a) e.setAttribute(k, a[k]); svgW.appendChild(e); return e; };
+  const [bx0, by0, bx1, by1] = W.box;
+  mk('rect', {x: bx0, y: by0, width: bx1 - bx0, height: by1 - by0, fill: 'rgba(244,183,49,.18)', stroke: '#f4b731', 'stroke-width': Math.max(2, W.w / 220), rx: 3});
+  for (const [x0, y0, x1, y1] of W.module) mk('rect', {x: x0, y: y0, width: x1 - x0, height: y1 - y0, fill: '#1d3557', stroke: '#c9d6e8', 'stroke-width': Math.max(1, W.w / 400), opacity: .92});
+  fig.style.setProperty('--klein', `${Math.round(Math.min(300, 230 * W.w / W.h + 16))}px`);   // hohe, schmale Wände nicht zu groß
+  fig.hidden = false;
+  fig.addEventListener('click', () => { fig.classList.toggle('gross'); $('wbHinweis').textContent = fig.classList.contains('gross') ? '· antippen zum Verkleinern' : '· antippen zum Vergrößern'; });
 }
 if (!D.szene) $('look').remove();
 else $('look').addEventListener('click', async e => {
