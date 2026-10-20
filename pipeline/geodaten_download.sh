@@ -1,7 +1,8 @@
 #!/bin/bash
 # Offene Geodaten Berlin (Datenlizenz Deutschland – Zero 2.0) nach data/downloads/ laden.
 #
-#   bash pipeline/geodaten_download.sh dom        # Oberflächenmodell DOM1 (Laser 2021, 1 m) – für Bäume/Höhen
+#   bash pipeline/geodaten_download.sh bdom       # bildbasiertes Oberflächenmodell (Befliegung März 2026, 1 m) – für Bäume/Höhen
+#   bash pipeline/geodaten_download.sh dom        # Oberflächenmodell DOM1 (Laser 2021, 1 m) – nur als Vergleich/Ersatz
 #   bash pipeline/geodaten_download.sh luftbild   # Luftbilder DOP20 2025 (ganz Berlin, ca. 19 GB)
 #   bash pipeline/geodaten_download.sh lod2       # LoD2-Gebäude (ruft pipeline/lod2_download.sh auf)
 #   bash pipeline/geodaten_download.sh alles
@@ -42,12 +43,24 @@ luftbild() {   # DOP20 2025: nur als 9 Regionspakete erhältlich -> ganz Berlin
   du -sh "$DL/luftbild"
 }
 
+bdom() {   # bDOM: 2x2-km-Kacheln, Name = Südwest-Ecke in km (gerade Werte)
+  mkdir -p "$DL/bdom"
+  local e n
+  for e in $(seq $((E0 - E0 % 2)) 2 "$E1"); do
+    for n in $(seq $((N0 - N0 % 2)) 2 "$N1"); do
+      hole "https://gdi.berlin.de/data/bdom/atom/${e}_${n}.zip" "$DL/bdom/bDOM_${e}_${n}.zip"
+    done
+  done
+  du -sh "$DL/bdom"
+}
+
 lod2() { bash "$PROJEKT/pipeline/lod2_download.sh" "$DL/lod2" "$E0" "$E1" "$N0" "$N1"; }
 
 case "${1:-}" in
+  bdom) bdom ;;
   dom) dom ;;
   luftbild) luftbild ;;
   lod2) lod2 ;;
-  alles) lod2; dom; luftbild ;;
-  *) sed -n '2,12p' "$0"; exit 1 ;;
+  alles) lod2; bdom; luftbild ;;
+  *) sed -n '2,13p' "$0"; exit 1 ;;
 esac
