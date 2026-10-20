@@ -1201,7 +1201,10 @@ $('korrOk').addEventListener('click', async () => {
 
 renderOpts(); placeModules(); drawSunpath(); setSun();
 requestAnimationFrame(loop);
-loadModell().then(() => { if (new URLSearchParams(location.search).has('pruefen')) setTimeout(() => {
+loadModell().then(() => {
+  // Wo es die echte Foto-Szene gibt, ist sie die Startansicht (genauer und man erkennt sein Haus); Modell per Knopf
+  if (D.szene && $('look') && !new URLSearchParams(location.search).has('modell')) $('look').click();
+  if (new URLSearchParams(location.search).has('pruefen')) setTimeout(() => {
   const r = [];
   for (const k of [-1, 0, 1]) { camAt(SWING_MITTE + k * SWING_WEITE); camera.updateMatrixWorld(); sichtTakt = 1; sichtPruefen(1); r.push(sichtBericht()); }
   document.title = 'SICHT ' + r.join(' | ') + ` lift=${LIFT}`;

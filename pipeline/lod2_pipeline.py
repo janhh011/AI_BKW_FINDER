@@ -46,6 +46,7 @@ PUNKT = 0.8           # m Abstand der Gebäudepunkte
 ORTHO_RES = 0.25      # m/Pixel Luftbild für die Karte
 IMG_RES = 0.05        # m/Pixel schematische Fassadenansicht
 MIN_LEN, MIN_H = 2.5, 2.5
+PHANTOM_TOLERANZ = 3.0   # m, so weit darf LoD2 über dem bDOM liegen (Dachkanten, Antennen, Messrauschen)
 
 NS = {"gml": "http://www.opengis.net/gml", "bldg": "http://www.opengis.net/citygml/building/1.0",
       "core": "http://www.opengis.net/citygml/1.0"}
@@ -527,6 +528,16 @@ def main():
     Pb = np.c_[box[0] + gx.ravel() + 0.5, box[3] - gy.ravel() - 0.5, gel[gy, gx].ravel()]
     log(f"  {len(Pt):,} Baumpunkte, {len(Pb):,} Geländepunkte")
 
+    # LoD2 gegen die Messung prüfen: Gebäudeteile, die deutlich über der gemessenen Oberfläche (bDOM 2026)
+    # liegen, gibt es so nicht (z. B. Nachbarhaus über einen flachen Hofanbau gezogen) -> für Schatten weglassen
+    from scipy.ndimage import maximum_filter
+    dom_max = maximum_filter(np.where(ok, dom, -1e9), size=3)
+    gx = np.clip((Pg[:, 0] - box[0]).astype(np.int64), 0, W - 1)
+    gy = np.clip((box[3] - Pg[:, 1]).astype(np.int64), 0, H - 1)
+    ref = dom_max[gy, gx]
+    phantom = (ref > -1e8) & (Pg[:, 2] > ref + PHANTOM_TOLERANZ)
+    Pg = Pg[~phantom]
+    log(f"  {phantom.mean() * 100:.1f} % der LoD2-Punkte liegen über der gemessenen Oberfläche und werden verworfen")
     P = np.vstack([Pg, Pt, Pb])
     istbaum = np.r_[np.zeros(len(Pg), bool), np.ones(len(Pt), bool), np.zeros(len(Pb), bool)]
     origin = np.floor(P.min(0))
