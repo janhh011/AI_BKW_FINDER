@@ -171,6 +171,7 @@
   .wand .eigen rect { fill: rgba(47, 125, 79, .35); stroke: var(--leaf); stroke-width: 3; vector-effect: non-scaling-stroke; }
   .wand .eigen text { fill: var(--moss); font: 700 12px Figtree, sans-serif; paint-order: stroke; stroke: #fff; stroke-width: 3px; stroke-linejoin: round; }
   .wand .geschoss { stroke: rgba(255, 255, 255, .55); stroke-dasharray: 3 5; vector-effect: non-scaling-stroke; }
+  .wand.schema .geschoss { stroke: rgba(28, 58, 41, .35); }
   .wand .boden { stroke: rgba(28, 58, 41, .7); stroke-width: 2; vector-effect: non-scaling-stroke; }
   .wand-leer { padding: 40px 16px; text-align: center; color: var(--fern); }
   .info-zeile { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13.5px; color: var(--fern); margin: 0 0 12px; }
@@ -742,10 +743,10 @@
       `<h2>Hauswand nach ${NAMEN[f.cls]}</h2>` +
       `<p class="info-zeile"><span class="bewertung ${s}">${STUFE_TEXT[s]}</span><span>${fmt(relErtrag(f.az) * 100)} % des Ertrags einer Südwand</span></p>`;
     if (st.fehler) html += `<div class="fehler">${esc(st.fehler)}</div>`;
-    html += `<div class="wand${st.zeichnen ? ' zeichnen' : ''}" id="wand">` + (f.img ? `<img id="wImg" src="${f.img}" alt="Ansicht der Hauswand aus dem 3D-Stadtmodell"><svg id="wSvg" preserveAspectRatio="xMidYMid meet"></svg>` : '<div class="wand-leer">Für diese Wand haben wir keine Ansicht.</div>') + `</div>`;
+    html += `<div class="wand${st.zeichnen ? ' zeichnen' : ''}${f.img_quelle === 'schema' ? ' schema' : ''}" id="wand">` + (f.img ? `<img id="wImg" src="${f.img}" alt="${f.img_quelle === 'schema' ? 'Umriss der Hauswand aus dem amtlichen Gebäudemodell' : 'Ansicht der Hauswand aus dem 3D-Stadtmodell'}"><svg id="wSvg" preserveAspectRatio="xMidYMid meet"></svg>` : '<div class="wand-leer">Für diese Wand haben wir keine Ansicht.</div>') + `</div>`;
     if (st.zeichnen) {
       const breite = st.box ? Math.abs(st.box[2] - st.box[0]) * f.img_res : null;
-      html += `<p class="text">${st.box ? `Ihr Balkon: <b>${fmt(breite, 1)} m</b> breit. Passt das? Sie können neu ziehen oder die Breite anpassen.` : 'Ziehen Sie mit dem Finger oder der Maus ein Rechteck über Ihren Balkon – von Geländer-Ecke zu Geländer-Ecke. Die gestrichelten Linien zeigen ungefähr die Geschosse.'}</p>`;
+      html += `<p class="text">${st.box ? `Ihr Balkon: <b>${fmt(breite, 1)} m</b> breit. Passt das? Sie können neu ziehen oder die Breite anpassen.` : (f.img_quelle === 'schema' ? 'Zählen Sie die Geschosse ab und ziehen Sie ein Rechteck dort, wo Ihr Balkon ist. Die Breite können Sie danach genau einstellen.' : 'Ziehen Sie mit dem Finger oder der Maus ein Rechteck über Ihren Balkon – von Geländer-Ecke zu Geländer-Ecke. Die gestrichelten Linien zeigen ungefähr die Geschosse.')}</p>`;
       if (st.box) html += `<label class="regler"><span>Breite</span><input type="range" id="bBreite" min="1" max="${Math.min(10, f.len).toFixed(1)}" step="0.1" value="${breite.toFixed(1)}"><b id="bBreiteT">${fmt(breite, 1)} m</b></label>` +
         `<p class="text" style="margin-bottom:6px">Wie sieht Ihr Geländer aus?</p><div class="chips" id="gel">${GELAENDER.map(([k, t]) => `<button class="chip" data-k="${k}" aria-pressed="${st.gelaender === k}">${t}</button>`).join('')}</div>`;
       html += `<div class="aktion">` + (st.box ? `<span class="angebot-wrap"><button class="btn" id="rechnen" ${st.gelaender ? '' : 'disabled'}>Ersparnis berechnen</button><span class="unverb">unverbindlich</span></span>` : '') +
@@ -756,7 +757,10 @@
       if (sim && sim.passt) html += `<div class="ergebnis"><div><b>${fmt(sim.kwh)}</b><span>kWh Strom im Jahr (senkrecht)</span></div><div><b>${fmt(sim.verlust * 100)} %</b><span>Verlust durch Schatten</span></div><div><b>${fmt(sim.sonne)}</b><span>Sonnenstunden</span></div></div>`;
       html += `<div class="aktion"><span class="angebot-wrap"><button class="btn" id="angebot">Angebot ansehen</button><span class="unverb">unverbindlich</span></span><button class="link" id="anders">anderer Balkon</button></div>`;
     } else {
-      if (bks === null && !st.analyseRichtungen.includes(f.cls)) {
+      if (bks === null && f.img_quelle === 'schema') {
+        html += `<p class="text">Die Ansicht zeigt den Umriss Ihrer Hauswand aus dem amtlichen Gebäudemodell. Zeichnen Sie ein, wo Ihr Balkon liegt – die gestrichelten Linien zeigen ungefähr die Geschosse.</p>` +
+          `<div class="aktion"><button class="btn" id="selbst">Balkon einzeichnen</button></div>`;
+      } else if (bks === null && !st.analyseRichtungen.includes(f.cls)) {
         html += `<p class="text">Zeichnen Sie Ihren Balkon einfach auf der Hauswand ein – wir rechnen danach Sonne und Schatten genau wie bei jedem anderen Balkon.</p>` +
           `<p class="klein" style="margin:-6px 0 12px">Unsere automatische Balkonsuche gibt es nur für Hauswände nach Süden, Südosten und Südwesten.</p>` +
           `<div class="aktion"><button class="btn" id="selbst">Balkon selbst einzeichnen</button></div>`;
@@ -801,7 +805,7 @@
     s.setAttribute('viewBox', `0 0 ${W} ${H}`); s.textContent = '';
     if (f.img_ztop != null && f.img_res) {
       const yg = (f.img_ztop - f.ground) / f.img_res;
-      if (st.zeichnen) for (let z = 3; z < f.h; z += 3) { const y = yg - z / f.img_res; if (y > 0) el('line', {class: 'geschoss', x1: 0, y1: y, x2: W, y2: y}, s); }
+      if (st.zeichnen || f.img_quelle === 'schema') for (let z = 3; z < f.h; z += 3) { const y = yg - z / f.img_res; if (y > 0) el('line', {class: 'geschoss', x1: 0, y1: y, x2: W, y2: y}, s); }
       if (yg > 0 && yg < H) el('line', {class: 'boden', x1: 0, y1: yg, x2: W, y2: yg}, s);
     }
     const e = BALKONE[String(f.id)];

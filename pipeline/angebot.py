@@ -88,7 +88,10 @@ def lade_eingaben(tile_dir, web):
     if not os.path.exists(p):
         sys.exit("balkone.json fehlt – zuerst balkone_claude.py collect ausführen")
     BK = json.load(open(p, encoding="utf-8"))
-    d = np.load(os.path.join(web, "_cache", "mesh.npz"), allow_pickle=True)
+    mp = os.path.join(web, "_cache", "mesh.npz")
+    if not os.path.exists(mp):           # LoD2-Version: kein Foto-Mesh, nur Punktwolke (_cache/punkte.npz)
+        return D, BK, None, None, None, None, None, []
+    d = np.load(mp, allow_pickle=True)
     tex = [os.path.join(tile_dir, os.path.basename(str(t))) for t in d["tex_files"]]
     missing = [t for t in tex if not os.path.exists(t)]
     if missing:
@@ -285,7 +288,11 @@ def balkon_geometrie(f, b, P, baum, n_module=None):
     o = (Q[:, :2] - L0) @ n
     s = (u > s0 + 0.2) & (u < s1 - 0.2) & (Q[:, 2] > zb) & (Q[:, 2] < zt) & (o > -0.5) & (o < 4.0) & ~qb
     default = {"Balkon": 1.2, "Loggia": 0.1}.get(b.get("typ"), 0.5)
-    tiefe = float(np.percentile(o[s], 90)) if s.sum() >= 20 else default
+    if f.get("img_quelle") == "schema" or b.get("tiefe_m"):
+        # Gebäudemodell ohne Balkone (LoD2): Tiefe aus der Eingabe oder typischer Wert
+        tiefe = float(b.get("tiefe_m") or default)
+    else:
+        tiefe = float(np.percentile(o[s], 90)) if s.sum() >= 20 else default
     tiefe = float(np.clip(tiefe, 0.05, 3.5))
     off = tiefe + 0.05
 
@@ -481,7 +488,29 @@ MODELL_RES = 0.5         # m, Rasterweite
 MODELL_STUFE = 1.0       # m, Höhenstufen der Gebäudeblöcke
 
 
-def exportiere_modell(out, P0, z0, f, balkone, P, baum, aktiv_bi=None, geo_wolke=None):
+def luftbild_ausschnitt(out, P0, ortho, groesse):
+    """Quadratischer Luftbild-Ausschnitt (Norden oben) um P0 mit Kantenlänge 'groesse' -> luftbild.jpg."""
+    if not ortho:
+        return None
+    im = ortho["bild"]
+    res = ortho["res"]
+    x0, y1 = ortho["x0"], ortho["y1"]
+    h = groesse / 2
+    box = (int(round((P0[0] - h - x0) / res)), int(round((y1 - P0[1] - h) / res)),
+           int(round((P0[0] + h - x0) / res)), int(round((y1 - P0[1] + h) / res)))
+    if box[2] <= 0 or box[3] <= 0 or box[0] >= im.width or box[1] >= im.height:
+        return None
+    c = im.crop(box)              # außerhalb des Bildes: schwarz -> mit Bodenfarbe füllen
+    if box[0] < 0 or box[1] < 0 or box[2] > im.width or box[3] > im.height:
+        bg = Image.new("RGB", c.size, (223, 232, 216))
+        bg.paste(im.crop((max(0, box[0]), max(0, box[1]), min(im.width, box[2]), min(im.height, box[3]))),
+                 (max(0, -box[0]), max(0, -box[1])))
+        c = bg
+    c.save(os.path.join(out, "luftbild.jpg"), quality=80)
+    return dict(file="luftbild.jpg", groesse=round(groesse, 2))
+
+
+def exportiere_modell(out, P0, z0, f, balkone, P, baum, aktiv_bi=None, geo_wolke=None, ortho=None):
     """Vereinfachtes Modell für die Angebotsseite: Gebäude als Blöcke in 1-m-Stufen,
     Bäume als Kronen, Balkone der eigenen Fassade als Platten mit Brüstung."""
     import cv2
@@ -584,7 +613,8 @@ def exportiere_modell(out, P0, z0, f, balkone, P, baum, aktiv_bi=None, geo_wolke
         platten.append(dict(c=[round(float(c[0]), 2), round(float(zb), 2), round(float(-c[1]), 2)],
                             breite=round(float(s1 - s0), 2), tiefe=round(float(gesamt), 2), aktiv=aktiv))
     modell = dict(radius=R, bloecke=bloecke, baeume=baeume, balkone=platten,
-                  drehung=round(float(math.atan2(t[1], t[0])), 4))
+                  drehung=round(float(math.atan2(t[1], t[0])), 4),
+                  luftbild=luftbild_ausschnitt(out, P0, ortho, 2 * R * 1.15))
     with open(os.path.join(out, "modell.json"), "w", encoding="utf-8") as fh:
         json.dump(modell, fh, separators=(",", ":"))
     return dict(file="modell.json", bloecke=len(bloecke), baeume=len(baeume), balkone=len(platten))
@@ -601,7 +631,11 @@ class Rechner:
         self.D, self.BK, self.V, self.F, self.VT, self.FT, self.mat, self.tex = D, BK, V, F, VT, FT, mat, tex
         self.meta = D["meta"]
         self.fac = {f["id"]: f for f in D["facades"]}
-        self.tri_baum = baum_dreiecke(F, VT, FT, mat, tex, os.path.join(webapp, "_cache", "baum_dreiecke.npy"))
+        self.mesh = V is not None
+        self.tri_baum = (baum_dreiecke(F, VT, FT, mat, tex, os.path.join(webapp, "_cache", "baum_dreiecke.npy"))
+                         if self.mesh else None)
+        if not self.mesh and not os.path.exists(os.path.join(webapp, "_cache", "punkte.npz")):
+            sys.exit("Weder mesh.npz noch punkte.npz – zuerst lod2_pipeline.py ausführen")
         self.P, self.baum = punktwolke(V, F, self.tri_baum, os.path.join(webapp, "_cache", "punkte.npz"))
         # Roh-Wolke für die Balkon-Geometrie, bereinigte Wolke für Schatten und 3D-Modell
         keep = bereinige_wolke(self.P, self.baum, os.path.join(webapp, "_cache", "wolke_bereinigt.npz"))
@@ -623,6 +657,11 @@ class Rechner:
             f"Referenz Dach 35° Süd: {self.sim.referenz_dach():.0f} kWh/kWp")
         self.adir = os.path.join(webapp, "angebot")
         self.tex_names = None
+        self.ortho = None
+        o = self.meta.get("ortho")
+        if o and os.path.exists(os.path.join(webapp, o["file"])):
+            self.ortho = dict(bild=Image.open(os.path.join(webapp, o["file"])).convert("RGB"), res=o["res"],
+                              x0=self.xmin, y1=self.ymax)
 
     def simuliere(self, fid, b, P=None, baum=None):
         """Ein Balkon (Box im Fassadenbild) -> (Geometrie, Ergebnis, Azimut, Randlage) oder None.
@@ -711,7 +750,7 @@ class Rechner:
         P0 = geo["mitte"]
         z0 = f["ground"]
         sz = None
-        if szene:      # Foto-Mesh (ca. 4 MB) nur für ausgewählte Balkone
+        if szene and self.mesh:      # Foto-Mesh (ca. 4 MB) nur für ausgewählte Balkone
             sz = exportiere_szene(out, P0, z0, self.V, self.F, self.VT, self.FT, self.mat, self.tri_baum)
             sz["tex"] = self.tex_names
         alt = os.path.join(out, "daten.json")
@@ -720,7 +759,7 @@ class Rechner:
         if extra and extra.get("ohne_baeume"):
             # Modell aus der vollständigen Punktwolke, dann genau die angeklickten Kronen weglassen
             # (sonst entstehen am Rand der entfernten Krone neue kleine Kronen)
-            modell = exportiere_modell(out, P0, z0, f, balkone, self.Ps, self.baums, aktiv_bi=bi, geo_wolke=(self.P, self.baum))
+            modell = exportiere_modell(out, P0, z0, f, balkone, self.Ps, self.baums, aktiv_bi=bi, geo_wolke=(self.P, self.baum), ortho=self.ortho)
             mp = os.path.join(out, "modell.json")
             mj = json.load(open(mp, encoding="utf-8"))
             weg = extra["ohne_baeume"]
@@ -729,7 +768,7 @@ class Rechner:
                 json.dump(mj, fh, separators=(",", ":"))
             modell["baeume"] = len(mj["baeume"])
         else:
-            modell = exportiere_modell(out, P0, z0, f, balkone, P, baum, aktiv_bi=bi, geo_wolke=(self.P, self.baum))
+            modell = exportiere_modell(out, P0, z0, f, balkone, P, baum, aktiv_bi=bi, geo_wolke=(self.P, self.baum), ortho=self.ortho)
         lon, lat = self.to_ll.transform(P0[0], P0[1])
         idx = self.idx
         pac = np.round(r["pac"]).astype(int)

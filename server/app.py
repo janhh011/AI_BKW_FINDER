@@ -140,7 +140,8 @@ class App:
         if f is None:
             return None
         e = self.R.BK.get(str(fid))
-        out = dict(id=fid, analysiert=e is not None, analyse_moeglich=f["cls"] in ANALYSE_RICHTUNGEN, bild=f.get("img"), cls=f["cls"], az=f["az"],
+        out = dict(id=fid, analysiert=e is not None, analyse_moeglich=f["cls"] in ANALYSE_RICHTUNGEN and f.get("img_quelle") != "schema",
+                   schema=f.get("img_quelle") == "schema", bild=f.get("img"), cls=f["cls"], az=f["az"],
                    breite_m=f["len"], hoehe_m=f["h"], img_res=f.get("img_res"))
         if e is not None:
             out.update(geschosse=e.get("geschosse"), bildqualitaet=e.get("bildqualitaet"), balkone=[
@@ -153,6 +154,8 @@ class App:
         f = self.R.fac.get(fid)
         if f is None or not f.get("img"):
             raise ValueError("Für diese Hauswand gibt es kein Bild.")
+        if f.get("img_quelle") == "schema":
+            raise ValueError("Für diese Hauswand gibt es nur eine schematische Ansicht. Bitte zeichnen Sie Ihren Balkon selbst ein.")
         if f["cls"] not in ANALYSE_RICHTUNGEN:
             raise ValueError("Die automatische Suche gibt es nur für Hauswände nach Süden, Südosten und Südwesten. "
                              "Bitte zeichnen Sie Ihren Balkon selbst ein.")
@@ -272,6 +275,10 @@ class App:
         breite = abs(x1 - x0) * f["img_res"]
         if not 0.8 <= breite <= 12:
             raise ValueError("Bitte eine Breite zwischen 0,8 und 12 m einzeichnen.")
+        z_unten = f["img_ztop"] - max(y0, y1) * f["img_res"]
+        if f.get("frei_ab") is not None and z_unten < f["frei_ab"] - 0.5:
+            raise ValueError("Dieser Teil der Wand grenzt an ein Nachbarhaus oder ein tieferes Dach. "
+                             "Bitte den Balkon im hellen, freien Teil der Wand einzeichnen.")
         b = A.balkon_aus_eingabe(f, box, gelaender=GELAENDER.get(gelaender))
         h = hashlib.sha1(json.dumps([fid, b["box"], gelaender]).encode()).hexdigest()[:10]
         key = f"{fid}_u{h}"

@@ -840,10 +840,27 @@ function waehleKamera() {
 const modellGroup = new THREE.Group(); scene.add(modellGroup);
 async function loadModell() {
   const M = await fetch(`${id}/${D.modell.file}`).then(r => r.json());
-  const ground = new THREE.Mesh(new THREE.CircleGeometry(M.radius * 1.15, 64), new THREE.MeshLambertMaterial({color: 0xdfe8d8}));
+  const bodenMat = new THREE.MeshLambertMaterial({color: 0xdfe8d8});
+  const ground = new THREE.Mesh(new THREE.CircleGeometry(M.radius * 1.15, 64), bodenMat);
   ground.rotation.x = -Math.PI / 2; ground.position.y = -0.02; ground.receiveShadow = true; modellGroup.add(ground);
   // Gebäudeblöcke einzeln, damit Häuser zwischen Kamera und Modulen durchsichtig werden können
-  const hausMat = new THREE.MeshLambertMaterial({color: 0xf7f8f3});
+  const wandMat = new THREE.MeshLambertMaterial({color: 0xf7f8f3});
+  let hausMat = wandMat;
+  if (M.luftbild) {
+    // Luftbild (Norden oben, Kantenlänge M.luftbild.groesse, Mitte = Balkon) auf Boden und Dächer legen
+    const tx = await new Promise(res => new THREE.TextureLoader().load(`${id}/${M.luftbild.file}`, res, undefined, () => res(null)));
+    if (tx) {
+      tx.colorSpace = THREE.SRGBColorSpace; tx.anisotropy = renderer.capabilities.getMaxAnisotropy();
+      const S = M.luftbild.groesse;
+      // Boden: CircleGeometry-UVs laufen über das umschließende Quadrat (Radius M.radius * 1.15)
+      const tb = tx.clone(); const r = M.radius * 1.15;
+      tb.repeat.set(2 * r / S, 2 * r / S); tb.offset.set(0.5 - r / S, 0.5 - r / S); tb.needsUpdate = true;
+      bodenMat.map = tb; bodenMat.color.set(0x7d7d7d); bodenMat.needsUpdate = true;   // Licht ist sehr hell -> Foto abdunkeln
+      // Dächer: ExtrudeGeometry nutzt die Grundriss-Koordinaten (x, y in m) als UV der Deckflächen
+      const td = tx.clone(); td.repeat.set(1 / S, 1 / S); td.offset.set(0.5, 0.5); td.needsUpdate = true;
+      hausMat = [new THREE.MeshLambertMaterial({map: td, color: 0x8a8a8a}), wandMat];
+    }
+  }
   const bloecke = [];
   for (const b of M.bloecke) {
     const shape = new THREE.Shape(b.outer.map(([x, y]) => new THREE.Vector2(x, y)));

@@ -42,6 +42,20 @@ python3 pipeline/adressen.py webapp
 python3 server/app.py data/<kachel> webapp --port 8000     # oder: webapp/start.command
 ```
 
+### LoD2-Version (offene Daten, ohne Mesh)
+
+Alle Quellen unter Datenlizenz Deutschland – Zero 2.0: LoD2-Gebäude für Häuser und Hauswände, bDOM 2026 für Bäume, Luftbild DOP20 2025 für Karte und Dächer. Die Hauswände haben eine schematische Ansicht (Umriss), Balkone zeichnet der Nutzer ein; die automatische Balkonsuche gibt es nur für Wände mit Foto.
+
+```bash
+# Gebiet in EPSG:25833 (Kern, Hauswände); 250 m Umgebung für Schatten werden automatisch mitgeladen
+python3 pipeline/lod2_pipeline.py data/downloads webapp_lod2 --bbox 385500,5816800,386500,5817800
+python3 pipeline/adressen.py webapp_lod2
+python3 server/app.py data/downloads webapp_lod2 --port 8000
+
+# Vergleich mit der Mesh-Version (gleiche Balkone, Ertrag je kWp)
+python3 pipeline/vergleich_mesh_lod2.py webapp webapp_lod2
+```
+
 Rohdaten liegen unter `data/` (nicht im Repo):
 
 ```
@@ -63,6 +77,7 @@ Hosting, Sicherheit und Datenschutz: [docs/ARCHITEKTUR.md](docs/ARCHITEKTUR.md)
 - Eine Kachel in Berlin-Wilmersdorf: 95 Südfassaden ausgewertet, 111 Balkone mit Angebot.
 - Wetter aus einem synthetischen Referenzjahr (PVGIS-TMY über `--wetter` einlesbar); Ertrag etwa ±15 %, Maße ±0,3–0,5 m.
 - Preise sind Platzhalter.
+- LoD2-Version (Branch `main`): 1 km² Wilmersdorf in gut 1 Minute auf dem Mac, 4.685 Hauswände. Gegenüber der Mesh-Version (Branch `version/mesh-v1`) für 87 gleiche Balkone: Ertrag im Median +4 %, 74 % innerhalb ±20 %. Abweichungen vor allem im Erdgeschoss und 1. Stock (Bäume im unbelaubten bDOM schwächer erfasst).
 
 ## Warum ich das baue
 
