@@ -42,6 +42,18 @@ python3 pipeline/adressen.py webapp
 python3 server/app.py data/<kachel> webapp --port 8000     # oder: webapp/start.command
 ```
 
+Rohdaten liegen unter `data/` (nicht im Repo):
+
+```
+data/
+  3858_58171_-002/      Mesh-Testkachel (Berlin 3D, nur für Fassadenbilder)
+  downloads/
+    lod2/               LoD2-Gebäude, 1-km-Kacheln (pipeline/lod2_download.sh)
+    luftbild/           Luftbilder DOP20 2025
+    laserscan/          Laserscan (ALS)
+    mesh/               weitere Mesh-Kacheln
+```
+
 Partnerlinks (Provision beim Kauf) je Set in `pipeline/partner.json` eintragen; ohne Link sammelt der Knopf nur Anfragen.
 
 Hosting, Sicherheit und Datenschutz: [docs/ARCHITEKTUR.md](docs/ARCHITEKTUR.md)

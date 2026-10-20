@@ -2,7 +2,9 @@
 # LoD2-Gebäudemodelle Berlin (1-km-Kacheln, dl-de/zero 2.0) für ein Rechteck laden.
 # Standard: Innenstadt (Charlottenburg bis Friedrichshain, Wedding bis Neukölln).
 # Nutzung: pipeline/lod2_download.sh [ZIELORDNER] [OST_VON OST_BIS NORD_VON NORD_BIS]
-ZIEL="${1:-$HOME/Downloads/lod2}"
+# Standard-Ziel: data/downloads/lod2 im Projektordner (data/ wird nicht committet).
+PROJEKT="$(cd "$(dirname "$0")/.." && pwd)"
+ZIEL="${1:-$PROJEKT/data/downloads/lod2}"
 E0="${2:-382}"; E1="${3:-396}"; N0="${4:-5813}"; N1="${5:-5825}"
 BASIS="https://gdi.berlin.de/data/a_lod2/atom"
 mkdir -p "$ZIEL"
