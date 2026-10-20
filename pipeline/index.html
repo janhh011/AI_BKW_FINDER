@@ -106,6 +106,12 @@
   .vorschlaege li[aria-selected="true"], .vorschlaege li:hover { background: var(--leaf-soft); }
   .vorschlaege li.info { cursor: default; color: var(--fern); font-size: 14px; }
   .vorschlaege li.info:hover { background: none; }
+  /* „Kostenlos · Ohne Anmeldung“ direkt unter der Suche: gut sichtbar, als Tags laut Styleguide */
+  .vorteile { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 0; padding: 0; }
+  .vorteile li { display: inline-flex; align-items: center; gap: 6px; background: var(--blau-10); color: var(--blau); border-radius: var(--r-tag);
+                 padding: 6px 12px 6px 8px; font-size: 15px; line-height: 20px; font-weight: 600; }
+  .vorteile svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+  .haupt.weiter .hero .vorteile { display: none; }
   .gebiet { margin: 8px 0 0; font-size: 13px; line-height: 18px; color: var(--fern); }
 
   /* ---------- Finder ---------- */
@@ -223,6 +229,7 @@
     .haupt { grid-template-columns: 1fr; grid-template-rows: auto auto auto; grid-template-areas: "intro" "karte" "panel"; height: auto; max-height: none; min-height: 0; }
     .haupt .karte { height: 58vh; min-height: 340px; scroll-margin-top: 8px; }
     .haupt.weiter .hero .lead, .haupt.weiter .hero .gebiet { display: block; }
+    .haupt.weiter .hero .vorteile { display: flex; }
     .drei, .zwei { grid-template-columns: 1fr; }
     nav.top { display: none; }
   }
@@ -287,7 +294,7 @@
     <section class="haupt" id="finder" aria-labelledby="titel">
       <div class="hero" id="intro">
         <h1 id="titel">Lohnt sich ein Balkonkraftwerk auf <em>deinem</em> Balkon?</h1>
-        <p class="lead">Adresse eingeben, Balkon antippen. Wir rechnen Sonne und Schatten aus dem 3D-Stadtmodell Berlin durch – und zeigen dir, was du sparst. Kostenlos, ohne Anmeldung.</p>
+        <p class="lead">Adresse eingeben, Balkon antippen. Wir rechnen Sonne und Schatten aus dem 3D-Stadtmodell Berlin durch – und zeigen dir, was du sparst.</p>
         <div class="suche">
           <form id="sucheForm" role="search" autocomplete="off">
             <label for="adresse" class="sr" style="position:absolute;left:-9999px">Deine Adresse</label>
@@ -296,6 +303,10 @@
           </form>
           <ul class="vorschlaege" id="vorschlaege" role="listbox" aria-label="Adressvorschläge"></ul>
         </div>
+        <ul class="vorteile" aria-label="Deine Vorteile">
+          <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Kostenlos</li>
+          <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Ohne Anmeldung</li>
+        </ul>
         <p class="gebiet" id="gebiet">Derzeit für ein Testgebiet in Berlin verfügbar – weitere Kieze folgen.</p>
       </div>
       <div class="karte" id="karte">
