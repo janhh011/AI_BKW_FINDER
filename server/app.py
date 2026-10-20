@@ -251,7 +251,7 @@ class App:
         if os.path.exists(os.path.join(self.R.adir, key, "daten.json")):
             return key
         with self.rechnen:
-            geo = A.balkon_geometrie(self.R.fac[fid], alle[bi], self.R.P, self.R.baum)
+            geo = A.balkon_geometrie(self.R.fac[fid], alle[bi], *self.R.geo_wolke(self.R.fac[fid]))
             if geo is None:
                 raise ValueError("Dieser Balkon lässt sich nicht neu berechnen.")
             P, baum, n = self.R.ohne_baeume(geo["mitte"], kronen)

@@ -110,6 +110,8 @@
   #map { width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; user-select: none; }
   #map.ziehen { cursor: grabbing; }
   #map .f { cursor: pointer; }
+  #map g.fern .f.schwach:not(.sel) { display: none; }
+  #map.ziehen .f:not(.sel) .halo { display: none; }
   #map .f .halo { stroke: transparent; stroke-linecap: round; }
   #map .f:hover .halo, #map .f.sel .halo { stroke: rgba(255, 255, 255, .85); }
   #map .f.sel .halo { stroke: #fff; }
@@ -493,7 +495,7 @@
 
   // ---------------------------------------------------------------- Karte
   const svg = $('map');
-  let D, M, R, xmin, ymin, xmax, ymax, OW, OH, byId = new Map(), gF, gPin, gNr;
+  let D, M, R, xmin, ymin, xmax, ymax, OW, OH, byId = new Map(), gF, gK, gPin, gNr;
   let view = {x: 0, y: 0, w: 1, h: 1};
   const st = {analyseRichtungen: ['S', 'SO', 'SW'], schritt: 1, f: null, bk: null, wand: [], adresse: null, zeichnen: false, box: null, gelaender: null, geladen: false};
 
@@ -503,8 +505,10 @@
     startP = daten().then(d => {
       if (!d) { $('karteLaedt').textContent = 'Kartendaten fehlen.'; return; }
       D = d; M = D.meta; R = M.ortho.res; [xmin, ymin, xmax, ymax] = M.bounds; OW = M.ortho.w; OH = M.ortho.h;
-      const img = el('image', {href: M.ortho.file, x: 0, y: 0, width: OW, height: OH, preserveAspectRatio: 'none'}, svg);
+      // Übersichtsbild für die ganze Karte; Kacheln in voller Auflösung erst beim Hineinzoomen (kacheln())
+      const img = el('image', {href: M.ortho.klein ? M.ortho.klein.file : M.ortho.file, x: 0, y: 0, width: OW, height: OH, preserveAspectRatio: 'none'}, svg);
       img.addEventListener('load', () => $('karteLaedt').remove(), {once: true});
+      gK = el('g', {}, svg);
       gF = el('g', {}, svg); gNr = el('g', {class: 'nummer'}, svg); gPin = el('g', {class: 'pin'}, svg);
       const ord = {schwach: 0, mittel: 1, gut: 2};
       [...D.facades].sort((a, b) => ord[stufe(a)] - ord[stufe(b)]).forEach(f => {
@@ -512,7 +516,7 @@
         const [ax, ay] = px(f.a), [bx, by] = px(f.b);
         f._m = [(ax + bx) / 2, (ay + by) / 2];
         const s = stufe(f), w = s === 'gut' ? 5.5 : (s === 'mittel' ? 4 : 2.6);
-        const g = el('g', {class: 'f', 'data-id': f.id}, gF);
+        const g = el('g', {class: `f ${s}`, 'data-id': f.id}, gF);
         el('line', {class: 'halo', x1: ax, y1: ay, x2: bx, y2: by, 'stroke-width': w + 9}, g);
         el('line', {class: 'l', x1: ax, y1: ay, x2: bx, y2: by, stroke: FARBE[s], 'stroke-width': w}, g);
         el('title', {}, g).textContent = `Hauswand nach ${NAMEN[f.cls]}`;
@@ -525,7 +529,35 @@
   }
   const px = p => [(p[0] - xmin) / R, (ymax - p[1]) / R];
   let pinP = null;
-  const apply = () => { svg.setAttribute('viewBox', `${view.x} ${view.y} ${view.w} ${view.h}`); if (pinP) setzePin(pinP); if (gNr) nummern(); };
+  // höchstens ein Neuzeichnen je Bildschirmbild, egal wie viele Maus-/Touch-Ereignisse kommen
+  let rafId = 0;
+  const apply = () => { if (!rafId) rafId = requestAnimationFrame(() => { rafId = 0; zeichneAnsicht(); }); };
+  function zeichneAnsicht() {
+    svg.setAttribute('viewBox', `${view.x} ${view.y} ${view.w} ${view.h}`);
+    if (pinP) setzePin(pinP); if (gNr) nummern(); kacheln();
+    if (gF) gF.classList.toggle('fern', view.w > OW * 0.45);      // weit herausgezoomt: nur gute Wände zeigen
+  }
+  const kachelBild = new Map();
+  function kacheln() {
+    const K = M && M.ortho.kacheln;
+    if (!K || !gK) return;
+    const s = K.px;                                               // Kachelgröße in Kartenpixeln
+    // Kacheln erst, wenn das Übersichtsbild sichtbar hochskaliert würde (> 2 Bildschirmpixel je Bildpixel)
+    const voll = svg.getBoundingClientRect().width / view.w * (OW / M.ortho.klein.w) > 2;
+    if (!voll) { for (const [k, im] of kachelBild) { im.remove(); kachelBild.delete(k); } return; }
+    const x0 = Math.max(0, Math.floor(view.x / s)), x1 = Math.min(K.nx - 1, Math.floor((view.x + view.w) / s));
+    const y0 = Math.max(0, Math.floor(view.y / s)), y1 = Math.min(K.ny - 1, Math.floor((view.y + view.h) / s));
+    for (const [k, im] of kachelBild) {
+      const [x, y] = k.split('_').map(Number);
+      if (x < x0 - 1 || x > x1 + 1 || y < y0 - 1 || y > y1 + 1) { im.remove(); kachelBild.delete(k); }
+    }
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+      const k = `${x}_${y}`;
+      if (kachelBild.has(k)) continue;
+      kachelBild.set(k, el('image', {href: K.muster.replace('{x}', x).replace('{y}', y), x: x * s, y: y * s,
+        width: Math.min(s, OW - x * s), height: Math.min(s, OH - y * s), preserveAspectRatio: 'none'}, gK));
+    }
+  }
   function fit() {
     const r = svg.getBoundingClientRect(), s = Math.min(OW / r.width, OH / r.height) * 0.92;   // füllend, Kachelrand außerhalb
     view = {w: r.width * s, h: r.height * s, x: (OW - r.width * s) / 2, y: (OH - r.height * s) / 2}; apply();

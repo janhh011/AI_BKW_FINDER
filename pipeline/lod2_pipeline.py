@@ -247,6 +247,26 @@ def luftbild(ordner, box, res, cache_dir):
     return out
 
 
+KACHEL_PX = 512       # Kantenlänge der Luftbild-Kacheln für die Karte
+KLEIN = 4             # Übersichtsbild: Auflösung geteilt durch diesen Faktor
+
+
+def luftbild_kacheln(ob, web):
+    """Übersichtsbild (1 m/Pixel) für die ganze Karte und 512-px-Kacheln in voller Auflösung,
+    die die Karte erst beim Hineinzoomen und nur im sichtbaren Ausschnitt lädt."""
+    d = os.path.join(web, "luftbild")
+    os.makedirs(d, exist_ok=True)
+    kl = ob.resize((ob.width // KLEIN, ob.height // KLEIN), Image.LANCZOS)
+    kl.save(os.path.join(web, "luftbild_klein.jpg"), quality=78, optimize=True)
+    nx, ny = math.ceil(ob.width / KACHEL_PX), math.ceil(ob.height / KACHEL_PX)
+    for iy in range(ny):
+        for ix in range(nx):
+            box = (ix * KACHEL_PX, iy * KACHEL_PX, min(ob.width, (ix + 1) * KACHEL_PX), min(ob.height, (iy + 1) * KACHEL_PX))
+            ob.crop(box).save(os.path.join(d, f"k_{ix}_{iy}.jpg"), quality=80, optimize=True)
+    return dict(klein=dict(file="luftbild_klein.jpg", w=kl.width, h=kl.height),
+                kacheln=dict(muster="luftbild/k_{x}_{y}.jpg", px=KACHEL_PX, nx=nx, ny=ny))
+
+
 # ------------------------------------------------------------------ Hauswände
 def waende(geb, hoehe_raster, rinfo, box_kern, gn):
     """Wandflächen -> zusammengefasste Hauswände (eine je Gebäude und Richtung/Flucht)."""
@@ -487,9 +507,11 @@ def main():
     log("Luftbild")
     ob = luftbild(os.path.join(a.downloads, "luftbild"), kern, ORTHO_RES, os.path.join(a.webapp, "_cache"))
     ob.save(os.path.join(a.webapp, "luftbild.jpg"), quality=82, optimize=True)
+    ortho = dict(file="luftbild.jpg", w=ob.width, h=ob.height, res=ORTHO_RES)
+    ortho.update(luftbild_kacheln(ob, a.webapp))
 
     meta = dict(tile="lod2", crs=EPSG, bounds=[round(v, 2) for v in kern], center_ll=[round(lat0, 6), round(lon0, 6)],
-                ortho=dict(file="luftbild.jpg", w=ob.width, h=ob.height, res=ORTHO_RES),
+                ortho=ortho,
                 north_grid_az=round(gn, 3), target_classes=list(TARGET), generated=time.strftime("%Y-%m-%d %H:%M"),
                 source="LoD2 Berlin, bDOM 2026, DOP20 2025 (Geoportal Berlin, dl-de/zero-2-0)")
     fass.sort(key=lambda f: f["id"])

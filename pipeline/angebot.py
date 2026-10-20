@@ -640,6 +640,8 @@ class Rechner:
         # Roh-Wolke für die Balkon-Geometrie, bereinigte Wolke für Schatten und 3D-Modell
         keep = bereinige_wolke(self.P, self.baum, os.path.join(webapp, "_cache", "wolke_bereinigt.npz"))
         self.Ps, self.baums = self.P[keep], self.baum[keep]
+        # Für die Balkontiefe an Wänden mit Fotoansicht: Mesh-Dreiecke (dort sind Balkone enthalten)
+        self.Pm = self.V[self.F].mean(1) if self.mesh else None
         self.xmin, self.ymin, self.xmax, self.ymax = self.meta["bounds"]
         cx, cy = (self.xmin + self.xmax) / 2, (self.ymin + self.ymax) / 2
         self.to_ll = Transformer.from_crs(self.meta["crs"], "EPSG:4326", always_xy=True)
@@ -663,13 +665,19 @@ class Rechner:
             self.ortho = dict(bild=Image.open(os.path.join(webapp, o["file"])).convert("RGB"), res=o["res"],
                               x0=self.xmin, y1=self.ymax)
 
+    def geo_wolke(self, f):
+        """Punkte für die Balkongeometrie: Mesh bei Fotoansicht aus dem Mesh, sonst Schatten-Punktwolke."""
+        if self.mesh and f.get("img_quelle") == "mesh":
+            return self.Pm, self.tri_baum
+        return self.P, self.baum
+
     def simuliere(self, fid, b, P=None, baum=None):
         """Ein Balkon (Box im Fassadenbild) -> (Geometrie, Ergebnis, Azimut, Randlage) oder None.
         P/baum: optional eine veränderte Punktwolke (z. B. ohne vom Nutzer entfernte Bäume)."""
         P = self.Ps if P is None else P
         baum = self.baums if baum is None else baum
         f = self.fac[int(fid)]
-        geo = balkon_geometrie(f, b, self.P, self.baum)
+        geo = balkon_geometrie(f, b, *self.geo_wolke(f))
         if geo is None:
             return None
         Q, qb = horizont_vorfilter(geo, P, baum)
@@ -723,7 +731,7 @@ class Rechner:
         varianten = []
         fit = geo["vorschlag"]["fit"]
         for nm in (range(1, min(fit, 4) + 1) if fit >= 1 else [1]):
-            g2 = balkon_geometrie(f, b, self.P, self.baum, n_module=nm if fit >= 1 else None)
+            g2 = balkon_geometrie(f, b, *self.geo_wolke(f), n_module=nm if fit >= 1 else None)
             Q2, qb2 = horizont_vorfilter(g2, P, baum)
             r2 = simuliere_balkon(sim, g2, Q2, qb2, gn_true, az_mod)
             pac2 = np.round(r2["pac"]).astype(int)
@@ -735,7 +743,7 @@ class Rechner:
                                   stunde_wh=pac2.tolist()))
         # optimierte Variante: bifaziale 450-Wp-Module, 30° ausgestellt (Modulneigung 60°)
         nm = min(max(fit, 1), 2)
-        g3 = balkon_geometrie(f, b, self.P, self.baum, n_module=nm if fit >= 1 else None)
+        g3 = balkon_geometrie(f, b, *self.geo_wolke(f), n_module=nm if fit >= 1 else None)
         Q3, qb3 = horizont_vorfilter(g3, P, baum)
         r3 = simuliere_balkon(sim, g3, Q3, qb3, gn_true, az_mod, neigung=90 - AUSSTELLWINKEL, wp_modul=WP_OPTIMIERT)
         pac3 = np.round(r3["pac"]).astype(int)
@@ -759,7 +767,7 @@ class Rechner:
         if extra and extra.get("ohne_baeume"):
             # Modell aus der vollständigen Punktwolke, dann genau die angeklickten Kronen weglassen
             # (sonst entstehen am Rand der entfernten Krone neue kleine Kronen)
-            modell = exportiere_modell(out, P0, z0, f, balkone, self.Ps, self.baums, aktiv_bi=bi, geo_wolke=(self.P, self.baum), ortho=self.ortho)
+            modell = exportiere_modell(out, P0, z0, f, balkone, self.Ps, self.baums, aktiv_bi=bi, geo_wolke=self.geo_wolke(f), ortho=self.ortho)
             mp = os.path.join(out, "modell.json")
             mj = json.load(open(mp, encoding="utf-8"))
             weg = extra["ohne_baeume"]
@@ -768,7 +776,7 @@ class Rechner:
                 json.dump(mj, fh, separators=(",", ":"))
             modell["baeume"] = len(mj["baeume"])
         else:
-            modell = exportiere_modell(out, P0, z0, f, balkone, P, baum, aktiv_bi=bi, geo_wolke=(self.P, self.baum), ortho=self.ortho)
+            modell = exportiere_modell(out, P0, z0, f, balkone, P, baum, aktiv_bi=bi, geo_wolke=self.geo_wolke(f), ortho=self.ortho)
         lon, lat = self.to_ll.transform(P0[0], P0[1])
         idx = self.idx
         pac = np.round(r["pac"]).astype(int)

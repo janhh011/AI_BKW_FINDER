@@ -50,7 +50,9 @@ Alle Quellen unter Datenlizenz Deutschland – Zero 2.0: LoD2-Gebäude für Häu
 # Gebiet in EPSG:25833 (Kern, Hauswände); 250 m Umgebung für Schatten werden automatisch mitgeladen
 python3 pipeline/lod2_pipeline.py data/downloads webapp_lod2 --bbox 385500,5816800,386500,5817800
 python3 pipeline/adressen.py webapp_lod2
-python3 server/app.py data/downloads webapp_lod2 --port 8000
+# optional: Fassadenfotos aus einer Mesh-Kachel für die LoD2-Wände (Rückseiten werden verworfen)
+python3 pipeline/mesh_fotos.py data/3858_58171_-002 webapp_lod2
+python3 server/app.py data/3858_58171_-002 webapp_lod2 --port 8000   # erstes Argument: Mesh-Kachel (für Fotos) oder data/downloads
 
 # Vergleich mit der Mesh-Version (gleiche Balkone, Ertrag je kWp)
 python3 pipeline/vergleich_mesh_lod2.py webapp webapp_lod2
