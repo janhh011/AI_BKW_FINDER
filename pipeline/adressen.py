@@ -22,6 +22,7 @@ import json
 import os
 import re
 import sys
+import urllib.error
 import urllib.parse
 import urllib.request
 
@@ -38,8 +39,18 @@ def bounds(webapp):
 
 def holen(url, data=None):
     req = urllib.request.Request(url, data=data, headers={"User-Agent": "balki-strom-adressen/1.0"})
-    with urllib.request.urlopen(req, timeout=120) as r:
-        return r.read()
+    try:
+        with urllib.request.urlopen(req, timeout=120) as r:
+            return r.read()
+    except urllib.error.URLError as e:
+        # Python von python.org auf dem Mac kennt die Systemzertifikate oft nicht -> curl nutzt den Schlüsselbund
+        if "CERTIFICATE_VERIFY_FAILED" not in str(e):
+            raise
+        import subprocess
+        cmd = ["curl", "-sS", "--fail", "--max-time", "120", "-A", "balki-strom-adressen/1.0", url]
+        if data is not None:
+            cmd += ["--data-binary", "@-"]
+        return subprocess.run(cmd, input=data, capture_output=True, check=True).stdout
 
 
 def berlin(b, crs):
