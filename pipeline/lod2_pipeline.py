@@ -267,6 +267,50 @@ def luftbild_kacheln(ob, web):
                 kacheln=dict(muster="luftbild/k_{x}_{y}.jpg", px=KACHEL_PX, nx=nx, ny=ny))
 
 
+def speichere_gebaeude(geb, bild, box, res, pfad):
+    """LoD2-Flächen kompakt für angebot.py: alle Wand- und Dachpolygone mit Gebäudenummer,
+    Dachfarbe (Mittel des Luftbilds über der Dachfläche, etwas gedämpft) und Grundriss."""
+    x0, y1 = box[0], box[3]
+    H, W = bild.shape[:2]
+    pts, start, typ, gnr, farbe, boden_pts, boden_start, boden_gnr = [], [], [], [], [], [], [], []
+    n = 0
+    nb = 0
+    for gi, d in enumerate(geb.values()):
+        for t, polys in ((0, d["wand"]), (1, d["dach"])):
+            for v in polys:
+                start.append(n)
+                pts.append(v)
+                n += len(v)
+                typ.append(t)
+                gnr.append(gi)
+                c = (232, 230, 224)
+                if t == 1:
+                    q = np.c_[(v[:, 0] - x0) / res, (y1 - v[:, 1]) / res]
+                    lo = np.floor(q.min(0)).astype(int)
+                    hi = np.ceil(q.max(0)).astype(int) + 1
+                    lo = np.maximum(lo, 0)
+                    hi = np.minimum(hi, [W, H])
+                    if (hi > lo).all():
+                        m = np.zeros((hi[1] - lo[1], hi[0] - lo[0]), np.uint8)
+                        cv2.fillPoly(m, [np.round(q - lo).astype(np.int32)], 1)
+                        aus = bild[lo[1]:hi[1], lo[0]:hi[0]][m > 0]
+                        if len(aus):
+                            mc = np.median(aus, axis=0)
+                            grau = mc.mean()
+                            mc = (0.75 * mc + 0.25 * grau) * 0.92          # etwas entsättigt und dunkler
+                            c = tuple(int(np.clip(x, 0, 255)) for x in mc)
+                farbe.append(c)
+        for v in d["boden"]:
+            boden_start.append(nb)
+            boden_pts.append(v[:, :2])
+            nb += len(v)
+            boden_gnr.append(gi)
+    np.savez_compressed(pfad, P=np.vstack(pts), start=np.array(start + [n]), typ=np.array(typ, np.uint8),
+                        geb=np.array(gnr, np.int32), farbe=np.array(farbe, np.uint8),
+                        boden=np.vstack(boden_pts) if boden_pts else np.zeros((0, 2)),
+                        boden_start=np.array(boden_start + [nb]), boden_geb=np.array(boden_gnr, np.int32))
+
+
 # ------------------------------------------------------------------ Hauswände
 def waende(geb, hoehe_raster, rinfo, box_kern, gn):
     """Wandflächen -> zusammengefasste Hauswände (eine je Gebäude und Richtung/Flucht)."""
@@ -509,6 +553,10 @@ def main():
     ob.save(os.path.join(a.webapp, "luftbild.jpg"), quality=82, optimize=True)
     ortho = dict(file="luftbild.jpg", w=ob.width, h=ob.height, res=ORTHO_RES)
     ortho.update(luftbild_kacheln(ob, a.webapp))
+
+    log("Gebäudemodell für die 3D-Ansicht (Dachfarben aus dem Luftbild)")
+    ob_gross = luftbild(os.path.join(a.downloads, "luftbild"), box, 1.0, os.path.join(a.webapp, "_cache"))
+    speichere_gebaeude(geb, np.asarray(ob_gross), box, 1.0, os.path.join(a.webapp, "_cache", "lod2_gebaeude.npz"))
 
     meta = dict(tile="lod2", crs=EPSG, bounds=[round(v, 2) for v in kern], center_ll=[round(lat0, 6), round(lon0, 6)],
                 ortho=ortho,

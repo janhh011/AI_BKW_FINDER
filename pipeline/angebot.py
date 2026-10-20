@@ -510,7 +510,51 @@ def luftbild_ausschnitt(out, P0, ortho, groesse):
     return dict(file="luftbild.jpg", groesse=round(groesse, 2))
 
 
-def exportiere_modell(out, P0, z0, f, balkone, P, baum, aktiv_bi=None, geo_wolke=None, ortho=None):
+def lod2_gebaeude(lod2, P0, z0, R):
+    """Gebäude aus dem LoD2-Modell im Umkreis R um P0 (lokale Koordinaten x Ost, y Nord, z über Gelände)."""
+    d = np.hypot(lod2["mitte"][:, 0] - P0[0], lod2["mitte"][:, 1] - P0[1])
+    nahe = np.unique(lod2["geb"][d < R * 1.1])
+    out = []
+    P, st = lod2["P"], lod2["start"]
+    for g in nahe:
+        flaechen = []
+        hmax = 0.0
+        for i in lod2["polys_von"][g]:
+            v = P[st[i]:st[i + 1]] - np.array([P0[0], P0[1], z0])
+            hmax = max(hmax, float(v[:, 2].max()))
+            r, gg, b = (int(x) for x in lod2["farbe"][i])
+            flaechen.append([int(lod2["typ"][i]), (r << 16) | (gg << 8) | b, np.round(v.ravel(), 2).tolist()])
+        boden = []
+        for j in lod2["boden_von"].get(int(g), []):
+            q = lod2["boden"][lod2["boden_start"][j]:lod2["boden_start"][j + 1]] - P0[:2]
+            if len(q) > len(boden):
+                boden = np.round(q, 2).tolist()
+        out.append(dict(h=round(hmax, 2), boden=boden, f=flaechen))
+    return out
+
+
+def fassaden_foto(out, f, web, P0, z0):
+    """Mesh-Fotoansicht der eigenen Hauswand als Bild mit transparentem Hintergrund + Ecken im Modell."""
+    if f.get("img_quelle") != "mesh" or not web:
+        return None
+    p = os.path.join(web, f["img"])
+    if not os.path.exists(p):
+        return None
+    im = Image.open(p).convert("RGB")
+    a = np.asarray(im)
+    alpha = np.where((np.abs(a.astype(int) - 236).max(axis=2) <= 4), 0, 255).astype(np.uint8)
+    Image.fromarray(np.dstack([a, alpha])).save(os.path.join(out, "fassade.webp"), quality=80)
+    res = f["img_res"]
+    left = np.array(f["img_left"], float) + np.array(f["n"], float) * 0.06    # knapp vor die Wand
+    t = np.array(f["img_t"], float)
+    zt, zb = f["img_ztop"], f["img_ztop"] - im.height * res
+    r = left + t * im.width * res
+    ecken = [[*left, zt], [*r, zt], [*r, zb], [*left, zb]]
+    return dict(file="fassade.webp", ecken=[[round(float(x - P0[0]), 3), round(float(y - P0[1]), 3), round(float(z - z0), 3)]
+                                            for x, y, z in ecken])
+
+
+def exportiere_modell(out, P0, z0, f, balkone, P, baum, aktiv_bi=None, geo_wolke=None, ortho=None, lod2=None):
     """Vereinfachtes Modell für die Angebotsseite: Gebäude als Blöcke in 1-m-Stufen,
     Bäume als Kronen, Balkone der eigenen Fassade als Platten mit Brüstung."""
     import cv2
@@ -543,6 +587,8 @@ def exportiere_modell(out, P0, z0, f, balkone, P, baum, aktiv_bi=None, geo_wolke
     hb[(o > 0.15) & (o < 4.0) & (u > -0.3) & (u < L + 0.3)] = -5.0
 
     bau = (hb > 2.5).astype(np.uint8)
+    if lod2 is not None:
+        bau[:] = 0          # Gebäude kommen als echte LoD2-Geometrie (Dachformen), keine Blöcke
     bau = cv2.morphologyEx(bau, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
     hmax = float(hb[bau > 0].max()) if bau.any() else 0
     bloecke = []
@@ -614,7 +660,8 @@ def exportiere_modell(out, P0, z0, f, balkone, P, baum, aktiv_bi=None, geo_wolke
                             breite=round(float(s1 - s0), 2), tiefe=round(float(gesamt), 2), aktiv=aktiv))
     modell = dict(radius=R, bloecke=bloecke, baeume=baeume, balkone=platten,
                   drehung=round(float(math.atan2(t[1], t[0])), 4),
-                  luftbild=luftbild_ausschnitt(out, P0, ortho, 2 * R * 1.15))
+                  luftbild=luftbild_ausschnitt(out, P0, ortho, 2 * R * 1.15),
+                  gebaeude=lod2_gebaeude(lod2, P0, z0, R) if lod2 is not None else None)
     with open(os.path.join(out, "modell.json"), "w", encoding="utf-8") as fh:
         json.dump(modell, fh, separators=(",", ":"))
     return dict(file="modell.json", bloecke=len(bloecke), baeume=len(baeume), balkone=len(platten))
@@ -659,6 +706,24 @@ class Rechner:
             f"Referenz Dach 35° Süd: {self.sim.referenz_dach():.0f} kWh/kWp")
         self.adir = os.path.join(webapp, "angebot")
         self.tex_names = None
+        self.lod2 = None
+        lp = os.path.join(webapp, "_cache", "lod2_gebaeude.npz")
+        if os.path.exists(lp):
+            z = np.load(lp)
+            L = {k: z[k] for k in z.files}
+            st = L["start"]
+            L["mitte"] = np.array([L["P"][st[i]:st[i + 1], :2].mean(0) for i in range(len(st) - 1)])
+            pv = {}
+            for i, g in enumerate(L["geb"]):
+                pv.setdefault(int(g), []).append(i)
+            L["polys_von"] = pv
+            bv = {}
+            for j, g in enumerate(L["boden_geb"]):
+                bv.setdefault(int(g), []).append(j)
+            L["boden_von"] = bv
+            self.lod2 = L
+        self.mesh_box = (self.V[:, 0].min() + 20, self.V[:, 1].min() + 20, self.V[:, 0].max() - 20,
+                         self.V[:, 1].max() - 20) if self.mesh else None
         self.ortho = None
         o = self.meta.get("ortho")
         if o and os.path.exists(os.path.join(webapp, o["file"])):
@@ -758,6 +823,8 @@ class Rechner:
         P0 = geo["mitte"]
         z0 = f["ground"]
         sz = None
+        if self.mesh_box and self.mesh_box[0] <= P0[0] <= self.mesh_box[2] and self.mesh_box[1] <= P0[1] <= self.mesh_box[3]:
+            szene = True             # Balkon liegt im Mesh: Foto-Ansicht immer mitliefern
         if szene and self.mesh:      # Foto-Mesh (ca. 4 MB) nur für ausgewählte Balkone
             sz = exportiere_szene(out, P0, z0, self.V, self.F, self.VT, self.FT, self.mat, self.tri_baum)
             sz["tex"] = self.tex_names
@@ -767,7 +834,7 @@ class Rechner:
         if extra and extra.get("ohne_baeume"):
             # Modell aus der vollständigen Punktwolke, dann genau die angeklickten Kronen weglassen
             # (sonst entstehen am Rand der entfernten Krone neue kleine Kronen)
-            modell = exportiere_modell(out, P0, z0, f, balkone, self.Ps, self.baums, aktiv_bi=bi, geo_wolke=self.geo_wolke(f), ortho=self.ortho)
+            modell = exportiere_modell(out, P0, z0, f, balkone, self.Ps, self.baums, aktiv_bi=bi, geo_wolke=self.geo_wolke(f), ortho=self.ortho, lod2=self.lod2)
             mp = os.path.join(out, "modell.json")
             mj = json.load(open(mp, encoding="utf-8"))
             weg = extra["ohne_baeume"]
@@ -776,7 +843,7 @@ class Rechner:
                 json.dump(mj, fh, separators=(",", ":"))
             modell["baeume"] = len(mj["baeume"])
         else:
-            modell = exportiere_modell(out, P0, z0, f, balkone, P, baum, aktiv_bi=bi, geo_wolke=self.geo_wolke(f), ortho=self.ortho)
+            modell = exportiere_modell(out, P0, z0, f, balkone, P, baum, aktiv_bi=bi, geo_wolke=self.geo_wolke(f), ortho=self.ortho, lod2=self.lod2)
         lon, lat = self.to_ll.transform(P0[0], P0[1])
         idx = self.idx
         pac = np.round(r["pac"]).astype(int)
@@ -812,7 +879,7 @@ class Rechner:
             jahr_basis=JAHR, wetter=self.wquelle, globalstrahlung=round(self.ghi_y),
             annahmen=dict(verluste=VERLUSTE, gamma=GAMMA, wr_ac=WR_AC, wr_eta=WR_ETA, albedo=ALBEDO,
                           tau_belaubt=TAU_BELAUBT, tau_kahl=TAU_KAHL),
-            szene=sz, modell=modell, quelle=self.meta.get("source"), erstellt=time.strftime("%Y-%m-%d %H:%M"),
+            szene=sz, modell=modell, fassade_foto=fassaden_foto(out, f, self.webapp, P0, z0), quelle=self.meta.get("source"), erstellt=time.strftime("%Y-%m-%d %H:%M"),
         )
         if extra:
             daten.update(extra)
