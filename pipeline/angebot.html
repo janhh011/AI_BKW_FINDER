@@ -3,42 +3,45 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>balki strom – Ihr Balkonkraftwerk</title>
+<title>balki strom – Dein Balkonkraftwerk</title>
 <meta name="robots" content="noindex">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'><rect width='48' height='48' rx='14' fill='%231f6b43'/><line x1='24' y1='5.5' x2='24' y2='12' stroke='%23f4b731' stroke-width='2.4' stroke-linecap='round'/><circle cx='24' cy='19' r='7.5' fill='%23f4b731'/><rect x='22.7' y='25' width='2.6' height='6' fill='%23f4b731'/><rect x='8.5' y='29.5' width='31' height='3.2' rx='1.6' fill='%23fafcf7'/><g fill='%23fafcf7'><rect x='11.5' y='32' width='2.4' height='8'/><rect x='17.3' y='32' width='2.4' height='8'/><rect x='22.8' y='32' width='2.4' height='8'/><rect x='28.3' y='32' width='2.4' height='8'/><rect x='34.1' y='32' width='2.4' height='8'/></g><rect x='6.5' y='39.5' width='35' height='3.2' rx='1.6' fill='%23fafcf7'/></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='12 22 76 54'><path d='M50 34L80 49L50 64L20 49Z' fill='%2313243A' fill-opacity='.1' stroke='%2313243A' stroke-width='2.5' stroke-linejoin='round'/><path d='M20 49L50 64L80 49L80 54L50 69L20 54Z' fill='%2313243A'/><path d='M50 64L80 49L80 31L50 46Z' fill='%232E6BF0'/><path d='M20 31L50 46L80 31M20 49V31M30 54V36M40 59V41M50 64V46M80 49V31' fill='none' stroke='%2313243A' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,650;12..96,750&family=Figtree:wght@400;500;600&family=Caveat:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600&family=Figtree:wght@400;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --sage: #e9efe5;        /* Seitengrund */
-    --paper: #fafcf7;       /* Flächen */
-    --moss: #1c3a29;        /* Text */
-    --leaf: #2f7d4f;        /* Aktion, Auswahl */
-    --leaf-soft: #d7e8da;
-    --fern: #5f7566;        /* Nebentext */
-    --line: #d3ddd0;
-    --sun: #e3a21a;
-    --sun-soft: rgba(227, 162, 26, .22);
+    /* Styleguide „Solar Blue“ */
+    --navy: #13243A; --blau: #2E6BF0; --blau-10: #EAF0FE; --spar: #19B37A; --spar-tint: #E3F6EE; --spar-text: #0B6B49;
+    --sonne: #FFC233; --sonne-tint: #FFF4D6; --mist: #F2F5FA;
+    --r-feld: 8px; --r-karte: 12px; --r-tag: 6px;
+    --sage: var(--mist);    /* Seitengrund */
+    --paper: #fff;          /* Flächen */
+    --moss: var(--navy);    /* Text */
+    --leaf: var(--blau);    /* Aktion, Auswahl */
+    --leaf-soft: var(--blau-10);
+    --fern: #4A5A70;        /* Nebentext */
+    --line: #DCE2EC;
+    --sun: #E5A800;
+    --sun-soft: var(--sonne-tint);
     --tree: #7fa77f;
-    --build: #a9b5a6;
+    --build: #B9C4D4;
     color-scheme: light;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; }
   body { background: var(--sage); color: var(--moss); font: 16px/1.5 Figtree, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
-  h1, h2, .price, .brand { font-family: "Bricolage Grotesque", Figtree, sans-serif; }
+  h1, h2, .price, .brand { font-family: Sora, Figtree, sans-serif; }
   button { font: inherit; color: inherit; }
   :focus-visible { outline: 3px solid var(--leaf); outline-offset: 2px; }
 
-  .page { height: 100vh; min-height: 640px; display: grid; grid-template-rows: auto 1fr; grid-template-columns: minmax(0, 1fr); padding: 18px 28px 22px; gap: 14px; }
+  .page { height: 100vh; min-height: 640px; display: grid; grid-template-rows: auto 1fr; grid-template-columns: minmax(0, 1fr); padding: 24px 40px 24px; gap: 24px; }
   header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px; }
   .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--moss); }
-  .brand svg { width: 34px; height: 34px; }
-  .brand .wort { font-family: "Bricolage Grotesque", Figtree, sans-serif; font-size: 23px; letter-spacing: -.035em; font-weight: 500; line-height: 1; }
-  .brand .wort b { font-weight: 750; margin-right: .18em; }
-  .marke-text { display: grid; gap: 3px; }
-  .claim { font-size: 12.5px; color: var(--fern); letter-spacing: 0; line-height: 1.2; }
+  .brand { padding: 8px 0; }
+  .brand .mark { width: 50px; height: 33px; flex: none; display: block; }
+  .brand .wort { font-family: Sora, Figtree, sans-serif; font-size: 26px; letter-spacing: -.03em; font-weight: 400; line-height: 1; white-space: nowrap; }
+  .brand .wort b { font-weight: 600; }
   .who { color: var(--fern); font-size: 14px; }
   .who { display: flex; gap: 14px; align-items: center; }
   .who select { font: inherit; border: 0; background: transparent; color: var(--fern); cursor: pointer; max-width: 46vw; }
@@ -47,23 +50,23 @@
   main { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(380px, .88fr); gap: 34px; min-height: 0; }
 
   /* Bild */
-  .stage { position: relative; border-radius: 28px; overflow: hidden; background: radial-gradient(120% 90% at 50% 30%, #f3f7ef 0%, var(--sage) 70%); min-height: 0; }
+  .stage { position: relative; border-radius: var(--r-karte); overflow: hidden; background: radial-gradient(120% 90% at 50% 30%, #ffffff 0%, var(--sage) 70%); min-height: 0; }
   .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
   .stage .loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--fern); font-size: 14px; }
   .sunbox { position: absolute; left: 16px; bottom: 16px; background: rgba(250, 252, 247, .9); backdrop-filter: blur(8px);
-            border-radius: 18px; padding: 12px 14px 10px; display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; align-items: center;
-            max-width: calc(100% - 32px); box-shadow: 0 6px 24px rgba(28, 58, 41, .08); }
+            border-radius: var(--r-karte); padding: 12px 14px 10px; display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; align-items: center;
+            max-width: calc(100% - 32px); box-shadow: 0 6px 24px rgba(19, 36, 58, .08); }
   .sunbox svg { grid-row: span 2; width: 190px; height: 82px; display: block; }
   .sunbox .t { font-size: 14px; line-height: 1.35; }
   .sunbox .t b { font-weight: 600; }
   .sunbox .ctl { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-  .chip { border: 1px solid var(--line); background: var(--paper); border-radius: 999px; padding: 3px 11px; font-size: 13px; cursor: pointer; color: var(--fern); }
+  .chip { border: 1px solid var(--line); background: var(--paper); border-radius: var(--r-feld); padding: 3px 11px; font-size: 13px; cursor: pointer; color: var(--fern); }
   /* Wandansicht als Bild im Bild: daran erkennt man sein Haus */
   .wandbild { position: absolute; left: 16px; top: 16px; width: min(42%, var(--klein, 300px)); margin: 0; z-index: 3; cursor: zoom-in;
-              background: rgba(250, 252, 247, .94); border-radius: 16px; padding: 8px 8px 6px; box-shadow: 0 8px 28px rgba(28, 58, 41, .16);
+              background: rgba(250, 252, 247, .94); border-radius: var(--r-karte); padding: 8px 8px 6px; box-shadow: 0 8px 28px rgba(19, 36, 58, .16);
               transition: width .35s ease; }
   .wandbild.gross { width: calc(100% - 32px); max-width: 720px; cursor: zoom-out; }
-  .wandbild .wb-rahmen { position: relative; border-radius: 10px; overflow: hidden; background: #eceee9; }
+  .wandbild .wb-rahmen { position: relative; border-radius: var(--r-feld); overflow: hidden; background: #eceee9; }
   .wandbild img { display: block; width: 100%; height: auto; }
   .wandbild svg { position: absolute; inset: 0; width: 100%; height: 100%; }
   .wandbild figcaption { font-size: 12px; color: var(--fern); padding: 5px 2px 0; }
@@ -73,38 +76,38 @@
   .look { position: absolute; right: 16px; top: 16px; }
   .korr { position: absolute; left: 16px; top: 16px; font-size: 12px; background: rgba(250, 252, 247, .85); }
   .korrbar { position: absolute; left: 16px; top: 16px; right: 84px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px;
-             background: rgba(250, 252, 247, .96); border-radius: 14px; padding: 8px 10px; box-shadow: 0 6px 24px rgba(28, 58, 41, .12); }
+             background: rgba(250, 252, 247, .96); border-radius: var(--r-feld); padding: 8px 10px; box-shadow: 0 6px 24px rgba(19, 36, 58, .12); }
   .korrbar[hidden], .korr[hidden] { display: none; }
   .korrbar span { flex: 1 1 200px; color: var(--moss); }
   .korrbar .chip.go { background: var(--leaf); border-color: var(--leaf); color: #fff; }
   .korrbar .chip:disabled { opacity: .5; cursor: default; }
   .stage.korrigieren canvas { cursor: pointer; }
   .meter { position: absolute; right: 16px; top: 60px; height: min(42%, 260px); width: 56px; display: flex; flex-direction: column; align-items: center; gap: 5px;
-           background: rgba(250, 252, 247, .9); backdrop-filter: blur(8px); border-radius: 16px; padding: 9px 6px; box-shadow: 0 6px 24px rgba(28, 58, 41, .08); }
+           background: rgba(250, 252, 247, .9); backdrop-filter: blur(8px); border-radius: var(--r-karte); padding: 9px 6px; box-shadow: 0 6px 24px rgba(19, 36, 58, .08); }
   .meter .val { text-align: center; line-height: 1.1; }
-  .meter .val b { display: block; font-family: "Bricolage Grotesque", Figtree, sans-serif; font-size: 19px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .meter .val b { display: block; font-family: Sora, Figtree, sans-serif; font-size: 19px; font-weight: 600; font-variant-numeric: tabular-nums; }
   .meter .val span { font-size: 11px; color: var(--fern); }
   .meter .track { position: relative; flex: 1; width: 14px; border-radius: 999px; background: var(--leaf-soft); overflow: hidden; min-height: 60px; }
   .meter .fill { position: absolute; left: 0; right: 0; bottom: 0; height: 0; border-radius: 999px;
-                 background: linear-gradient(to top, var(--leaf) 0%, #8cc06a 55%, var(--sun) 100%); transition: height .6s ease-out; }
+                 background: linear-gradient(to top, var(--leaf) 0%, #5B8DF5 55%, var(--sun) 100%); transition: height .6s ease-out; }
   .meter .fill::after { content: ""; position: absolute; inset: 0; border-radius: inherit;
                         background: repeating-linear-gradient(to top, rgba(255,255,255,.0) 0 10px, rgba(255,255,255,.35) 10px 12px);
                         animation: steigen 1.2s linear infinite; }
   .meter.off .fill::after { animation: none; }
   @keyframes steigen { from { background-position: 0 0; } to { background-position: 0 -24px; } }
   .meter .lbl { font-size: 10.5px; color: var(--fern); text-align: center; line-height: 1.25; }
-  .meter .max { font-size: 11px; color: #8a9a8e; }
+  .meter .max { font-size: 11px; color: #6B7A8F; }
   .play { width: 28px; height: 28px; border-radius: 50%; border: 0; background: var(--sun); cursor: pointer; display: grid; place-items: center; }
   .play svg { width: 12px; height: 12px; }
   .clock { font-size: 13px; color: var(--fern); font-variant-numeric: tabular-nums; min-width: 66px; }
 
   /* Angebot */
   .offer { display: flex; flex-direction: column; min-height: 0; padding-top: 4px; }
-  h1 { font-size: clamp(30px, 4.1vh, 44px); line-height: 1.08; font-weight: 750; letter-spacing: -.025em; margin: 0 0 10px; }
+  h1 { font-size: clamp(30px, 4.1vh, 44px); line-height: 1.08; font-weight: 600; letter-spacing: -.025em; margin: 0 0 10px; }
   .lead { color: var(--fern); margin: 0 0 18px; font-size: 16px; max-width: 46ch; }
   .opts { display: grid; gap: 8px; margin-bottom: 14px; }
   .opt { position: relative; display: grid; grid-template-columns: 22px 1fr auto; gap: 2px 14px; align-items: center; text-align: left;
-         background: var(--paper); border: 1.5px solid transparent; border-radius: 16px; padding: 12px 16px; cursor: pointer; }
+         background: var(--paper); border: 1.5px solid transparent; border-radius: var(--r-karte); padding: 12px 16px; cursor: pointer; }
   .opt:hover { border-color: var(--line); }
   .opt[aria-checked="true"] { border-color: var(--leaf); background: #fff; box-shadow: 0 4px 18px rgba(47, 125, 79, .12); }
   .opt .dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--line); grid-row: span 3; }
@@ -113,16 +116,16 @@
   .opt .name { flex-wrap: wrap; row-gap: 3px; }
   .opt .name .titel { white-space: nowrap; }
   .opt .price small { white-space: nowrap; }
-  .opt .garantie { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; font-size: 12px; font-weight: 600; color: #1f6b43;
-                   border: 1px solid #b9d7c0; border-radius: 999px; padding: 0 8px 0 6px; line-height: 20px; }
+  .opt .garantie { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; font-size: 12px; font-weight: 600; color: var(--spar-text);
+                   background: var(--spar-tint); border-radius: var(--r-tag); padding: 0 8px 0 6px; line-height: 20px; }
   .opt .garantie svg { width: 11px; height: 13px; }
   .opt .tag { white-space: nowrap; font-size: 12px; font-weight: 600; color: var(--leaf); background: var(--leaf-soft); border-radius: 999px; padding: 1px 8px; }
   .opt .sub { font-size: 14px; color: var(--fern); grid-column: 2; }
-  .opt .tech { grid-column: 2; font-size: 12.5px; color: #8a9a8e; }
-  .opt .price { grid-row: 1 / span 3; grid-column: 3; text-align: right; font-size: 24px; font-weight: 650; letter-spacing: -.01em; line-height: 1.1; }
+  .opt .tech { grid-column: 2; font-size: 12.5px; color: #6B7A8F; }
+  .opt .price { grid-row: 1 / span 3; grid-column: 3; text-align: right; font-size: 24px; font-weight: 600; letter-spacing: -.01em; line-height: 1.1; }
   .opt .price .mwst0 { display: inline-block; vertical-align: middle; margin: -3px 7px 0 0; font-family: Figtree, sans-serif; font-size: 11px; font-weight: 700;
-                       letter-spacing: 0; color: var(--moss); background: #f8e3a8; border-radius: 6px; padding: 2px 6px; line-height: 1.3; }
-  .opt .price small { display: block; font-family: Figtree, sans-serif; font-size: 13px; font-weight: 500; color: var(--leaf); letter-spacing: 0; }
+                       letter-spacing: 0; color: var(--moss); background: var(--sonne-tint); border-radius: var(--r-tag); padding: 2px 6px; line-height: 1.3; }
+  .opt .price small { display: block; font-family: Figtree, sans-serif; font-size: 13px; font-weight: 600; color: var(--spar-text); letter-spacing: 0; }
 
   .house { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; color: var(--fern); margin-bottom: 18px; }
 
@@ -131,15 +134,15 @@
   .step b { display: flex; align-items: center; gap: 8px; color: var(--moss); font-size: 15px; font-weight: 600; margin-bottom: 3px; }
   .step b span { width: 24px; height: 24px; flex: none; border-radius: 50%; background: var(--leaf-soft); color: var(--leaf); display: grid; place-items: center; font-size: 13px; }
   .cta { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
-  .partnerhinweis { font-size: 12px; color: #8a9a8e; max-width: 26em; line-height: 1.35; }
+  .partnerhinweis { font-size: 12px; color: #6B7A8F; max-width: 26em; line-height: 1.35; }
   .partnerhinweis[hidden] { display: none; }
-  .btn { background: var(--leaf); color: #fff; border: 0; border-radius: 14px; padding: 14px 24px; font-weight: 600; font-size: 16px; cursor: pointer; }
-  .btn:hover { background: #276b43; }
+  .btn { background: var(--leaf); color: #fff; border: 0; border-radius: var(--r-feld); padding: 14px 24px; font-weight: 600; font-size: 16px; cursor: pointer; }
+  .btn:hover { background: #2259d6; }
   .link { background: none; border: 0; padding: 0; color: var(--fern); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; font-size: 14px; }
-  .fine { font-size: 12px; color: #8a9a8e; margin-top: 10px; }
+  .fine { font-size: 12px; color: #6B7A8F; margin-top: 10px; }
 
-  dialog { border: 0; border-radius: 22px; padding: 26px 28px; max-width: 560px; width: calc(100% - 32px); color: var(--moss); background: var(--paper); }
-  dialog::backdrop { background: rgba(28, 58, 41, .35); }
+  dialog { border: 0; border-radius: var(--r-karte); padding: 26px 28px; max-width: 560px; width: calc(100% - 32px); color: var(--moss); background: var(--paper); }
+  dialog::backdrop { background: rgba(19, 36, 58, .35); }
   dialog h2 { margin: 0 0 12px; font-size: 22px; }
   dialog dl { display: grid; grid-template-columns: 1fr auto; gap: 6px 18px; margin: 0 0 14px; font-size: 14px; }
   dialog dt { color: var(--fern); }
@@ -150,16 +153,16 @@
 
   /* Pakete mit Produktbild */
   .opt { grid-template-columns: 78px 1fr auto !important; padding: 10px 16px 10px 10px; }
-  .opt .bild { grid-row: 1 / span 3; width: 78px; height: 58px; border-radius: 12px; background: #eef3ea; display: grid; place-items: center; }
+  .opt .bild { grid-row: 1 / span 3; width: 78px; height: 58px; border-radius: var(--r-feld); background: #F2F5FA; display: grid; place-items: center; }
   .opt .bild svg { width: 70px; height: 52px; }
-  .opt .bild img { width: 100%; height: 100%; object-fit: contain; border-radius: 10px; background: #fff; }
+  .opt .bild img { width: 100%; height: 100%; object-fit: contain; border-radius: var(--r-feld); background: #fff; }
   .opt .produkt { color: var(--leaf); white-space: nowrap; font-size: 12.5px; }
-  .opt[aria-checked="true"] .bild { background: #e3efe1; }
+  .opt[aria-checked="true"] .bild { background: #EAF0FE; }
   .opt .dot { display: none; }
   .opt .desc { grid-column: 2; font-size: 13.5px; color: var(--fern); line-height: 1.35; }
   .opt:not([aria-checked="true"]) .desc { display: none; }   /* Beschreibung nur beim gewählten Paket: kompakter */
   .opt:not([aria-checked="true"]) .bild { height: 46px; }
-  .opt .price small.mwst { color: #8a9a8e; font-weight: 500; }
+  .opt .price small.mwst { color: #6B7A8F; font-weight: 500; }
   .house { font-size: 13px; gap: 6px; margin-bottom: 14px; }
   .house .chip { padding: 1px 9px; font-size: 12.5px; }
   .house .trenn { margin-left: 10px; }
@@ -168,7 +171,7 @@
   .band { padding: 64px 28px 56px; }
   .band.hell { background: var(--paper); }
   .band-in { max-width: 1180px; margin: 0 auto; }
-  .band h2 { font-size: clamp(28px, 3vw, 38px); line-height: 1.1; letter-spacing: -.025em; margin: 0 0 8px; font-weight: 750; }
+  .band h2 { font-size: clamp(28px, 3vw, 38px); line-height: 1.1; letter-spacing: -.025em; margin: 0 0 8px; font-weight: 600; }
   .sub2 { color: var(--fern); margin: 0 0 22px; max-width: 60ch; }
   .sub2 b { color: var(--moss); }
   .eco { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(280px, 1fr); gap: 44px; align-items: start; }
@@ -176,28 +179,28 @@
   .legend { display: flex; gap: 18px; flex-wrap: wrap; font-size: 13px; color: var(--fern); margin-bottom: 6px; }
   .legend i { display: inline-block; width: 18px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 7px; }
   .legend .l1 { background: var(--leaf); height: 4px; }
-  .legend .l2 { background: repeating-linear-gradient(90deg, #8a9a8e 0 5px, transparent 5px 9px); }
+  .legend .l2 { background: repeating-linear-gradient(90deg, #6B7A8F 0 5px, transparent 5px 9px); }
   #ecoChart { width: 100%; height: auto; display: block; overflow: visible; }
-  #ecoChart text { font: 12px Figtree, sans-serif; fill: #8a9a8e; }
+  #ecoChart text { font: 12px Figtree, sans-serif; fill: #6B7A8F; }
   .eco-side { display: grid; gap: 16px; padding-top: 8px; }
-  .rendite { background: var(--moss); color: #fff; border-radius: 22px; padding: 22px 24px; }
-  .rendite .big { display: block; font-family: "Bricolage Grotesque", Figtree, sans-serif; font-size: 52px; font-weight: 750; letter-spacing: -.03em; line-height: 1; color: #f4b731; margin-bottom: 8px; }
+  .rendite { background: var(--moss); color: #fff; border-radius: var(--r-karte); padding: 22px 24px; }
+  .rendite .big { display: block; font-family: Sora, Figtree, sans-serif; font-size: 52px; font-weight: 600; letter-spacing: -.03em; line-height: 1; color: #f4b731; margin-bottom: 8px; }
   .rendite span:last-child { font-size: 15px; line-height: 1.4; display: block; }
-  .stecker { display: flex; gap: 14px; align-items: center; background: #fdeec2; border-radius: 999px 22px 22px 999px; padding: 10px 20px 10px 12px;
+  .stecker { display: flex; gap: 14px; align-items: center; background: #FFF4D6; border-radius: 999px 22px 22px 999px; padding: 10px 20px 10px 12px;
              transform: rotate(-1.5deg); box-shadow: 0 4px 14px rgba(227, 162, 26, .25); }
   .stecker svg { width: 40px; height: 40px; flex: none; transform: rotate(90deg); }
   .stecker b { display: block; font-size: 17px; }
   .stecker span { font-size: 14px; color: #6b5512; }
   .facts { display: grid; grid-template-columns: 1fr auto; gap: 6px 16px; margin: 0; font-size: 14px; }
   .facts dt { color: var(--fern); } .facts dd { margin: 0; text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
-  .fuss { max-width: 1180px; margin: 22px auto 0; font-size: 12px; color: #8a9a8e; }
+  .fuss { max-width: 1180px; margin: 22px auto 0; font-size: 12px; color: #6B7A8F; }
   .zeit { list-style: none; margin: 8px 0 30px; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; counter-reset: s; position: relative; }
   .zeit::before { content: ""; position: absolute; left: 6%; right: 6%; top: 15px; height: 2px; background: repeating-linear-gradient(90deg, var(--line) 0 8px, transparent 8px 14px); }
   .zeit li { position: relative; font-size: 14px; color: var(--fern); line-height: 1.4; padding-top: 44px; }
   .zeit li::before { counter-increment: s; content: counter(s); position: absolute; top: 0; left: 0; width: 32px; height: 32px; border-radius: 50%;
                      background: var(--leaf-soft); color: var(--leaf); font-weight: 700; display: grid; place-items: center; }
   .zeit li.ziel::before { content: "☀"; background: #f4b731; color: var(--moss); }
-  .zeit .dauer { display: inline-block; font-family: "Bricolage Grotesque", Figtree, sans-serif; font-weight: 750; font-size: 22px; color: var(--moss); letter-spacing: -.02em; margin-bottom: 2px; }
+  .zeit .dauer { display: inline-block; font-family: Sora, Figtree, sans-serif; font-weight: 600; font-size: 22px; color: var(--moss); letter-spacing: -.02em; margin-bottom: 2px; }
   .zeit b { display: block; color: var(--moss); font-size: 15px; margin-bottom: 2px; }
   @media (max-width: 900px) { .eco { grid-template-columns: 1fr; } .zeit { grid-template-columns: 1fr 1fr; } .zeit::before { display: none; } }
   @media (max-width: 560px) { .zeit { grid-template-columns: 1fr; } .band { padding: 44px 16px; } }
@@ -205,8 +208,8 @@
   /* Neugier-Teaser unten rechts im ersten Bildschirm */
   .offer { position: relative; }
   .teaser { margin-top: auto; align-self: flex-end; text-align: right; text-decoration: none; color: var(--moss); display: grid; justify-items: end; padding: 10px 4px 0; }
-  .teaser .frage { font-family: "Bricolage Grotesque", Figtree, sans-serif; font-weight: 750; font-size: clamp(30px, 4.2vh, 46px); letter-spacing: -.03em; line-height: 1; }
-  .teaser .spoiler { font-family: Caveat, "Bricolage Grotesque", cursive; font-weight: 700; font-size: clamp(26px, 3.4vh, 36px); color: var(--leaf);
+  .teaser .frage { font-family: Sora, Figtree, sans-serif; font-weight: 600; font-size: clamp(30px, 4.2vh, 46px); letter-spacing: -.03em; line-height: 1; }
+  .teaser .spoiler { font-family: Figtree, sans-serif; font-weight: 600; color: var(--blau); font-size: clamp(26px, 3.4vh, 36px); color: var(--leaf);
                      transform: rotate(-4deg); margin: 2px 18px 0 0; }
   .teaser .pfeil { width: 44px; height: 44px; border-radius: 50%; background: var(--sun); color: var(--moss); display: grid; place-items: center; margin-top: 6px;
                    animation: hupf 1.6s ease-in-out infinite; box-shadow: 0 6px 16px rgba(227, 162, 26, .35); }
@@ -214,12 +217,12 @@
   .teaser:hover .frage { text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 6px; }
   @keyframes hupf { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(8px); } }
   .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 6px 0 14px; }
-  .tab { border: 1.5px solid var(--line); background: var(--paper); border-radius: 999px; padding: 6px 14px; font-size: 14px; cursor: pointer; color: var(--fern); }
+  .tab { border: 1.5px solid var(--line); background: var(--paper); border-radius: var(--r-feld); padding: 6px 14px; font-size: 14px; cursor: pointer; color: var(--fern); }
   .tab b { color: var(--moss); font-weight: 600; margin-right: 6px; }
   .tab[aria-selected="true"] { border-color: var(--leaf); background: #fff; color: var(--moss); box-shadow: 0 3px 12px rgba(47, 125, 79, .12); }
   .bilanz { display: flex; align-items: center; gap: 28px; flex-wrap: wrap; margin: 14px 0 26px; }
   .bilanz > div:not(.gegen) { display: grid; }
-  .bilanz .zahl { font-family: "Bricolage Grotesque", Figtree, sans-serif; font-weight: 750; font-size: clamp(34px, 4vw, 52px); letter-spacing: -.03em; line-height: 1; color: var(--moss); }
+  .bilanz .zahl { font-family: Sora, Figtree, sans-serif; font-weight: 600; font-size: clamp(34px, 4vw, 52px); letter-spacing: -.03em; line-height: 1; color: var(--moss); }
   .bilanz > div:last-child .zahl { color: var(--leaf); }
   .bilanz > div > span:not(.zahl) { color: var(--fern); font-size: 15px; margin-top: 4px; }
   .bilanz .gegen { font-size: 40px; color: var(--sun); font-weight: 700; }
@@ -273,21 +276,21 @@
 <body>
 <div class="page">
   <header>
-    <a class="brand" href="../" aria-label="balki strom"><svg viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="14" fill="#1f6b43"/><line x1="24" y1="5.5" x2="24" y2="12" stroke="#f4b731" stroke-width="2.4" stroke-linecap="round"/><circle cx="24" cy="19" r="7.5" fill="#f4b731"/><rect x="22.7" y="25" width="2.6" height="6" fill="#f4b731"/><rect x="8.5" y="29.5" width="31" height="3.2" rx="1.6" fill="#fafcf7"/><g fill="#fafcf7"><rect x="11.5" y="32" width="2.4" height="8"/><rect x="17.3" y="32" width="2.4" height="8"/><rect x="22.8" y="32" width="2.4" height="8"/><rect x="28.3" y="32" width="2.4" height="8"/><rect x="34.1" y="32" width="2.4" height="8"/></g><rect x="6.5" y="39.5" width="35" height="3.2" rx="1.6" fill="#fafcf7"/></svg><span class="marke-text"><span class="wort"><b>balki</b>strom</span><span class="claim">1 Stunde Aufwand. Jahrelang sparen – fürs Konto und fürs Klima.</span></span></a>
+    <a class="brand" href="../" aria-label="balki strom"><svg class="mark" viewBox="17 28 66 43" aria-hidden="true"><defs><clipPath id="mk1"><path d="M50 64L80 49L80 31L50 46Z"/></clipPath></defs><path d="M50 34L80 49L50 64L20 49Z" fill="#13243A" fill-opacity=".1" stroke="#13243A" stroke-width="2.5" stroke-linejoin="round"/><path d="M20 49L50 64L80 49L80 54L50 69L20 54Z" fill="#13243A"/><path d="M50 64L80 49L80 31L50 46Z" fill="#2E6BF0"/><path d="M65 62V33M44 58L86 37" stroke="#fff" stroke-opacity=".55" stroke-width="1.5" clip-path="url(#mk1)"/><path d="M20 31L50 46L80 31M20 49V31M30 54V36M40 59V41M50 64V46M80 49V31" fill="none" stroke="#13243A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="wort"><b>balki</b> strom</span></a>
     <div class="who"><a class="back" href="../">Zur Karte</a></div>
   </header>
 
   <main>
-    <section class="stage" id="stage" aria-label="3D-Ansicht Ihres Balkons">
-      <div class="loading" id="loading">Ihr Balkon wird geladen …</div>
+    <section class="stage" id="stage" aria-label="3D-Ansicht deines Balkons">
+      <div class="loading" id="loading">Dein Balkon wird geladen …</div>
       <button class="chip look" id="look" aria-pressed="false">Foto-Ansicht</button>
       <figure class="wandbild" id="wandbild" hidden>
-        <div class="wb-rahmen"><img id="wbImg" alt="Ihre Hauswand mit dem gewählten Balkon"><svg id="wbSvg" preserveAspectRatio="none"></svg></div>
-        <figcaption>Ihre Hauswand <span id="wbHinweis">· antippen zum Vergrößern</span></figcaption>
+        <div class="wb-rahmen"><img id="wbImg" alt="Deine Hauswand mit dem gewählten Balkon"><svg id="wbSvg" preserveAspectRatio="none"></svg></div>
+        <figcaption>Deine Hauswand <span id="wbHinweis">· antippen zum Vergrößern</span></figcaption>
       </figure>
       <button class="chip korr" id="korr" hidden>Baum stimmt nicht?</button>
       <div class="korrbar" id="korrbar" hidden role="group" aria-label="Bäume korrigieren">
-        <span id="korrText">Tippen Sie auf Bäume, die es so nicht gibt – wir rechnen ohne sie neu.</span>
+        <span id="korrText">Tipp auf Bäume, die es so nicht gibt – wir rechnen ohne sie neu.</span>
         <button class="chip go" id="korrOk" disabled>Neu berechnen</button>
         <button class="chip" id="korrZurueck" hidden>Original</button>
         <button class="chip" id="korrAbbr">Abbrechen</button>
@@ -301,7 +304,7 @@
         <svg id="sunpath" viewBox="0 0 190 82" role="img" aria-label="Sonnenbahn und Schatten am Balkon"></svg>
         <div class="t" id="sunText"></div>
         <div class="ctl">
-          <button class="play" id="play" aria-label="Tagesverlauf abspielen"><svg viewBox="0 0 12 12"><path id="playIcon" d="M3 1.5v9l7-4.5z" fill="#1c3a29"/></svg></button>
+          <button class="play" id="play" aria-label="Tagesverlauf abspielen"><svg viewBox="0 0 12 12"><path id="playIcon" d="M3 1.5v9l7-4.5z" fill="#13243A"/></svg></button>
           <button class="chip" data-doy="172">Sommer</button>
           <button class="chip" data-doy="80">Frühling</button>
           <button class="chip" data-doy="355">Winter</button>
@@ -311,7 +314,7 @@
     </section>
 
     <section class="offer">
-      <h1 id="headline">Ihr Balkon kann Strom machen.</h1>
+      <h1 id="headline">Dein Balkon kann Strom machen.</h1>
       <p class="lead" id="lead"></p>
       <div class="opts" id="opts" role="radiogroup" aria-label="Ausstattung wählen"></div>
       <div class="house" role="group" aria-label="Personen im Haushalt">
@@ -323,7 +326,7 @@
       </div>
       <div class="cta">
         <button class="btn" id="order">Unverbindlich anfragen</button>
-        <span class="partnerhinweis" hidden>Partnerlink: Wir erhalten ggf. eine Provision – Ihr Preis ändert sich nicht.</span>
+        <span class="partnerhinweis" hidden>Partnerlink: Wir erhalten ggf. eine Provision – dein Preis ändert sich nicht.</span>
       </div>
       <div class="fine" id="fine"></div>
       <a class="teaser" href="#rechnung" aria-label="Zur Wirtschaftlichkeit nach unten scrollen">
@@ -341,13 +344,13 @@
       <h2>Rechnet sich das?</h2>
       <div class="tabs" id="tabs" role="tablist" aria-label="Ausstattung für die Rechnung"></div>
       <p class="sub2" id="ecoLead"></p>
-      <div class="legend" id="ecoLegende"><span><i class="l1"></i>Ihr Balkonkraftwerk</span><span><i class="l2"></i>gleicher Betrag in einem ETF (7 % p. a.)</span></div>
+      <div class="legend" id="ecoLegende"><span><i class="l1"></i>Dein Balkonkraftwerk</span><span><i class="l2"></i>gleicher Betrag in einem ETF (7 % p. a.)</span></div>
       <svg id="ecoChart" viewBox="0 0 640 260" role="img" aria-label="Vergleich Balkonkraftwerk und ETF über 20 Jahre"></svg>
     </div>
     <div class="eco-side">
       <div class="rendite"><span class="big" id="rendite"></span><span id="renditeText"></span></div>
       <div class="stecker" id="mwst">
-        <svg viewBox="0 0 40 40" aria-hidden="true"><rect x="9" y="3" width="4" height="10" rx="2" fill="#1c3a29"/><rect x="27" y="3" width="4" height="10" rx="2" fill="#1c3a29"/><path d="M5 12h30v8a15 15 0 0 1-30 0z" fill="#1c3a29"/><rect x="17" y="33" width="6" height="7" rx="2" fill="#1c3a29"/></svg>
+        <svg viewBox="0 0 40 40" aria-hidden="true"><rect x="9" y="3" width="4" height="10" rx="2" fill="#13243A"/><rect x="27" y="3" width="4" height="10" rx="2" fill="#13243A"/><path d="M5 12h30v8a15 15 0 0 1-30 0z" fill="#13243A"/><rect x="17" y="33" width="6" height="7" rx="2" fill="#13243A"/></svg>
         <div><b>0 % Mehrwertsteuer</b><span id="mwstText"></span></div>
       </div>
       <dl class="facts" id="facts"></dl>
@@ -361,19 +364,19 @@
   <div class="band-in">
     <h2>So einfach geht's</h2>
     <div class="bilanz">
-      <div><span class="zahl">≈ 1 Stunde</span><span>Ihr Aufwand – insgesamt</span></div>
+      <div><span class="zahl">≈ 1 Stunde</span><span>Dein Aufwand – insgesamt</span></div>
       <div class="gegen" aria-hidden="true">→</div>
       <div><span class="zahl"><span id="zehnJahre">–</span><sup class="stern">*</sup></span><span id="zehnJahreText">gespart in den nächsten 10 Jahren</span></div>
     </div>
     <p class="sub2">Die meiste Zeit wartet der Paketbote. So läuft es ab:</p>
     <ol class="zeit">
       <li><span class="dauer">3 Minuten</span><b>Bestellen</b>Ausstattung wählen, Foto vom Geländer hochladen, fertig.</li>
-      <li><span class="dauer">2–5 Werktage</span><b>Lieferung</b>Alles kommt passend für Ihr Geländer bis an die Haustür.</li>
+      <li><span class="dauer">2–5 Werktage</span><b>Lieferung</b>Alles kommt passend für dein Geländer bis an die Haustür.</li>
       <li><span class="dauer">ca. 45 Minuten</span><b>Montage</b>Halterung ans Geländer, Module einhängen, Stecker in die Steckdose.</li>
-      <li><span class="dauer">ca. 5 Minuten</span><b>Online anmelden</b>Kurzer Eintrag im Marktstammdatenregister – das ist Pflicht, aber einfach. Wir zeigen Ihnen, wie.</li>
-      <li class="ziel"><span class="dauer">10+ Jahre</span><b>Sonnenstrom genießen</b>Ab jetzt läuft Ihr Zähler langsamer – jeden sonnigen Tag. Gute Module halten oft deutlich länger.</li>
+      <li><span class="dauer">ca. 5 Minuten</span><b>Online anmelden</b>Kurzer Eintrag im Marktstammdatenregister – das ist Pflicht, aber einfach. Wir zeigen dir, wie.</li>
+      <li class="ziel"><span class="dauer">10+ Jahre</span><b>Sonnenstrom genießen</b>Ab jetzt läuft dein Zähler langsamer – jeden sonnigen Tag. Gute Module halten oft deutlich länger.</li>
     </ol>
-    <div class="cta"><button class="btn" id="order2">Unverbindlich anfragen</button><span class="partnerhinweis" hidden>Partnerlink: Wir erhalten ggf. eine Provision – Ihr Preis ändert sich nicht.</span></div>
+    <div class="cta"><button class="btn" id="order2">Unverbindlich anfragen</button><span class="partnerhinweis" hidden>Partnerlink: Wir erhalten ggf. eine Provision – dein Preis ändert sich nicht.</span></div>
     <p class="hinweis">* Geschätzt auf Basis unserer Modelle (3D-Stadtmodell, Wetter-Referenzjahr, minutengenaues Verbrauchsmodell eines typischen Haushalts). Die tatsächliche Ersparnis kann je nach Nutzung, Wetter, Strompreis und Montage abweichen. Zeitangaben sind Erfahrungswerte.</p>
   </div>
 </section>
@@ -513,16 +516,16 @@ function produktBild(p) {
   if (p.key === 'schnupper') return `<svg viewBox="0 0 70 52">${panel(21, 18, 28, 24)}${gelaender}<rect x="31" y="8" width="8" height="6" rx="1.5" fill="#8fa194"/></svg>`;
   if (p.key === 'einfach') return `<svg viewBox="0 0 70 52">${panel(6, 18, 27, 24)}${panel(37, 18, 27, 24)}${gelaender}<rect x="31" y="8" width="8" height="6" rx="1.5" fill="#8fa194"/></svg>`;
   if (p.key === 'optimiert') return `<svg viewBox="0 0 70 52">${panel(6, 20, 27, 22, -14)}${panel(37, 20, 27, 22, -14)}${gelaender}<path d="M58 9 a6 6 0 0 1 6 6" fill="none" stroke="#e3a21a" stroke-width="1.6"/><circle cx="60" cy="8" r="3.2" fill="#f4b731"/></svg>`;
-  return `<svg viewBox="0 0 70 52">${panel(4, 22, 22, 20, -14)}${panel(28, 22, 22, 20, -14)}${gelaender}<rect x="53" y="22" width="13" height="20" rx="2.5" fill="#f2f4ef" stroke="#a9b5a6"/><rect x="56" y="26" width="7" height="2" rx="1" fill="#2f7d4f"/><rect x="51" y="5" width="11" height="15" rx="2" fill="#1c3a29"/><rect x="53" y="8" width="7" height="8" rx="1" fill="#8fd18f"/></svg>`;
+  return `<svg viewBox="0 0 70 52">${panel(4, 22, 22, 20, -14)}${panel(28, 22, 22, 20, -14)}${gelaender}<rect x="53" y="22" width="13" height="20" rx="2.5" fill="#F2F5FA" stroke="#B9C4D4"/><rect x="56" y="26" width="7" height="2" rx="1" fill="#2f7d4f"/><rect x="51" y="5" width="11" height="15" rx="2" fill="#13243A"/><rect x="53" y="8" width="7" height="8" rx="1" fill="#8fd18f"/></svg>`;
 }
 
 // ---------------------------------------------------------------- Texte
 const HIMMEL = ['Norden', 'Nordosten', 'Osten', 'Südosten', 'Süden', 'Südwesten', 'Westen', 'Nordwesten'];
 const seite = HIMMEL[Math.round(D.az / 45) % 8];
-const stock = D.geschoss == null ? 'an Ihrer Hauswand' : (D.geschoss === 0 ? 'im Erdgeschoss' : `im ${D.geschoss}. Stock`);
+const stock = D.geschoss == null ? 'an deiner Hauswand' : (D.geschoss === 0 ? 'im Erdgeschoss' : `im ${D.geschoss}. Stock`);
 const sonnig = 1 - D.jahr.kwh / D.jahr.kwh_frei;
 const lage = sonnig < 0.15 ? 'bekommt viel Sonne' : sonnig < 0.35 ? 'bekommt gut Sonne' : 'liegt öfter im Schatten – lohnt sich trotzdem';
-$('lead').textContent = `${D.quelle_balkon === 'selbst eingezeichnet' ? `Ihr eingezeichneter Balkon ${stock}` : `Wir haben Ihren Balkon ${stock} vermessen`}: ${nf(D.breite_m, 1)} m Geländer nach ${seite}, er ${lage}. ${['Eine passende Ausstattung', 'Zwei passende Ausstattungen', 'Drei passende Ausstattungen', 'Vier passende Ausstattungen'][PAKETE.length - 1] || 'Passende Ausstattungen'}:`;
+$('lead').textContent = `${D.quelle_balkon === 'selbst eingezeichnet' ? `Dein eingezeichneter Balkon ${stock}` : `Wir haben deinen Balkon ${stock} vermessen`}: ${nf(D.breite_m, 1)} m Geländer nach ${seite}, er ${lage}. ${['Eine passende Ausstattung', 'Zwei passende Ausstattungen', 'Drei passende Ausstattungen', 'Vier passende Ausstattungen'][PAKETE.length - 1] || 'Passende Ausstattungen'}:`;
 let sel = null;
 const jahreText = j => j > JAHRE ? `über ${JAHRE} Jahren` : `${nf(Math.round(j * 2) / 2, 1).replace(',0', '')} Jahren`;
 
@@ -547,14 +550,14 @@ function renderOpts() {
     b.className = 'opt'; b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', p === sel);
     b.innerHTML = `<span class="bild">${p.set.bild ? `<img src="${p.set.bild}" alt="${SHOP} ${p.set.titel}" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(document.createRange().createContextualFragment(this.dataset.alt))" data-alt='${produktBild(p)}'>` : produktBild(p)}</span>
       <span class="name"><span class="titel">${p.name}</span>${garantieBadge(p)}${p.empfehlung ? '<span class="tag">lohnt sich am meisten</span>' : ''}</span>
-      <span class="price"><span class="mwst0" title="Seit 2023 gilt für Balkonkraftwerke 0 % Mehrwertsteuer – Sie sparen ${eur(p.mwst)}.">0 % MwSt.</span>${eur(p.preis)}<small>spart ${eur(p.spart)} im Jahr</small><small class="mwst">rechnet sich nach ${jahreText(p.jahre)}</small></span>
+      <span class="price"><span class="mwst0" title="Seit 2023 gilt für Balkonkraftwerke 0 % Mehrwertsteuer – du sparst ${eur(p.mwst)}.">0 % MwSt.</span>${eur(p.preis)}<small>spart ${eur(p.spart)} im Jahr</small><small class="mwst">rechnet sich nach ${jahreText(p.jahre)}</small></span>
       <span class="desc">${p.desc} ${garantieText(p)} <a class="produkt" href="${p.set.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${SHOP} ${p.set.titel} ↗</a></span>
       <span class="tech">${nf(p.v.wp)} Watt · ca. ${nf(Math.round(p.v.kwh / 10) * 10)} kWh Strom im Jahr</span>`;
     b.addEventListener('click', () => { sel = p; renderOpts(); placeModules(); setSun(); });
     box.appendChild(b);
   }
-  $('headline').textContent = `Ihr Balkon spart ${eur(sel.spart)} Strom im Jahr.`;
-  $('fine').textContent = `Alle Werte sind Schätzungen auf Basis unserer Modelle und können je nach Nutzung, Wetter und Strompreis abweichen. Beispielpreise inkl. Lieferung, 0 % MwSt.; gerechnet mit ${nf(preis * 100, 1)} ct/kWh, ${nf(verbrauch)} kWh Jahresverbrauch und ${({0: 'tagsüber meist niemand', 0.4: 'tagsüber teilweise jemand', 1: 'tagsüber meist jemand'})[zuhause]} zu Hause. Unverbindlich – endgültig nach einem Foto Ihres Geländers.`;
+  $('headline').textContent = `Dein Balkon spart ${eur(sel.spart)} Strom im Jahr.`;
+  $('fine').textContent = `Alle Werte sind Schätzungen auf Basis unserer Modelle und können je nach Nutzung, Wetter und Strompreis abweichen. Beispielpreise inkl. Lieferung, 0 % MwSt.; gerechnet mit ${nf(preis * 100, 1)} ct/kWh, ${nf(verbrauch)} kWh Jahresverbrauch und ${({0: 'tagsüber meist niemand', 0.4: 'tagsüber teilweise jemand', 1: 'tagsüber meist jemand'})[zuhause]} zu Hause. Unverbindlich – endgültig nach einem Foto deines Geländers.`;
   for (const c of document.querySelectorAll('.house .chip')) c.setAttribute('aria-pressed', c.dataset.da != null ? +c.dataset.da === zuhause : +c.dataset.kwh === verbrauch);
   renderEco(); renderHow(); renderTabs(); if (typeof renderBestellen === 'function') renderBestellen();
   const r = sel.rendite;
@@ -583,13 +586,13 @@ function renderEco() {
   const etf = Array.from({length: JAHRE + 1}, (_, t) => p.preis * ((1 + ETF) ** t - 1));
   const r = p.rendite, mitEtf = r > ETF;          // ETF-Vergleich nur, wenn das Balkonkraftwerk vorne liegt
   $('ecoLead').innerHTML = `Paket <b>${p.name}</b> für ${eur(p.preis)}: Nach ${jahreText(p.jahre)} ist es bezahlt, danach ist jeder Sonnentag Gewinn. ` +
-    `Nach 20 Jahren haben Sie rund <b>${eur(p.kum[JAHRE])}</b> gespart` + (mitEtf ? ` – derselbe Betrag im ETF hätte etwa <b>${eur(etf[JAHRE])}</b> gebracht.` : '.');
+    `Nach 20 Jahren hast du rund <b>${eur(p.kum[JAHRE])}</b> gespart` + (mitEtf ? ` – derselbe Betrag im ETF hätte etwa <b>${eur(etf[JAHRE])}</b> gebracht.` : '.');
   $('ecoLegende').hidden = !mitEtf;
   $('rendite').textContent = `${nf(r * 100)} %`;
   $('renditeText').innerHTML = r > ETF * 1.5
     ? `Rendite pro Jahr – rund ${nf(r / ETF, 0)}-mal so viel wie ein durchschnittlicher Aktien-ETF mit etwa 7 %.*`
     : (r > ETF ? 'Rendite pro Jahr – mehr als ein durchschnittlicher Aktien-ETF mit etwa 7 %.*' : 'Rendite pro Jahr, gerechnet auf die eingesparte Stromrechnung.*');
-  $('mwstText').textContent = `Sie sparen ${eur(p.mwst)} gegenüber dem normalen Steuersatz.`;
+  $('mwstText').textContent = `Du sparst ${eur(p.mwst)} gegenüber dem normalen Steuersatz.`;
   $('facts').innerHTML = [
     ['Anschaffung', eur(p.preis)], ['Ersparnis im 1. Jahr', eur(p.spart)],
     ['Davon selbst genutzt', `${nf(p.selbst)} von ${nf(p.v.kwh)} kWh`], ['Bezahlt nach', jahreText(p.jahre)],
@@ -614,13 +617,13 @@ function renderEco() {
   for (const t of [0, 5, 10, 15, 20]) el('text', {x: x(t), y: H - 8, 'text-anchor': 'middle'}, svg).textContent = t ? `${t} Jahre` : 'heute';
   const pfad = arr => arr.map((v, t) => `${t ? 'L' : 'M'}${x(t).toFixed(1)},${y(v).toFixed(1)}`).join('');
   el('path', {d: pfad(p.kum) + `L${x(JAHRE)},${y(0)}L${x(0)},${y(0)}Z`, fill: 'rgba(47,125,79,.10)'}, svg);
-  if (mitEtf) el('path', {d: pfad(etf), fill: 'none', stroke: '#8a9a8e', 'stroke-width': 2, 'stroke-dasharray': '5 4'}, svg);
-  el('path', {d: pfad(p.kum), fill: 'none', stroke: '#2f7d4f', 'stroke-width': 3, 'stroke-linejoin': 'round'}, svg);
+  if (mitEtf) el('path', {d: pfad(etf), fill: 'none', stroke: '#6B7A8F', 'stroke-width': 2, 'stroke-dasharray': '5 4'}, svg);
+  el('path', {d: pfad(p.kum), fill: 'none', stroke: '#19B37A', 'stroke-width': 3, 'stroke-linejoin': 'round'}, svg);
   if (p.jahre <= JAHRE) {
-    el('circle', {cx: x(p.jahre), cy: y(0), r: 5, fill: '#fff', stroke: '#1c3a29', 'stroke-width': 2}, svg);
-    el('text', {x: x(p.jahre) + 9, y: y(0) + 20, style: 'fill:#1c3a29;font-weight:600'}, svg).textContent = `bezahlt nach ${jahreText(p.jahre)}`;
+    el('circle', {cx: x(p.jahre), cy: y(0), r: 5, fill: '#fff', stroke: '#13243A', 'stroke-width': 2}, svg);
+    el('text', {x: x(p.jahre) + 9, y: y(0) + 20, style: 'fill:#13243A;font-weight:600'}, svg).textContent = `bezahlt nach ${jahreText(p.jahre)}`;
   }
-  el('text', {x: x(JAHRE) - 2, y: y(p.kum[JAHRE]) - 10, 'text-anchor': 'end', style: 'fill:#2f7d4f;font-weight:700;font-size:13px'}, svg).textContent = eur(p.kum[JAHRE]);
+  el('text', {x: x(JAHRE) - 2, y: y(p.kum[JAHRE]) - 10, 'text-anchor': 'end', style: 'fill:#0B6B49;font-weight:700;font-size:13px'}, svg).textContent = eur(p.kum[JAHRE]);
   if (mitEtf) el('text', {x: x(JAHRE) - 2, y: y(etf[JAHRE]) + 24, 'text-anchor': 'end', style: 'fill:#6f8073;font-weight:600'}, svg).textContent = 'ETF ' + eur(etf[JAHRE]);
 }
 
@@ -635,7 +638,7 @@ function renderHow() {
     ['Ertragsverlust durch Schatten', `${nf((1 - p.v.kwh / p.v.kwh_frei) * 100)} %`],
   ].map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join('');
   $('howText').textContent = `Wir haben Nachbarhäuser und Bäume aus dem 3D-Stadtmodell Berlin vermessen und den Ertrag für jede Stunde eines Jahres simuliert (${D.wetter}). ` +
-    `Ihren Verbrauch rechnen wir Minute für Minute mit einem typischen Haushalt Ihrer Größe: Kühlschrank und Standby laufen immer, dazu Kaffee, Kochen, Wasch- und Spülmaschine, Licht und Fernsehen zu üblichen Zeiten – je nachdem, ob tagsüber jemand zu Hause ist. Ein Balkonkraftwerk deckt vor allem diese Grundlast und alles, was mittags läuft. Strom, den Sie gerade nicht brauchen, geht ohne Vergütung ins Netz` +
+    `Deinen Verbrauch rechnen wir Minute für Minute mit einem typischen Haushalt deiner Größe: Kühlschrank und Standby laufen immer, dazu Kaffee, Kochen, Wasch- und Spülmaschine, Licht und Fernsehen zu üblichen Zeiten – je nachdem, ob tagsüber jemand zu Hause ist. Ein Balkonkraftwerk deckt vor allem diese Grundlast und alles, was mittags läuft. Strom, den du gerade nicht brauchst, geht ohne Vergütung ins Netz` +
     `${p.speicherKwh ? `, außer der Speicher nimmt ihn auf` : ''}. Preise sind Beispielpreise aus aktuellen Marktangeboten. Genauigkeit etwa ±15 %.`;
 }
 $('howBtn').addEventListener('click', () => $('how').showModal());
@@ -1147,7 +1150,7 @@ if ((D.ohne_baeume || []).length) {
 }
 function korrText() {
   const n = wegBaeume.size;
-  $('korrText').textContent = n ? `${n} ${n === 1 ? 'Baum' : 'Bäume'} markiert. Noch einer? Sonst neu berechnen.` : 'Tippen Sie auf Bäume, die es so nicht gibt – wir rechnen ohne sie neu.';
+  $('korrText').textContent = n ? `${n} ${n === 1 ? 'Baum' : 'Bäume'} markiert. Noch einer? Sonst neu berechnen.` : 'Tipp auf Bäume, die es so nicht gibt – wir rechnen ohne sie neu.';
   $('korrOk').disabled = !n;
 }
 $('korr').addEventListener('click', () => { korrModus = true; $('korr').hidden = true; if ($('look')) $('look').style.visibility = 'hidden'; $('korrbar').hidden = false; stage.classList.add('korrigieren'); korrText(); });

@@ -155,10 +155,10 @@ class App:
         if f is None or not f.get("img"):
             raise ValueError("Für diese Hauswand gibt es kein Bild.")
         if f.get("img_quelle") == "schema":
-            raise ValueError("Für diese Hauswand gibt es nur eine schematische Ansicht. Bitte zeichnen Sie Ihren Balkon selbst ein.")
+            raise ValueError("Für diese Hauswand gibt es nur eine schematische Ansicht. Bitte zeichne deinen Balkon selbst ein.")
         if f["cls"] not in ANALYSE_RICHTUNGEN:
             raise ValueError("Die automatische Suche gibt es nur für Hauswände nach Süden, Südosten und Südwesten. "
-                             "Bitte zeichnen Sie Ihren Balkon selbst ein.")
+                             "Bitte zeichne deinen Balkon selbst ein.")
         with self.analyse_locks[fid]:              # gleichzeitige Anfragen zur selben Wand: nur ein Aufruf
             if str(fid) in self.R.BK:
                 return self.fassade(fid)
@@ -182,7 +182,7 @@ class App:
                     self.heute -= 1
                     log("Claude-Fehler:", type(e).__name__, getattr(e, "status_code", ""))
                     raise RuntimeError("Die automatische Balkonsuche ist gerade nicht verfügbar. "
-                                       "Sie können Ihren Balkon aber selbst einzeichnen.") from None
+                                       "Du kannst deinen Balkon aber selbst einzeichnen.") from None
             res = BC.parse_answer(msg)
             info = {"sent": sent, "orig": orig}
             entry = dict(model=model, bildqualitaet=res.get("bildqualitaet"), geschosse=res.get("geschosse"),
@@ -428,8 +428,8 @@ def handler_fuer(app, begrenzer, vertraue_proxy):
                     if str(fid) in app.R.BK:                       # schon bekannt: kostet nichts
                         return self.json(200, app.fassade(fid))
                     if not begrenzer.erlaubt(self.ip(), "analyse"):
-                        return self.fehler(429, "Sie haben gerade schon einige Hauswände untersuchen lassen. "
-                                                "Bitte in einer Stunde wieder – oder Balkon selbst einzeichnen.")
+                        return self.fehler(429, "Du hast gerade schon einige Hauswände untersuchen lassen. "
+                                                "Versuch es in einer Stunde wieder – oder zeichne deinen Balkon selbst ein.")
                     return self.json(200, app.analysiere(fid))
                 if teile == ["api", "angebot"]:
                     if not begrenzer.erlaubt(self.ip(), "angebot"):
