@@ -3,14 +3,14 @@
 Findet Balkone mit Potenzial für Balkonkraftwerke im 3D-Stadtmodell von Berlin und erstellt daraus ein persönliches Angebot – mit Verschattung, Preis und Amortisation.
 
 <p align="center">
-  <img src="docs/0_uebersicht.png" width="48%" alt="Kartenansicht: Südfassaden und Balkonanzahl auf dem Luftbild">
-  <img src="docs/1_karte.png" width="48%" alt="Fassade mit erkannten Balkonen und Modulvorschlag">
+  <img src="docs/0_uebersicht.png" width="48%" alt="Startseite: Adresssuche und Luftbild, sonnige Hauswände gelb markiert">
+  <img src="docs/1_karte.png" width="48%" alt="Hauswand gewählt: Umriss aus dem Gebäudemodell, Balkon einzeichnen">
 </p>
 <p align="center">
   <img src="docs/2_laden.png" width="48%" alt="Ladebildschirm: Angebot wird erstellt">
-  <img src="docs/3_angebot.png" width="48%" alt="Angebotsseite mit 3D-Modell, Ausstattungen und Preisen">
+  <img src="docs/3_angebot.png" width="48%" alt="Angebotsseite: Foto-Ansicht des Hauses mit Modul, Sonnenverlauf und Paket mit Preis">
 </p>
-<p align="center"><sub>Karte mit allen Südfassaden → Balkon wählen → Angebot wird erstellt → Angebot mit 3D-Modell, Sonnenstand und Preisen</sub></p>
+<p align="center"><sub>Adresse suchen → Hauswand wählen und Balkon einzeichnen → Angebot wird erstellt → Angebot mit Foto-Ansicht, Sonnenverlauf und Preisen</sub></p>
 
 ## Ablauf
 
