@@ -865,6 +865,9 @@ class Rechner:
         for src, dst in (("angebot.html", "index.html"), ("lastgang.js", "lastgang.js"), ("partner.json", "partner.json")):
             if os.path.exists(os.path.join(here, src)):
                 shutil.copyfile(os.path.join(here, src), os.path.join(self.adir, dst))
+        # three.js selbst ausliefern (kein CDN: Datenschutz, Werbeblocker, Ausfälle)
+        if os.path.isdir(os.path.join(here, "vendor")):
+            shutil.copytree(os.path.join(here, "vendor"), os.path.join(self.adir, "vendor"), dirs_exist_ok=True)
 
     def ohne_baeume(self, mitte, kronen, faktor=1.3):
         """Punktwolke ohne die Baumpunkte unter den angegebenen Kronen.
@@ -908,9 +911,11 @@ class Rechner:
         nm = min(max(fit, 1), 2)
         g3 = balkon_geometrie(f, b, *self.geo_wolke(f), n_module=nm if fit >= 1 else None)
         Q3, qb3 = horizont_vorfilter(g3, P, baum)
-        r3 = simuliere_balkon(sim, g3, Q3, qb3, gn_true, az_mod, neigung=90 - AUSSTELLWINKEL, wp_modul=WP_OPTIMIERT)
+        # Leistung je Modul passend zur Fläche: auf schmalen Geländern nur das kleine Modul, nicht 450 Wp auf dessen Fläche
+        wp_opt = WP_OPTIMIERT if fit >= 1 else g3["vorschlag"]["wp_modul"]
+        r3 = simuliere_balkon(sim, g3, Q3, qb3, gn_true, az_mod, neigung=90 - AUSSTELLWINKEL, wp_modul=wp_opt)
         pac3 = np.round(r3["pac"]).astype(int)
-        optimiert = dict(n=g3["vorschlag"]["n"], wp=g3["vorschlag"]["n"] * WP_OPTIMIERT, wp_modul=WP_OPTIMIERT,
+        optimiert = dict(n=g3["vorschlag"]["n"], wp=g3["vorschlag"]["n"] * wp_opt, wp_modul=wp_opt,
                          ausstellwinkel=AUSSTELLWINKEL, kwh=round(float(pac3.sum()) / 1000, 1),
                          kwh_frei=round(float(r3["pac_frei"].sum()) / 1000, 1),
                          module=[[lokal(e, geo["mitte"], f["ground"]) for e in m["ecken"]] for m in g3["module"]],

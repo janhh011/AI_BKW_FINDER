@@ -27,6 +27,7 @@ import argparse
 import base64
 import io
 import json
+import math
 import os
 import sys
 import time
@@ -216,11 +217,19 @@ def parse_answer(msg):
         return {"balkone": [], "anmerkung": "keine auswertbare Antwort"}
 
 
+def gueltige_box(b):
+    """Antwort des Modells prüfen: Box aus vier endlichen Zahlen."""
+    box = b.get("box") if isinstance(b, dict) else None
+    return (isinstance(box, list) and len(box) == 4
+            and all(isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v) for v in box))
+
+
 def measure(b, f, info):
-    """Box ins Originalbild umrechnen und Maße in Metern bestimmen."""
+    """Box ins Originalbild umrechnen und Maße in Metern bestimmen.
+    Alle Felder aus der Modellantwort werden auf feste Typen und Wertebereiche gebracht (sie landen im Cache für alle)."""
     sx = info["orig"][0] / info["sent"][0]
     sy = info["orig"][1] / info["sent"][1]
-    x0, y0, x1, y1 = b["box"]
+    x0, y0, x1, y1 = (float(v) for v in b["box"])
     x0, x1 = sorted((x0 * sx, x1 * sx))
     y0, y1 = sorted((y0 * sy, y1 * sy))
     x0, x1 = max(0.0, x0), min(float(info["orig"][0]), x1)
@@ -228,15 +237,33 @@ def measure(b, f, info):
     res = facade_res(f, info["orig"][0])
     out = {
         "box": [round(x0), round(y0), round(x1), round(y1)],
-        "typ": b.get("typ", "unsicher"),
-        "geschoss": b.get("geschoss"),
-        "sicherheit": round(float(b.get("sicherheit", 0)), 2),
+        "typ": b.get("typ") if b.get("typ") in ("Balkon", "Loggia", "unsicher") else "unsicher",
+        "geschoss": _ganzzahl(b.get("geschoss"), 0, 40),
+        "sicherheit": round(min(1.0, max(0.0, _zahl(b.get("sicherheit"), 0.0))), 2),
         "breite_m": round((x1 - x0) * res, 2),
         "hoehe_m": round((y1 - y0) * res, 2),
     }
     if f.get("img_ztop") is not None:
         out["unterkante_m"] = round(f["img_ztop"] - y1 * res - f["ground"], 1)   # über Gelände/Nachbardach
     return out
+
+
+def _zahl(v, standard):
+    try:
+        v = float(v)
+        return v if math.isfinite(v) else standard
+    except (TypeError, ValueError):
+        return standard
+
+
+def _ganzzahl(v, lo, hi):
+    if isinstance(v, bool) or v is None:
+        return None
+    try:
+        v = int(v)
+    except (TypeError, ValueError):
+        return None
+    return v if lo <= v <= hi else None
 
 
 def draw_review(entry, f, out_path):

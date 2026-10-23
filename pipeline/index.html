@@ -656,8 +656,28 @@
   }
 
   // ---------------------------------------------------------------- Adresssuche
-  const norm = s => s.toLowerCase().replace(/ß/g, 'ss').replace(/str\.?(\s|$)/g, 'strasse$1').replace(/straße/g, 'strasse')
-    .replace(/[äöü]/g, c => ({ä: 'ae', ö: 'oe', ü: 'ue'}[c])).replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+  // Normalform für die Suche: ß/ss, ä/ae/a usw. gleich behandeln, "Str." = "Straße", Satzzeichen weg
+  const norm = s => s.toLowerCase().replace(/ß/g, 'ss').replace(/straße/g, 'strasse').replace(/str\.?(\s|$|,)/g, 'strasse$1')
+    .replace(/[äöü]/g, c => ({ä: 'a', ö: 'o', ü: 'u'}[c])).replace(/ae/g, 'a').replace(/oe/g, 'o').replace(/ue/g, 'u')
+    .replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+  // Anfrage zerlegen: Straßenwörter, Hausnummer (auch "24 a" -> "24a"), Postleitzahl; "Berlin" ignorieren
+  function zerlege(q) {
+    const t = norm(q).split(' ').filter(w => w && w !== 'berlin');
+    const strasse = [], plz = [];
+    let nr = null;
+    for (let i = 0; i < t.length; i++) {
+      const w = t[i];
+      if (/^\d{5}$/.test(w)) { plz.push(w); continue; }
+      if (/^\d{1,4}[a-z]?$/.test(w) && nr === null) {
+        nr = w;
+        if (/^\d+$/.test(w) && /^[a-z]$/.test(t[i + 1] || '')) { nr += t[i + 1]; i++; }
+        continue;
+      }
+      if (/^\d/.test(w)) continue;               // zweite Zahl, z. B. bei "24-26"
+      strasse.push(w);
+    }
+    return {strasse, nr, plz};
+  }
   const liste = $('vorschlaege'), inp = $('adresse');
   let treffer = [], aktiv = -1;
   async function suche(q) {
@@ -665,9 +685,27 @@
     const n = norm(q);
     if (!n) return [];
     if (!A) return null;
-    if (!A._idx) A._idx = A.adressen.map(a => [norm(`${a.s} ${a.n} ${a.p}`), a]);
-    const teile = n.split(' ');
-    return A._idx.filter(([t]) => teile.every(w => t.split(' ').some(x => x.startsWith(w)))).slice(0, 7).map(x => x[1]);
+    if (!A._idx) A._idx = A.adressen.map(a => {
+      const hn = norm(String(a.n)).replace(/\s+/g, '');
+      return {a, woerter: norm(a.s).split(' '), hn, basis: (hn.match(/^\d+/) || [''])[0], plz: String(a.p)};
+    });
+    const {strasse, nr, plz} = zerlege(q);
+    if (!strasse.length && !nr) return [];
+    const strassePasst = A._idx.filter(e => strasse.every(w => e.woerter.some(x => x.startsWith(w))));
+    const finde = passend => {
+      if (!nr) return passend.slice(0, 7).map(e => e.a);
+      // Hausnummer: genaue Treffer zuerst (5 -> 5, nicht 50), dann Zusätze (5 -> 5a), beim Tippen auch Anfänge (1 -> 12)
+      const genau = passend.filter(e => e.hn === nr);
+      const zusatz = passend.filter(e => e.hn !== nr && /^\d+$/.test(nr) && e.basis === nr);
+      const ohneZusatz = /[a-z]$/.test(nr) ? passend.filter(e => e.hn === nr.replace(/[a-z]$/, '')) : [];   // 11a gibt es nicht -> 11 anbieten
+      const anfang = passend.filter(e => e.hn !== nr && e.basis !== nr && e.hn.startsWith(nr));
+      const t = [...genau, ...zusatz, ...ohneZusatz, ...anfang].slice(0, 7).map(e => e.a);
+      t.genau = genau.length > 0;
+      return t;
+    };
+    // Postleitzahl nur als Filter, solange sie nicht alle Treffer verwirft (Straßen mit mehreren PLZ, Tippfehler)
+    const mitPlz = plz.length ? finde(strassePasst.filter(e => plz.every(p => e.plz === p))) : null;
+    return mitPlz && mitPlz.length ? mitPlz : finde(strassePasst);
   }
   function zeigeVorschlaege(t, q) {
     liste.textContent = ''; aktiv = -1;
@@ -695,8 +733,11 @@
   inp.addEventListener('blur', () => setTimeout(() => liste.classList.remove('offen'), 120));
   $('sucheForm').addEventListener('submit', async e => {
     e.preventDefault();
-    const t = treffer && treffer.length ? treffer : await suche(inp.value);
-    if (t && t.length) nimm(t[Math.max(0, aktiv)]);
+    const t = await suche(inp.value);
+    treffer = t;
+    // Enter übernimmt nur eindeutige Treffer (oder den mit den Pfeiltasten gewählten), sonst Vorschläge zeigen
+    if (t && t.length && aktiv >= 0) nimm(t[aktiv]);
+    else if (t && t.length && (t.genau || t.length === 1)) nimm(t[0]);
     else zeigeVorschlaege(t, inp.value.trim() || ' ');
   });
   function nimm(a) {
@@ -802,7 +843,7 @@
         `<button class="link" id="abbr">Abbrechen</button></div>`;
     } else if (st.bk != null && bks && bks[st.bk]) {
       const b = bks[st.bk], sim = window.ERTRAG && ERTRAG.balkone[String(f.id)] && ERTRAG.balkone[String(f.id)][String(st.bk)];
-      html += `<p class="text"><b>${b.typ === 'Loggia' ? 'Loggia' : 'Balkon'}${b.geschoss != null ? `, ${b.geschoss === 0 ? 'Erdgeschoss' : b.geschoss + '. Stock'}` : ''}</b> – ca. ${fmt(b.breite_m, 1)} m breit.</p>`;
+      html += `<p class="text"><b>${b.typ === 'Loggia' ? 'Loggia' : 'Balkon'}${Number.isInteger(b.geschoss) ? `, ${b.geschoss === 0 ? 'Erdgeschoss' : b.geschoss + '. Stock'}` : ''}</b> – ca. ${fmt(b.breite_m, 1)} m breit.</p>`;
       if (sim && sim.passt) html += `<div class="ergebnis"><div><b>${fmt(sim.kwh)}</b><span>kWh Strom im Jahr (senkrecht)</span></div><div><b>${fmt(sim.verlust * 100)} %</b><span>Verlust durch Schatten</span></div><div><b>${fmt(sim.sonne)}</b><span>Sonnenstunden</span></div></div>`;
       html += `<div class="aktion"><span class="angebot-wrap"><button class="btn" id="angebot">Angebot ansehen</button><span class="unverb">unverbindlich</span></span><button class="link" id="anders">anderer Balkon</button></div>`;
     } else {
@@ -893,12 +934,25 @@
     });
   }
 
+  // Antwort sicher lesen: Proxy-Fehlerseiten (HTML) ergeben eine verständliche Meldung statt "Unexpected token"
+  async function apiPost(url, body, ms) {
+    const ctl = new AbortController(), uhr = setTimeout(() => ctl.abort(), ms);
+    try {
+      const r = await fetch(url, {method: 'POST', headers: {'Content-Type': 'application/json'}, body, signal: ctl.signal});
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.fehler || (r.status === 429 ? 'Gerade sind sehr viele Anfragen unterwegs. Bitte kurz warten.' : 'Das hat gerade nicht geklappt. Bitte später noch einmal.'));
+      return j;
+    } catch (err) {
+      if (err.name === 'AbortError') throw new Error('Das dauert gerade zu lange. Bitte später noch einmal.');
+      if (err instanceof TypeError) throw new Error('Keine Verbindung zum Server. Bitte später noch einmal.');
+      throw err;
+    } finally { clearTimeout(uhr); }
+  }
+
   async function analysiere(f) {
     st.analyse = true; st.fehler = null; render();
     try {
-      const r = await fetch(`api/fassade/${f.id}/analyse`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{}'});
-      const j = await r.json();
-      if (!r.ok) throw new Error(j.fehler || 'Das hat nicht geklappt.');
+      const j = await apiPost(`api/fassade/${f.id}/analyse`, '{}', 120000);
       BALKONE[String(f.id)] = {geschosse: j.geschosse, bildqualitaet: j.bildqualitaet, balkone: j.balkone};
     } catch (err) { st.fehler = err.message || 'Das hat nicht geklappt.'; }
     st.analyse = false; if (st.f === f.id) render();
@@ -911,9 +965,7 @@
     const idP = id ? Promise.resolve(id) : (async () => {
       const a = await api();
       if (!a) throw new Error('Für diesen Balkon brauchen wir unseren Server – der läuft hier gerade nicht.');
-      const r = await fetch('api/angebot', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(anfrage)});
-      const j = await r.json();
-      if (!r.ok) throw new Error(j.fehler || 'Das hat nicht geklappt.');
+      const j = await apiPost('api/angebot', JSON.stringify(anfrage), 90000);
       return j.id;
     })();
     angebotErstellen(idP);

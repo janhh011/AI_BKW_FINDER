@@ -257,6 +257,10 @@
   @media (max-width: 560px) {
     .page { padding: 14px 16px 22px; }
     .sunbox { left: 10px; bottom: 10px; padding: 8px 10px; gap: 2px 10px; grid-template-columns: 104px auto; }
+    .opt { grid-template-columns: 52px minmax(0, 1fr) !important; }
+    .opt .bild { width: 52px; height: 44px; }
+    .opt .price { grid-column: 2; grid-row: auto; text-align: left; font-size: 20px; }
+    .opt .name .titel, .opt .produkt { white-space: normal; }
     .sunbox svg { width: 104px; height: 46px; }
     .sunbox .t { font-size: 12.5px; min-width: 0; white-space: normal; }
     .chip { padding: 2px 9px; font-size: 12px; }
@@ -269,8 +273,8 @@
 </style>
 <script type="importmap">
 { "imports": {
-  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  "three": "./vendor/three/three.module.min.js",
+  "three/addons/": "./vendor/three/addons/"
 } }
 </script>
 <script src="../angebote.js" onerror="window.ANGEBOTE=[]"></script>
@@ -372,7 +376,7 @@
     </div>
     <p class="sub2">Die meiste Zeit wartet der Paketbote. So läuft es ab:</p>
     <ol class="zeit">
-      <li><span class="dauer">3 Minuten</span><b>Bestellen</b>Ausstattung wählen, Foto vom Geländer hochladen, fertig.</li>
+      <li><span class="dauer">3 Minuten</span><b>Bestellen</b>Ausstattung wählen und im Shop bestellen – vorher kurz prüfen, ob die Halterung zu deinem Geländer passt.</li>
       <li><span class="dauer">2–5 Werktage</span><b>Lieferung</b>Alles kommt passend für dein Geländer bis an die Haustür.</li>
       <li><span class="dauer">ca. 45 Minuten</span><b>Montage</b>Halterung ans Geländer, Module einhängen, Stecker in die Steckdose.</li>
       <li><span class="dauer">ca. 5 Minuten</span><b>Online anmelden</b>Kurzer Eintrag im Marktstammdatenregister – das ist Pflicht, aber einfach. Wir zeigen dir, wie.</li>
@@ -386,7 +390,7 @@
 <dialog id="how">
   <h2>So haben wir gerechnet</h2>
   <dl id="howList"></dl>
-  <p>Strompreis <input id="preis" type="number" min="15" max="70" step="0.5" value="37"> ct pro kWh</p>
+  <p>Strompreis <input id="preis" type="number" min="15" max="70" step="0.5" value="37"> ct pro kWh (Arbeitspreis laut Stromrechnung, ohne Grundgebühr)</p>
   <p id="howText"></p>
   <p><button class="btn" id="howClose" style="padding:9px 18px;font-size:14px">Schließen</button></p>
 </dialog>
@@ -433,10 +437,24 @@ const SPEICHER_STANDBY_W = 6, SPEICHER_ETA = 0.92;
 // ---------------------------------------------------------------- Daten
 const LIST = window.ANGEBOTE || [];
 const id = new URLSearchParams(location.search).get('id') || (LIST[0] && LIST[0].id);
-const D = await fetch(`${id}/daten.json`).then(r => r.json());
+// Nur eigene Angebots-IDs laden (sonst könnte ein Link fremde Zahlen unter unserer Domain anzeigen)
+const ID_MUSTER = /^[0-9]{1,6}_([0-9]{1,3}|u[0-9a-f]{10})(_b[0-9a-f]{10})?$/;
+function abbruch(text) {
+  $('headline').textContent = 'Dieses Angebot können wir gerade nicht anzeigen.';
+  $('lead').innerHTML = `${text} <a href="../">Zurück zur Karte</a>`;
+  for (const x of ['opts', 'loading']) { const e = $(x); if (e) e.textContent = ''; }
+  for (const sel of ['.house', '.cta', '.teaser', '#rechnung', '#ablauf', '.sunbox', '#meter', '#look', '#korr']) {
+    const e = document.querySelector(sel); if (e) e.style.display = 'none';
+  }
+  throw new Error(text);
+}
+if (!id || !ID_MUSTER.test(id)) abbruch('Der Link ist unvollständig oder ungültig.');
+const D = await fetch(`${id}/daten.json`).then(r => (r.ok ? r.json() : null)).catch(() => null);
+if (!D || !Array.isArray(D.stunde_wh) || !D.jahr || !D.vorschlag || !D.horizont) abbruch('Das Angebot wurde nicht gefunden oder ist veraltet.');
 const N = D.stunde_wh.length;
 const VARS = (D.varianten && D.varianten.length ? D.varianten : [{n: D.vorschlag.n, wp: D.vorschlag.wp, kwh: D.jahr.kwh, kwh_frei: D.jahr.kwh_frei, module: D.module, stunde_wh: D.stunde_wh}])
   .map(v => ({...v, pv: Float64Array.from(v.stunde_wh), neigung: 0}));
+let DREI_OK = false;        // wird true, sobald die 3D-Ansicht läuft
 const NORD = ['N', 'NO', 'NW'].includes(D.fassade_cls);   // Nordbalkone: ehrliche Texte
 const OPT = D.optimiert ? {...D.optimiert, pv: Float64Array.from(D.optimiert.stunde_wh), neigung: D.optimiert.ausstellwinkel} : null;
 
@@ -452,7 +470,7 @@ const s1 = sets.filter(k => k.module === Math.min(2, vSenk.n)).sort((a, b) => a.
 const s2 = sets.filter(k => k.module === (OPT ? OPT.n : 2)).sort((a, b) => b.wp * b.module - a.wp * a.module || a.preis - b.preis)[0] || s1;
 // 3) smart mit Speicher: günstigster passender Speicher
 const s3 = speicher.sort((a, b) => a.preis - b.preis)[0];
-function skaliere(v, wp) { const f = wp / (v.wp / v.n); return {...v, pv: v.pv.map(x => Math.min(800, x * f)), kwh: v.kwh * f, wp: wp * v.n}; }
+function skaliere(v, wp) { const f = wp / (v.wp / v.n); return {...v, pv: v.pv.map(x => Math.min(800, x * f)), kwh: v.kwh * f, kwh_frei: v.kwh_frei * f, wp: wp * v.n}; }
 const PAKETE = [];
 // 0) zum Reinschnuppern: das günstigste Set mit einem Modul – kleiner Einstieg ins Hobby
 const s0 = KATALOG.filter(k => k.typ === 'set' && k.module === 1 && passt(k)).sort((a, b) => a.preis - b.preis)[0];
@@ -469,11 +487,27 @@ if (s2 && OPT) PAKETE.push({key: 'optimiert', name: 'Optimiert', set: s2,
              : `${s2.module} ${s2.bauart}, um ${OPT.neigung}° zur Sonne geneigt – deutlich mehr Ertrag.`});
 if (s3 && OPT) PAKETE.push({key: 'smart', name: 'Smart mit Speicher', set: s3,
   v: skaliere(OPT, s3.wp), neigung: OPT.neigung, speicherKwh: s3.kwh,
-  desc: `Geneigte Module plus ${nf(s3.kwh, 1)}-kWh-Speicher (${s3.wr}) – Sonnenstrom auch am Abend.`});
+  desc: `Geneigte Module plus ${nf(s3.kwh, 1)}-kWh-Speicher (${s3.wr}) – Sonnenstrom auch am Abend. Ein Austausch des Speichers ist in der Rechnung nicht enthalten.`});
 for (const p of PAKETE) { p.preis = p.set.preis + p.set.halterung; p.mwst = p.preis * MWST; }
 // gleiches Set senkrecht und geneigt kostet gleich viel -> nur die geneigte (ertragreichere) Variante zeigen
 { const e = PAKETE.find(p => p.key === 'einfach'), o = PAKETE.find(p => p.key === 'optimiert');
   if (e && o && e.set === o.set) PAKETE.splice(PAKETE.indexOf(e), 1); }
+
+let sel = null;
+// Kein Set passt (Geländer schmaler als die Module im Katalog): Ertrag trotzdem zeigen, ohne Pakete und Rechnung
+const KEIN_SET = PAKETE.length === 0;
+if (KEIN_SET) sel = {key: 'keins', name: '', v: VARS[0], neigung: 0, speicherKwh: 0, set: {id: 'keins', module: VARS[0].n, wp: VARS[0].wp / VARS[0].n}};
+function renderKeinSet() {
+  const v = VARS[0], minBreite = Math.min(...KATALOG.map(k => k.breite)), kwh = nf(Math.round(v.kwh / 10) * 10);
+  $('headline').textContent = `Dein Balkon könnte rund ${kwh} kWh Strom im Jahr machen.`;
+  $('opts').innerHTML = '';
+  const h = document.createElement('p'); h.className = 'ehrlich';
+  h.textContent = `Für ${nf(platz, 1)} m Geländer haben wir noch kein passendes Set: Die Module in unserem Katalog sind mindestens ${nf(minBreite, 2)} m breit. ` +
+    `Ein kleineres Modul (${nf(v.wp)} Watt) würde hier rund ${kwh} kWh im Jahr erzeugen. Kleinere Sets nehmen wir bald auf.`;
+  $('opts').appendChild(h);
+  for (const q of ['.house', '.cta', '.teaser', '#rechnung', '#ablauf']) { const e = document.querySelector(q); if (e) e.style.display = 'none'; }
+  $('fine').textContent = 'Alle Werte sind Schätzungen auf Basis unserer Modelle und können je nach Wetter und Montage abweichen.';
+}
 
 let verbrauch = 2500, personen = 2, zuhause = 0.4, preis = 0.37;
 
@@ -507,7 +541,9 @@ function rechne() {
     p.rendite = irr(cf);
     p.netto20 = p.kum[JAHRE];
   }
-  const best = PAKETE.reduce((a, b) => (b.netto20 > a.netto20 ? b : a));
+  // Empfehlung ohne Speicherpaket: dessen Austausch nach etwa 10 Jahren ist nicht eingerechnet
+  const kandidaten = PAKETE.filter(p => !p.speicherKwh).length ? PAKETE.filter(p => !p.speicherKwh) : PAKETE;
+  const best = kandidaten.reduce((a, b) => (b.netto20 > a.netto20 ? b : a));
   for (const p of PAKETE) p.empfehlung = p === best;
 }
 
@@ -534,7 +570,7 @@ const lage = guete >= 0.75 ? 'bekommt viel Sonne'
   : guete >= 0.5 ? 'bekommt gut Sonne'
   : guete >= 0.3 ? (NORD ? 'bekommt kaum direkte Sonne, aber viel Himmelslicht' : 'liegt öfter im Schatten')
   : 'bekommt wenig Licht';
-$('lead').textContent = `${D.quelle_balkon === 'selbst eingezeichnet' ? `Dein eingezeichneter Balkon ${stock}` : `Wir haben deinen Balkon ${stock} vermessen`}: ${nf(D.breite_m, 1)} m Geländer nach ${seite}, er ${lage}. ${['Eine passende Ausstattung', 'Zwei passende Ausstattungen', 'Drei passende Ausstattungen', 'Vier passende Ausstattungen'][PAKETE.length - 1] || 'Passende Ausstattungen'}:`;
+$('lead').textContent = `${D.quelle_balkon === 'selbst eingezeichnet' ? `Dein eingezeichneter Balkon ${stock}` : `Wir haben deinen Balkon ${stock} vermessen`}: ${nf(D.breite_m, 1)} m Geländer nach ${seite}, er ${lage}.${KEIN_SET ? '' : ' ' + (['Eine passende Ausstattung', 'Zwei passende Ausstattungen', 'Drei passende Ausstattungen', 'Vier passende Ausstattungen'][PAKETE.length - 1] || 'Passende Ausstattungen') + ':'}`;
 if (NORD || guete < 0.3) {
   const h = document.createElement('p'); h.className = 'ehrlich';
   h.textContent = NORD
@@ -542,13 +578,12 @@ if (NORD || guete < 0.3) {
     : `Ehrlich gesagt: Hier kommt wenig Licht an – etwa ${Math.round(guete * 100)} % von dem, was ein freier Südbalkon schafft.`;
   $('lead').after(h);
 }
-let sel = null;
 const jahreText = j => j > JAHRE ? `über ${JAHRE} Jahren` : `${nf(Math.round(j * 2) / 2, 1).replace(',0', '')} Jahren`;
 
 // Garantie als starkes Kaufargument: Badge an jeder Karte, ausführlich beim gewählten Paket
 function garantieBadge(p) {
   const g = p.set.garantie; if (!g || !g.module) return '';
-  return `<span class="garantie" title="${garantieText(p).replace(/<[^>]+>/g, '')}"><svg viewBox="0 0 12 14" aria-hidden="true"><path d="M6 .8 11 2.6v4.1c0 3-2.1 5.4-5 6.5C3.1 12.1 1 9.7 1 6.7V2.6z" fill="currentColor"/><path d="M3.8 7 5.4 8.6 8.4 5.4" fill="none" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>${g.module} Jahre Garantie</span>`;
+  return `<span class="garantie" title="${garantieText(p).replace(/<[^>]+>/g, '')}"><svg viewBox="0 0 12 14" aria-hidden="true"><path d="M6 .8 11 2.6v4.1c0 3-2.1 5.4-5 6.5C3.1 12.1 1 9.7 1 6.7V2.6z" fill="currentColor"/><path d="M3.8 7 5.4 8.6 8.4 5.4" fill="none" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>${g.module} J. Garantie auf Module</span>`;
 }
 function garantieText(p) {
   const g = p.set.garantie; if (!g) return '';
@@ -558,6 +593,7 @@ function garantieText(p) {
   return `<b>Garantie:</b> ${t.join(', ')} (laut Hersteller).`;
 }
 function renderOpts() {
+  if (KEIN_SET) return renderKeinSet();
   rechne();
   if (!sel || !PAKETE.includes(sel)) sel = PAKETE.find(p => p.key === 'optimiert') || PAKETE.find(p => p.empfehlung);
   const box = $('opts'); box.innerHTML = '';
@@ -566,20 +602,20 @@ function renderOpts() {
     b.className = 'opt'; b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', p === sel);
     b.innerHTML = `<span class="bild">${p.set.bild ? `<img src="${p.set.bild}" alt="${SHOP} ${p.set.titel}" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(document.createRange().createContextualFragment(this.dataset.alt))" data-alt='${produktBild(p)}'>` : produktBild(p)}</span>
       <span class="name"><span class="titel">${p.name}</span>${garantieBadge(p)}${p.empfehlung ? '<span class="tag">lohnt sich am meisten</span>' : ''}</span>
-      <span class="price"><span class="mwst0" title="Seit 2023 gilt für Balkonkraftwerke 0 % Mehrwertsteuer – du sparst ${eur(p.mwst)}.">0 % MwSt.</span>${eur(p.preis)}<small>spart ${eur(p.spart)} im Jahr</small><small class="mwst">rechnet sich nach ${jahreText(p.jahre)}</small></span>
+      <span class="price"><span class="mwst0" title="Seit 2023 fällt auf Balkonkraftwerke keine Mehrwertsteuer an. Der Preis ist der Endpreis laut Shop.">0 % MwSt.</span>${eur(p.preis)}<small>spart ${eur(p.spart)} im Jahr</small><small class="mwst">rechnet sich nach ${jahreText(p.jahre)}</small></span>
       <span class="desc">${p.desc} ${garantieText(p)} <a class="produkt" href="${p.set.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${SHOP} ${p.set.titel} ↗</a></span>
       <span class="tech">${nf(p.v.wp)} Watt · ca. ${nf(Math.round(p.v.kwh / 10) * 10)} kWh Strom im Jahr</span>`;
-    b.addEventListener('click', () => { sel = p; renderOpts(); placeModules(); setSun(); });
+    b.addEventListener('click', () => { sel = p; renderOpts(); if (DREI_OK) { placeModules(); setSun(); } });
     box.appendChild(b);
   }
   $('headline').textContent = `Dein Balkon spart ${eur(sel.spart)} Strom im Jahr.`;
-  $('fine').textContent = `Alle Werte sind Schätzungen auf Basis unserer Modelle und können je nach Nutzung, Wetter und Strompreis abweichen. Beispielpreise inkl. Lieferung, 0 % MwSt.; gerechnet mit ${nf(preis * 100, 1)} ct/kWh, ${nf(verbrauch)} kWh Jahresverbrauch und ${({0: 'tagsüber meist niemand', 0.4: 'tagsüber teilweise jemand', 1: 'tagsüber meist jemand'})[zuhause]} zu Hause. Unverbindlich – endgültig nach einem Foto deines Geländers.`;
+  $('fine').textContent = `Alle Werte sind Schätzungen auf Basis unserer Modelle und können je nach Nutzung, Wetter und Strompreis abweichen. Beispielpreise laut Shop (Stand 19.10.2026), Versandkosten siehe Shop; gerechnet mit ${nf(preis * 100, 1)} ct/kWh Arbeitspreis (ohne Grundgebühr), ${nf(verbrauch)} kWh Jahresverbrauch und ${({0: 'tagsüber meist niemand', 0.4: 'tagsüber teilweise jemand', 1: 'tagsüber meist jemand'})[zuhause]} zu Hause. Prüfe vor dem Kauf, ob die Halterung zu deinem Geländer passt.`;
   for (const c of document.querySelectorAll('.house .chip')) c.setAttribute('aria-pressed', c.dataset.da != null ? +c.dataset.da === zuhause : +c.dataset.kwh === verbrauch);
   renderEco(); renderHow(); renderTabs(); if (typeof renderBestellen === 'function') renderBestellen();
   const r = sel.rendite;
   $('spoiler').textContent = r > ETF ? '(Spoiler: ja.)' : (r > 0.02 ? '(Spoiler: auf Dauer ja.)' : '(Spoiler: knapp.)');
   $('zehnJahre').textContent = eur(sel.kum[10] + sel.preis);
-  $('zehnJahreText').textContent = `gespart in den nächsten 10 Jahren (${sel.name})`;
+  $('zehnJahreText').textContent = `Stromkosten gespart in den nächsten 10 Jahren (${sel.name})`;
 }
 function renderTabs() {
   const box = $('tabs'); box.innerHTML = '';
@@ -587,7 +623,7 @@ function renderTabs() {
     const t = document.createElement('button');
     t.className = 'tab'; t.setAttribute('role', 'tab'); t.setAttribute('aria-selected', p === sel);
     t.innerHTML = `<b>${p.name}</b>${eur(p.preis)}`;
-    t.addEventListener('click', () => { sel = p; renderOpts(); placeModules(); setSun(); });
+    t.addEventListener('click', () => { sel = p; renderOpts(); if (DREI_OK) { placeModules(); setSun(); } });
     box.appendChild(t);
   }
 }
@@ -602,17 +638,17 @@ function renderEco() {
   const etf = Array.from({length: JAHRE + 1}, (_, t) => p.preis * ((1 + ETF) ** t - 1));
   const r = p.rendite, mitEtf = r > ETF;          // ETF-Vergleich nur, wenn das Balkonkraftwerk vorne liegt
   $('ecoLead').innerHTML = `Paket <b>${p.name}</b> für ${eur(p.preis)}: Nach ${jahreText(p.jahre)} ist es bezahlt, danach ist jeder Sonnentag Gewinn. ` +
-    `Nach 20 Jahren hast du rund <b>${eur(p.kum[JAHRE])}</b> gespart` + (mitEtf ? ` – derselbe Betrag im ETF hätte etwa <b>${eur(etf[JAHRE])}</b> gebracht.` : '.');
+    `Nach 20 Jahren bleiben dir nach Abzug des Kaufpreises rund <b>${eur(p.kum[JAHRE])}</b>` + (mitEtf ? ` – derselbe Betrag im ETF hätte etwa <b>${eur(etf[JAHRE])}</b> gebracht.` : '.');
   $('ecoLegende').hidden = !mitEtf;
   $('rendite').textContent = `${nf(r * 100)} %`;
   $('renditeText').innerHTML = r > ETF * 1.5
     ? `Rendite pro Jahr – rund ${nf(r / ETF, 0)}-mal so viel wie ein durchschnittlicher Aktien-ETF mit etwa 7 %.*`
     : (r > ETF ? 'Rendite pro Jahr – mehr als ein durchschnittlicher Aktien-ETF mit etwa 7 %.*' : 'Rendite pro Jahr, gerechnet auf die eingesparte Stromrechnung.*');
-  $('mwstText').textContent = `Du sparst ${eur(p.mwst)} gegenüber dem normalen Steuersatz.`;
+  $('mwstText').textContent = 'Seit 2023 fällt auf Balkonkraftwerke keine Mehrwertsteuer an – die Preise oben sind Endpreise.';
   $('facts').innerHTML = [
     ['Anschaffung', eur(p.preis)], ['Ersparnis im 1. Jahr', eur(p.spart)],
     ['Davon selbst genutzt', `${nf(p.selbst)} von ${nf(p.v.kwh)} kWh`], ['Bezahlt nach', jahreText(p.jahre)],
-    ['Ersparnis in 20 Jahren', eur(p.kum[JAHRE] + p.preis)],
+    ['Stromkosten gespart in 20 Jahren', eur(p.kum[JAHRE] + p.preis)], ['Nach Abzug des Kaufpreises', eur(p.kum[JAHRE])],
   ].map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join('');
   $('ecoFuss').textContent = `* Keine Anlageberatung. ` + (mitEtf ? `Der ETF-Vergleich nutzt 7 % pro Jahr als ungefähren langjährigen Durchschnitt eines weltweiten Aktienindex; ` +
     `vergangene Entwicklungen sind keine Garantie für die Zukunft. ` : '') + `Die Rendite des Balkonkraftwerks ergibt sich aus der eingesparten Stromrechnung über ${JAHRE} Jahre ` +
@@ -650,12 +686,12 @@ function renderHow() {
     ['Ausstattung', `${p.set.module} × ${p.set.wp} Wp, ${p.neigung ? p.neigung + '° geneigt' : 'senkrecht'}${p.speicherKwh ? `, Speicher ${nf(p.speicherKwh, 1)} kWh` : ''}`],
     ['Stromertrag pro Jahr', `${nf(p.v.kwh)} kWh`],
     ['davon selbst genutzt', `${nf(p.selbst)} kWh (${nf(p.selbst / p.v.kwh * 100)} %)`],
-    ['Sonnenstunden auf den Modulen', `${nf(D.jahr.sonnenstunden)} von ${nf(D.jahr.sonnenstunden_frei)}`],
+    ['Stunden mit direkter Sonne (klarer Himmel)', `${nf(D.jahr.sonnenstunden)} von ${nf(D.jahr.sonnenstunden_frei)}`],
     ['Ertragsverlust durch Schatten', `${nf((1 - p.v.kwh / p.v.kwh_frei) * 100)} %`],
   ].map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join('');
   $('howText').textContent = `Wir haben Nachbarhäuser und Bäume aus dem 3D-Stadtmodell Berlin vermessen und den Ertrag für jede Stunde eines Jahres simuliert (${D.wetter}). ` +
     `Deinen Verbrauch rechnen wir Minute für Minute mit einem typischen Haushalt deiner Größe: Kühlschrank und Standby laufen immer, dazu Kaffee, Kochen, Wasch- und Spülmaschine, Licht und Fernsehen zu üblichen Zeiten – je nachdem, ob tagsüber jemand zu Hause ist. Ein Balkonkraftwerk deckt vor allem diese Grundlast und alles, was mittags läuft. Strom, den du gerade nicht brauchst, geht ohne Vergütung ins Netz` +
-    `${p.speicherKwh ? `, außer der Speicher nimmt ihn auf` : ''}. Preise sind Beispielpreise aus aktuellen Marktangeboten. Genauigkeit etwa ±15 %.`;
+    `${p.speicherKwh ? `, außer der Speicher nimmt ihn auf` : ''}. Preise sind Beispielpreise eines Shops. Das Ergebnis ist eine Schätzung – Wetter, Verbrauch und Montage können es deutlich verändern.`;
 }
 $('howBtn').addEventListener('click', () => $('how').showModal());
 $('howClose').addEventListener('click', () => $('how').close());
@@ -750,7 +786,26 @@ function sunState(s) {
 
 // ---------------------------------------------------------------- 3D
 const stage = $('stage');
-const renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
+// Ohne WebGL (alte Geräte, abgeschaltet): Zahlen und Wandansicht trotzdem zeigen, nur ohne 3D
+function webglDa() {
+  try { const c = document.createElement('canvas'); return !!(window.WebGLRenderingContext && (c.getContext('webgl2') || c.getContext('webgl'))); }
+  catch (e) { return false; }
+}
+function ohne3D() {
+  renderOpts();
+  const l = $('loading'); if (l) l.textContent = '';
+  for (const q of ['.sunbox', '#meter', '#look', '#korr']) { const e = document.querySelector(q); if (e) e.style.display = 'none'; }
+  wandAnsicht();
+  const fig = $('wandbild');
+  if (fig && !fig.hidden) fig.classList.add('gross');
+  else if (l) l.textContent = 'Die 3D-Ansicht ist auf diesem Gerät nicht verfügbar. Die Rechnung gilt trotzdem.';
+}
+let renderer;
+try {
+  if (!webglDa()) throw new Error('WebGL nicht verfügbar');
+  renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
+} catch (e) { ohne3D(); throw e; }
+DREI_OK = true;
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -1033,7 +1088,9 @@ async function loadFoto() {
   scene.add(fotoMesh);
 }
 // Wandansicht: dieselbe Ansicht wie beim Auswählen, Balkon und Module eingezeichnet
-if (D.wand_ansicht) {
+function wandAnsicht() {
+  if (!D.wand_ansicht || wandAnsicht.fertig) return;
+  wandAnsicht.fertig = true;
   const W = D.wand_ansicht, fig = $('wandbild'), svgW = $('wbSvg');
   $('wbImg').src = `${id}/${W.file}`;
   svgW.setAttribute('viewBox', `0 0 ${W.w} ${W.h}`);
@@ -1045,6 +1102,7 @@ if (D.wand_ansicht) {
   fig.hidden = false;
   fig.addEventListener('click', () => { fig.classList.toggle('gross'); $('wbHinweis').textContent = fig.classList.contains('gross') ? '· antippen zum Verkleinern' : '· antippen zum Vergrößern'; });
 }
+wandAnsicht();
 if (!D.szene) $('look').remove();
 else $('look').addEventListener('click', async e => {
   const btn = e.currentTarget, foto = btn.getAttribute('aria-pressed') !== 'true';
@@ -1119,7 +1177,7 @@ function setSun() {
   sunDot.setAttribute('visibility', vis ? 'visible' : 'hidden');
   if (vis) sunDot.setAttribute('transform', `translate(${sx(s.az)},${sy(s.el)})`);
   $('clock').textContent = `${Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, '0')} Uhr`;
-  $('sunText').innerHTML = `<b>${sunState(s)}</b><br>${nf(D.jahr.sonnenstunden)} Sonnenstunden im Jahr`;
+  $('sunText').innerHTML = `<b>${sunState(s)}</b><br>${nf(D.jahr.sonnenstunden)} Std. direkte Sonne bei klarem Himmel`;
   watt = leistungJetzt(s);
   const m = $('meter');
   m.classList.toggle('off', watt <= 5);

@@ -62,35 +62,74 @@ Für den Start reichen die JSON-Caches (`_cache/balkone_live.json`, `_cache/balk
 
 ## Beispiel-Konfiguration
 
-`/etc/caddy/Caddyfile`
+`/etc/caddy/Caddyfile` (geprüft mit Caddy 2.8: `_cache/`, versteckte Dateien und Hilfsdateien liefern 404)
 ```
+{
+    servers {
+        timeouts {
+            read_header 5s
+            read_body 10s
+            write 60s
+            idle 60s
+        }
+    }
+}
+
 balki-strom.example {
     encode zstd gzip
     root * /srv/balki/webapp
-    @versteckt path /_cache/* /.* 
-    respond @versteckt 404
-    basic_auth /intern.html {
-        team <bcrypt-hash von `caddy hash-password`>
+
+    # Reihenfolge ist wichtig: in Caddy laufen "handle"-Blöcke vor "respond".
+    # Deshalb die Sperre als eigener handle-Block VOR dem file_server.
+    @versteckt path /_cache /_cache/* /.* */.* *.command *.py *.csv /intern.html
+    handle @versteckt {
+        respond 404
     }
+
     handle /api/* {
+        request_body {
+            max_size 4KB
+        }
         reverse_proxy 127.0.0.1:8000 {
             header_up X-Forwarded-For {remote_host}
+            transport http {
+                response_header_timeout 120s
+            }
         }
     }
+
     handle {
-        file_server
+        file_server {
+            hide .* _* *.command *.py *.csv
+        }
     }
+
     header {
         Strict-Transport-Security "max-age=31536000"
         X-Content-Type-Options nosniff
+        X-Frame-Options DENY
         Referrer-Policy strict-origin-when-cross-origin
+        Permissions-Policy "geolocation=(), camera=(), microphone=()"
+        -Server
     }
+    header /angebot/* X-Robots-Tag noindex
+
     log {
-        output file /var/log/caddy/balki.log { roll_keep_for 168h }
-        format filter { request>remote_ip ip_mask 16 32 }
+        output file /var/log/caddy/balki.log {
+            roll_keep_for 168h
+        }
+        format filter {
+            request>remote_ip ip_mask 16 32
+        }
     }
 }
 ```
+
+Hinweise:
+- Die App immer mit `--hinter-proxy` starten (sonst teilen sich alle Nutzer ein Limit, weil jede Anfrage von 127.0.0.1 kommt).
+- Besser als Sperrregeln: nur die Dateien ins Webroot kopieren, die ausgeliefert werden sollen (`index.html`, `data.js`, Bilder, `angebot/`), und `intern.html` nicht auf den Server legen.
+- Caddy hat kein eingebautes Ratenlimit. Die App begrenzt selbst (je IPv4-Adresse bzw. IPv6-/64-Netz, gleichzeitige Verbindungen, Warteschlange der Rechnungen). Für mehr Schutz das Modul `caddy-ratelimit` einbauen.
+- Kein `.env` unter `/srv/balki` ablegen; der Key kommt nur über `EnvironmentFile`.
 
 `/etc/systemd/system/balki.service`
 ```
@@ -102,14 +141,26 @@ After=network.target
 User=balki
 WorkingDirectory=/srv/balki
 EnvironmentFile=/etc/balki/env
-ExecStart=/usr/bin/python3 server/app.py data/3858_58171_-002 webapp --port 8000 --hinter-proxy
+ExecStart=/srv/balki/.venv/bin/python server/app.py data/3858_58171_-002 webapp --port 8000 --hinter-proxy
 Restart=on-failure
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
 PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectProc=invisible
+LockPersonality=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+CapabilityBoundingSet=
+SystemCallFilter=@system-service
+UMask=0077
 ReadWritePaths=/srv/balki/webapp/angebot /srv/balki/webapp/_cache
 MemoryMax=3G
+TasksMax=256
+LimitNOFILE=1024
 
 [Install]
 WantedBy=multi-user.target
