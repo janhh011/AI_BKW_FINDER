@@ -4,13 +4,10 @@ Stand: 23.10.2026. Quelle: Review (Sicherheit, Architektur, Robustheit/Datenschu
 
 ## Vor dem öffentlichen Start
 
-- [ ] **Impressum und Datenschutzerklärung** (Hetzner/OVH und Anthropic als Auftragsverarbeiter nennen; Speicherung eingezeichneter Balkone und Klicks mit Löschfrist beschreiben, `server/app.py`-Docstring „keine personenbezogenen Daten“ korrigieren).
+- [ ] **Impressum und Datenschutzerklärung** (Hetzner/OVH und Anthropic als Auftragsverarbeiter nennen; Speicherung eingezeichneter Balkone mit Löschfrist beschreiben, `server/app.py`-Docstring „keine personenbezogenen Daten“ korrigieren).
 - [ ] **Schriften selbst hosten** (Sora, Figtree statt Google Fonts) – überträgt sonst IP-Adressen an Google.
-- [ ] **Produktbilder**: Shopify-Bilder sind ohne Lizenz eingebunden → Bilder/Feed aus dem Partnerprogramm oder eigene Illustrationen.
-- [ ] **Preise**: fest eingetragen („Stand 19.10.2026“) → Partner-Feed, Datum und Versandkosten sichtbar, verkaufenden Shop nennen.
-- [ ] **Werbekennzeichnung**: Partnerhinweis gut lesbar (Kontrast ≥ 4,5:1) und auch an den Produktlinks in den Karten; Auswahl nur eines Shops offenlegen.
-- [ ] **Garantie-Angaben** je Komponente prüfen (Wechselrichter fehlt teils, Speicher 10 Jahre).
-- [ ] **Mesh-Lizenz** (Berlin 3D) vor öffentlicher/kommerzieller Nutzung klären; bis dahin Mesh nur in der Demo.
+- [ ] **Richtpreise** regelmäßig prüfen (Stand Okt. 2026) oder als Spanne angeben.
+- [ ] **Mesh-Lizenz** (Berlin 3D) für die nicht-kommerzielle öffentliche Nutzung schriftlich bestätigen lassen (Anfrage läuft), Quellenangabe nach Vorgabe.
 - [ ] **Content-Security-Policy**: Inline-Skripte in Dateien auslagern, `onerror`/`onclick`-Attribute durch Listener ersetzen, dann CSP mit `connect-src 'self'`, `frame-ancestors 'none'`.
 - [ ] **Barrierefreiheit**: Hauswände per Tastatur wählbar, Fokus nach dem Neuzeichnen des Panels halten, Kontraste der Hinweistexte (`.hinweis` 2,5:1, `.fine` 4,4:1), Paket-Auswahl mit Pfeiltasten, Ladeoverlay mit Fokus.
 - [ ] Statischer Modus: früher sagen, dass der Server fehlt (nicht erst nach dem Einzeichnen).
@@ -32,7 +29,7 @@ Stand: 23.10.2026. Quelle: Review (Sicherheit, Architektur, Robustheit/Datenschu
 
 - [ ] **Stabile Hauswand-IDs** (Hash aus LoD2-Gebäude-ID, Ausrichtung, gerundeten Endpunkten) – heute ändern sich IDs bei jedem Pipeline-Lauf; Balkone, Angebote und Links zeigen dann auf falsche Wände. Balkone ebenfalls per Hash statt Listenindex.
 - [ ] **Angebote versionieren** (Modell- und Datenstand im Schlüssel), atomar schreiben (tmp-Ordner + rename).
-- [ ] **SQLite (WAL)** statt JSON-Caches: erkannte Balkone, eingezeichnete Balkone, Angebote, Klicks, Claude-Budget, später Anfragen; Migrationen über `PRAGMA user_version`.
+- [ ] **SQLite (WAL)** statt JSON-Caches: erkannte Balkone, eingezeichnete Balkone, Angebote, Claude-Budget; Migrationen über `PRAGMA user_version`.
 - [ ] **Kacheln + räumlicher Index**: 1-km²-Kacheln (float32, nach Zellen sortiert, `mmap`), je Angebot nur ±220 m laden statt der ganzen Punktwolke (heute ~650 MB je km², Innenstadt wäre ~17 GB RAM).
 - [ ] **Prozess-Pool** (begrenzte Warteschlange, gleiche Anfragen nur einmal rechnen) statt globaler Sperre.
 - [ ] **Statische Daten in Kacheln** (`walls.json` je Kachel statt einer `data.js`; Innenstadt wäre ~180 MB), unveränderliche URLs mit Release-Kennung, Cache-Header.
@@ -53,6 +50,10 @@ Stand: 23.10.2026. Quelle: Review (Sicherheit, Architektur, Robustheit/Datenschu
 
 - [ ] Startseite: Adresse auf Straßenkarte (basemap.de oder selbst gehostetes OSM), dann 3D-Ausschnitt nur um die Adresse.
 - [ ] Angebotsseite: fester Blickkorridor statt freier 360°-Drehung.
+
+## Erledigt (02.11.2026)
+
+- Nicht-kommerziell: Partnerlinks, Shop-Katalog, Produktbilder, Garantie-Badges, Klick-Zählung (`/api/klick`) und `partner.json` entfernt; neutrale Ausstattungen mit Richtpreisen; „Angebot“ heißt für Nutzer jetzt „Auswertung/Ergebnis“; nächste Schritte mit Vermieter-Zustimmung und Links zu Verbraucherzentrale und Marktstammdatenregister.
 
 ## Erledigt (23.10.2026)
 

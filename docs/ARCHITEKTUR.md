@@ -41,10 +41,10 @@ Die KI-Kosten sind dadurch nach oben begrenzt: höchstens einmal je Hauswand (ei
 
 ## Datenbank
 
-Für den Start reichen die JSON-Caches (`_cache/balkone_live.json`, `_cache/balkone_nutzer.json`) – schnell, einfach zu sichern. Sobald Anfragen (Leads) gespeichert werden oder mehr als ein Kiez dazukommt:
+Für den Start reichen die JSON-Caches (`_cache/balkone_live.json`, `_cache/balkone_nutzer.json`) – schnell, einfach zu sichern. Sobald mehr als ein Kiez dazukommt:
 
-- **PostgreSQL + PostGIS** (oder SQLite für einen Kiez): Tabellen `adressen` (für ganz Berlin ca. 400 000, mit Volltext- und Geo-Index), `fassaden`, `balkone` (Quelle: erkannt / selbst eingezeichnet), `angebote`, `anfragen`.
-- **Anfragen** (Name, E-Mail, Telefon) sind personenbezogen: eigene Tabelle, nur mit Einwilligung, Löschfrist (z. B. 6 Monate ohne Auftrag), Zugriff nur aus dem Backend. Alles andere (Wände, Balkone, Erträge) enthält keine Personendaten.
+- **PostgreSQL + PostGIS** (oder SQLite für einen Kiez): Tabellen `adressen` (für ganz Berlin ca. 400 000, mit Volltext- und Geo-Index), `fassaden`, `balkone` (Quelle: erkannt / selbst eingezeichnet), `angebote`.
+- Das Projekt speichert keine Kontaktdaten. Wände, Balkone und Erträge enthalten keine Personendaten; eingezeichnete Balkone sind an eine Adresse gebunden und werden in der Datenschutzerklärung mit Löschfrist beschrieben.
 
 ## SEO
 
@@ -168,7 +168,7 @@ WantedBy=multi-user.target
 
 ## Nächste Ausbaustufen
 
-1. Schriften lokal, Impressum/Datenschutz, Anfrageformular mit Einwilligung (statt nur Button).
+1. Schriften lokal, Impressum/Datenschutz.
 2. Adressen für ganz Berlin in die Datenbank, Suche über einen kleinen `/api/adresse?q=`-Endpunkt (dann nicht mehr als Datei im Browser).
 3. Pipeline für weitere Kacheln; der Rechner lädt die Kachel einer Wand bei Bedarf (LRU-Cache im Speicher).
 4. Bei mehr Last: `server/app.py` auf FastAPI + uvicorn umstellen (gleiche Endpunkte), Rechnung in einen Worker mit Warteschlange.

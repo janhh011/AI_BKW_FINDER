@@ -385,7 +385,6 @@ class App:
 # nur ASCII-Ziffern und fullmatch (sonst passen "١_0" oder ein angehängter Zeilenumbruch)
 BASIS = re.compile(r"([0-9]{1,6})_([0-9]{1,3}|u[0-9a-f]{10})")
 ANGEBOT_ID = re.compile(r"[0-9]{1,6}_([0-9]{1,3}|u[0-9a-f]{10})(_b[0-9a-f]{10})?")
-SET_ID = re.compile(r"[a-z0-9-]{1,40}")
 
 
 def handler_fuer(app, begrenzer, vertraue_proxy):
@@ -499,18 +498,6 @@ def handler_fuer(app, begrenzer, vertraue_proxy):
             except ValueError:
                 return self.fehler(400, "Ungültige Anfrage.")
             teile = pfad.strip("/").split("/")
-            if teile == ["api", "klick"]:
-                # Klick auf einen Partnerlink zählen (für den Abgleich der Provisionen). Keine personenbezogenen Daten.
-                if not begrenzer.erlaubt(self.ip(), "lesen"):
-                    return self.fehler(429, "Zu viele Anfragen.")
-                ang, st, pk = daten.get("angebot"), daten.get("set"), daten.get("paket")
-                if not (isinstance(ang, str) and ANGEBOT_ID.fullmatch(ang) and isinstance(st, str) and SET_ID.fullmatch(st)
-                        and pk in ("schnupper", "einfach", "optimiert", "smart")):
-                    return self.fehler(400, "Ungültige Anfrage.")
-                with app.datei_lock:
-                    with open(os.path.join(app.webapp, "_cache", "klicks.jsonl"), "a", encoding="utf-8") as fh:
-                        fh.write(json.dumps({"zeit": time.strftime("%Y-%m-%d %H:00"), "angebot": ang, "set": st, "paket": pk}) + "\n")
-                return self.json(200, {"ok": True})
             try:
                 if len(teile) == 4 and teile[:2] == ["api", "fassade"] and teile[2].isdigit() and teile[3] == "analyse":
                     fid = int(teile[2])

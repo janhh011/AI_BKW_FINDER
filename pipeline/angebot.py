@@ -862,7 +862,7 @@ class Rechner:
                 shutil.copyfile(p, dst)
             self.tex_names.append("tex/" + os.path.basename(p))
         here = os.path.dirname(os.path.abspath(__file__))
-        for src, dst in (("angebot.html", "index.html"), ("lastgang.js", "lastgang.js"), ("partner.json", "partner.json")):
+        for src, dst in (("angebot.html", "index.html"), ("lastgang.js", "lastgang.js")):
             if os.path.exists(os.path.join(here, src)):
                 shutil.copyfile(os.path.join(here, src), os.path.join(self.adir, dst))
         # three.js selbst ausliefern (kein CDN: Datenschutz, Werbeblocker, Ausfälle)

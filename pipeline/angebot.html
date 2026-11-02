@@ -118,15 +118,11 @@
   .opt .name { flex-wrap: wrap; row-gap: 3px; }
   .opt .name .titel { white-space: nowrap; }
   .opt .price small { white-space: nowrap; }
-  .opt .garantie { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; font-size: 12px; font-weight: 600; color: var(--spar-text);
-                   background: var(--spar-tint); border-radius: var(--r-tag); padding: 0 8px 0 6px; line-height: 20px; }
-  .opt .garantie svg { width: 11px; height: 13px; }
   .opt .tag { white-space: nowrap; font-size: 12px; font-weight: 600; color: var(--leaf); background: var(--leaf-soft); border-radius: 999px; padding: 1px 8px; }
   .opt .sub { font-size: 14px; color: var(--fern); grid-column: 2; }
   .opt .tech { grid-column: 2; font-size: 12.5px; color: #6B7A8F; }
   .opt .price { grid-row: 1 / span 3; grid-column: 3; text-align: right; font-size: 24px; font-weight: 600; letter-spacing: -.01em; line-height: 1.1; }
-  .opt .price .mwst0 { display: inline-block; vertical-align: middle; margin: -3px 7px 0 0; font-family: Figtree, sans-serif; font-size: 11px; font-weight: 700;
-                       letter-spacing: 0; color: var(--moss); background: var(--sonne-tint); border-radius: var(--r-tag); padding: 2px 6px; line-height: 1.3; }
+  .opt .price .ca { font-family: Figtree, sans-serif; font-size: 14px; font-weight: 600; color: var(--fern); letter-spacing: 0; }
   .opt .price small { display: block; font-family: Figtree, sans-serif; font-size: 13px; font-weight: 600; color: var(--spar-text); letter-spacing: 0; }
 
   .house { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; color: var(--fern); margin-bottom: 18px; }
@@ -136,8 +132,10 @@
   .step b { display: flex; align-items: center; gap: 8px; color: var(--moss); font-size: 15px; font-weight: 600; margin-bottom: 3px; }
   .step b span { width: 24px; height: 24px; flex: none; border-radius: 50%; background: var(--leaf-soft); color: var(--leaf); display: grid; place-items: center; font-size: 13px; }
   .cta { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
-  .partnerhinweis { font-size: 12px; color: #6B7A8F; max-width: 26em; line-height: 1.35; }
-  .partnerhinweis[hidden] { display: none; }
+  .unabh { font-size: 13px; color: #56657A; max-width: 26em; line-height: 1.35; }
+  a.btn { display: inline-block; text-decoration: none; }
+  .weiter { font-size: 15px; color: var(--fern); margin: 8px 0 0; }
+  .weiter a, .zeit a { color: inherit; }
   .btn { background: var(--leaf); color: #fff; border: 0; border-radius: var(--r-feld); padding: 14px 24px; font-weight: 600; font-size: 16px; cursor: pointer; }
   .btn:hover { background: #2259d6; }
   .link { background: none; border: 0; padding: 0; color: var(--fern); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; font-size: 14px; }
@@ -158,7 +156,6 @@
   .opt .bild { grid-row: 1 / span 3; width: 78px; height: 58px; border-radius: var(--r-feld); background: #F2F5FA; display: grid; place-items: center; }
   .opt .bild svg { width: 70px; height: 52px; }
   .opt .bild img { width: 100%; height: 100%; object-fit: contain; border-radius: var(--r-feld); background: #fff; }
-  .opt .produkt { color: var(--leaf); white-space: nowrap; font-size: 12.5px; }
   .opt[aria-checked="true"] .bild { background: #EAF0FE; }
   .opt .dot { display: none; }
   .opt .desc { grid-column: 2; font-size: 13.5px; color: var(--fern); line-height: 1.35; }
@@ -260,7 +257,7 @@
     .opt { grid-template-columns: 52px minmax(0, 1fr) !important; }
     .opt .bild { width: 52px; height: 44px; }
     .opt .price { grid-column: 2; grid-row: auto; text-align: left; font-size: 20px; }
-    .opt .name .titel, .opt .produkt { white-space: normal; }
+    .opt .name .titel { white-space: normal; }
     .sunbox svg { width: 104px; height: 46px; }
     .sunbox .t { font-size: 12.5px; min-width: 0; white-space: normal; }
     .chip { padding: 2px 9px; font-size: 12px; }
@@ -331,8 +328,8 @@
         <button class="chip" data-da="0">selten</button><button class="chip" data-da="0.4">teils</button><button class="chip" data-da="1">meist</button>
       </div>
       <div class="cta">
-        <button class="btn" id="order">Unverbindlich anfragen</button>
-        <span class="partnerhinweis" hidden>Partnerlink: Wir erhalten ggf. eine Provision – dein Preis ändert sich nicht.</span>
+        <a class="btn" href="#ablauf">So geht’s weiter</a>
+        <span class="unabh">Unabhängig und nicht kommerziell – wir verkaufen nichts und bekommen keine Provision.</span>
       </div>
       <div class="fine" id="fine"></div>
       <a class="teaser" href="#rechnung" aria-label="Zur Wirtschaftlichkeit nach unten scrollen">
@@ -370,19 +367,19 @@
   <div class="band-in">
     <h2>So einfach geht's</h2>
     <div class="bilanz">
-      <div><span class="zahl">≈ 1 Stunde</span><span>Dein Aufwand – insgesamt</span></div>
+      <div><span class="zahl">gut 1 Stunde</span><span>Dein Aufwand – insgesamt</span></div>
       <div class="gegen" aria-hidden="true">→</div>
       <div><span class="zahl"><span id="zehnJahre">–</span><sup class="stern">*</sup></span><span id="zehnJahreText">gespart in den nächsten 10 Jahren</span></div>
     </div>
-    <p class="sub2">Die meiste Zeit wartet der Paketbote. So läuft es ab:</p>
+    <p class="sub2">Die meiste Zeit wartest du auf die Lieferung. So läuft es ab:</p>
     <ol class="zeit">
-      <li><span class="dauer">3 Minuten</span><b>Bestellen</b>Ausstattung wählen und im Shop bestellen – vorher kurz prüfen, ob die Halterung zu deinem Geländer passt.</li>
-      <li><span class="dauer">2–5 Werktage</span><b>Lieferung</b>Alles kommt passend für dein Geländer bis an die Haustür.</li>
+      <li><span class="dauer">ca. 10 Minuten</span><b>Vermieter fragen</b>Als Mieter brauchst du die Zustimmung. Seit Oktober 2024 darf der Vermieter sie nur in Ausnahmefällen verweigern.</li>
+      <li><span class="dauer">ca. 15 Minuten</span><b>Set kaufen</b>Im Fachhandel, Baumarkt oder online – achte auf eine Halterung, die zu deinem Geländer passt.</li>
       <li><span class="dauer">ca. 45 Minuten</span><b>Montage</b>Halterung ans Geländer, Module einhängen, Stecker in die Steckdose.</li>
-      <li><span class="dauer">ca. 5 Minuten</span><b>Online anmelden</b>Kurzer Eintrag im Marktstammdatenregister – das ist Pflicht, aber einfach. Wir zeigen dir, wie.</li>
+      <li><span class="dauer">ca. 5 Minuten</span><b>Online anmelden</b>Kurzer Eintrag im <a href="https://www.marktstammdatenregister.de" target="_blank" rel="noopener">Marktstammdatenregister</a> – das ist Pflicht, aber einfach.</li>
       <li class="ziel"><span class="dauer">10+ Jahre</span><b>Sonnenstrom genießen</b>Ab jetzt läuft dein Zähler langsamer – jeden sonnigen Tag. Gute Module halten oft deutlich länger.</li>
     </ol>
-    <div class="cta"><button class="btn" id="order2">Unverbindlich anfragen</button><span class="partnerhinweis" hidden>Partnerlink: Wir erhalten ggf. eine Provision – dein Preis ändert sich nicht.</span></div>
+    <p class="weiter">Unabhängige Beratung: <a href="https://www.verbraucherzentrale-berlin.de" target="_blank" rel="noopener">Verbraucherzentrale Berlin</a> · Anmeldung: <a href="https://www.marktstammdatenregister.de" target="_blank" rel="noopener">Marktstammdatenregister</a></p>
     <p class="hinweis">* Geschätzt auf Basis unserer Modelle (3D-Stadtmodell, Wetter-Referenzjahr, minutengenaues Verbrauchsmodell eines typischen Haushalts). Die tatsächliche Ersparnis kann je nach Nutzung, Wetter, Strompreis und Montage abweichen. Zeitangaben sind Erfahrungswerte.</p>
   </div>
 </section>
@@ -407,29 +404,15 @@ const eur = x => nf(Math.round(x)) + ' €';
 const RAD = Math.PI / 180;
 const el = (tag, attrs = {}, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
 
-// ---------------------------------------------------------------- Produktkatalog (Probe: echte Sets eines Shops)
-// Stand 19.10.2026, Preise für Privatkunden inkl. 0 % MwSt. laut Shop; Halterung = Shop-Option "Gitterbalkon".
-// Bilder werden vom Shop geladen (für den Livebetrieb: Bilder/Feed aus dem Partnerprogramm verwenden).
-// Beschreibungen sind eigene Kurztexte. breite = Modulbreite quer am Geländer (m).
-// garantie: Jahre laut Produktseite (Module = Produktgarantie, wr = Wechselrichter, speicher = Speicher); fehlt = dort nicht angegeben.
-const SHOP = 'kleines kraftwerk';
+// ---------------------------------------------------------------- Ausstattungen (neutral, ohne Marken oder Shop)
+// Typische Sets, wie sie im Handel üblich sind. preis/halterung = Richtpreise (Stand Okt. 2026, 0 % MwSt.), keine Kaufempfehlung.
+// breite = Modulbreite quer am Geländer (m).
 const KATALOG = [
-  {id: 'kk-single-xl', typ: 'set', module: 1, wp: 500, breite: 1.96, bauart: 'bifaziales Glas-Glas-Modul (TOPCon)', wr: 'Hoymiles HiFlow 800 mit WLAN',
-   preis: 179, halterung: 59, titel: 'Single XL – 500 Wp', garantie: {module: 25},
-   url: 'https://kleineskraftwerk.de/products/single-xl-500wp-bifaziales-balkonkraftwerk-mit-800w-wechselrichter',
-   bild: 'https://cdn.shopify.com/s/files/1/0650/8884/8113/files/kleines_kraftwerk_Single_XL_-_500Wp_bifaziales_Balkonkraftwerk_HF_800_WB_OH.jpg?v=1780417641'},
-  {id: 'kk-duo-xl', typ: 'set', module: 2, wp: 500, breite: 1.96, bauart: 'bifaziale Glas-Glas-Module (TOPCon)', wr: 'Hoymiles HiFlow 800 mit WLAN',
-   preis: 269, halterung: 99, titel: 'Duo XL – 1000 Wp', garantie: {module: 25},
-   url: 'https://kleineskraftwerk.de/products/duo-xl-1000wp-bifaziales-balkonkraftwerk-hf-800-wb-wechselrichter',
-   bild: 'https://cdn.shopify.com/s/files/1/0650/8884/8113/files/kleines_kraftwerk_Duo_XL_-_1000Wp_bifaziales_Balkonkraftwerk_HF_800_WB_OH.jpg?v=1780417893'},
-  {id: 'kk-duo-bc', typ: 'set', module: 2, wp: 480, breite: 1.80, bauart: 'bifaziale Glas-Glas-Module (Back-Contact)', wr: 'Hoymiles HiFlow 800 Pro mit WLAN',
-   preis: 329, halterung: 99, titel: 'Duo (BC) – 960 Wp', garantie: {module: 30, wr: 12},
-   url: 'https://kleineskraftwerk.de/products/kleines-kraftwerk-duo-bc-960wp-bifaziales-balkonkraftwerk',
-   bild: 'https://cdn.shopify.com/s/files/1/0650/8884/8113/files/kleines_kraftwerk_Duo_BC_-_960Wp_bifaziales_Balkonkraftwerk_HMS-800-2WB_HiFlow_Pro_OH_544f6247-3b41-4a0a-80f8-2be53b06a391.jpg?v=1778516424'},
-  {id: 'kk-duo-xl-speicher', typ: 'speicher', module: 2, wp: 500, breite: 1.96, bauart: 'bifaziale Glas-Glas-Module (TOPCon)', kwh: 2.7,
-   wr: 'Anker SOLIX Solarbank 3 Pro mit App und Smart Meter', preis: 1189, halterung: 99, titel: 'Duo XL mit Speicher (Solarbank 3 Pro)', garantie: {module: 25, speicher: 10},
-   url: 'https://kleineskraftwerk.de/products/kleines-kraftwerk-duo-xl-1000wp-balkonkraftwerk-mit-speicher-solarbank-3-pro',
-   bild: 'https://cdn.shopify.com/s/files/1/0650/8884/8113/files/kleineskraftwerkDuoXL-1000WpBalkonkraftwerkmitSpeicherAnkerSOLIXSolarbank3Pro_OH_cd023f0d-a65b-4967-8cfe-7f6e9d019f4a.jpg?v=1792049588'},
+  {id: 'set-1x500', typ: 'set', module: 1, wp: 500, breite: 1.96, bauart: 'bifaziales Glas-Glas-Modul', wr: '800-W-Wechselrichter', preis: 179, halterung: 59, titel: '1 Modul, 500 Wp'},
+  {id: 'set-2x500', typ: 'set', module: 2, wp: 500, breite: 1.96, bauart: 'bifaziale Glas-Glas-Module', wr: '800-W-Wechselrichter', preis: 269, halterung: 99, titel: '2 Module, 1000 Wp'},
+  {id: 'set-2x480', typ: 'set', module: 2, wp: 480, breite: 1.80, bauart: 'bifaziale Glas-Glas-Module', wr: '800-W-Wechselrichter', preis: 329, halterung: 99, titel: '2 Module, 960 Wp'},
+  {id: 'set-2x500-speicher', typ: 'speicher', module: 2, wp: 500, breite: 1.96, bauart: 'bifaziale Glas-Glas-Module', kwh: 2.7,
+   wr: 'mit Smart Meter', preis: 1189, halterung: 99, titel: '2 Module mit Speicher'},
 ];
 const MWST = 0.19, STROM_PLUS = 0.02, DEGRADATION = 0.005, ETF = 0.07, JAHRE = 20;
 const SPEICHER_STANDBY_W = 6, SPEICHER_ETA = 0.92;
@@ -440,7 +423,7 @@ const id = new URLSearchParams(location.search).get('id') || (LIST[0] && LIST[0]
 // Nur eigene Angebots-IDs laden (sonst könnte ein Link fremde Zahlen unter unserer Domain anzeigen)
 const ID_MUSTER = /^[0-9]{1,6}_([0-9]{1,3}|u[0-9a-f]{10})(_b[0-9a-f]{10})?$/;
 function abbruch(text) {
-  $('headline').textContent = 'Dieses Angebot können wir gerade nicht anzeigen.';
+  $('headline').textContent = 'Diese Auswertung können wir gerade nicht anzeigen.';
   $('lead').innerHTML = `${text} <a href="../">Zurück zur Karte</a>`;
   for (const x of ['opts', 'loading']) { const e = $(x); if (e) e.textContent = ''; }
   for (const sel of ['.house', '.cta', '.teaser', '#rechnung', '#ablauf', '.sunbox', '#meter', '#look', '#korr']) {
@@ -450,7 +433,7 @@ function abbruch(text) {
 }
 if (!id || !ID_MUSTER.test(id)) abbruch('Der Link ist unvollständig oder ungültig.');
 const D = await fetch(`${id}/daten.json`).then(r => (r.ok ? r.json() : null)).catch(() => null);
-if (!D || !Array.isArray(D.stunde_wh) || !D.jahr || !D.vorschlag || !D.horizont) abbruch('Das Angebot wurde nicht gefunden oder ist veraltet.');
+if (!D || !Array.isArray(D.stunde_wh) || !D.jahr || !D.vorschlag || !D.horizont) abbruch('Die Auswertung wurde nicht gefunden oder ist veraltet.');
 const N = D.stunde_wh.length;
 const VARS = (D.varianten && D.varianten.length ? D.varianten : [{n: D.vorschlag.n, wp: D.vorschlag.wp, kwh: D.jahr.kwh, kwh_frei: D.jahr.kwh_frei, module: D.module, stunde_wh: D.stunde_wh}])
   .map(v => ({...v, pv: Float64Array.from(v.stunde_wh), neigung: 0}));
@@ -580,18 +563,6 @@ if (NORD || guete < 0.3) {
 }
 const jahreText = j => j > JAHRE ? `über ${JAHRE} Jahren` : `${nf(Math.round(j * 2) / 2, 1).replace(',0', '')} Jahren`;
 
-// Garantie als starkes Kaufargument: Badge an jeder Karte, ausführlich beim gewählten Paket
-function garantieBadge(p) {
-  const g = p.set.garantie; if (!g || !g.module) return '';
-  return `<span class="garantie" title="${garantieText(p).replace(/<[^>]+>/g, '')}"><svg viewBox="0 0 12 14" aria-hidden="true"><path d="M6 .8 11 2.6v4.1c0 3-2.1 5.4-5 6.5C3.1 12.1 1 9.7 1 6.7V2.6z" fill="currentColor"/><path d="M3.8 7 5.4 8.6 8.4 5.4" fill="none" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>${g.module} J. Garantie auf Module</span>`;
-}
-function garantieText(p) {
-  const g = p.set.garantie; if (!g) return '';
-  const t = [`${g.module} Jahre auf die Module`];
-  if (g.wr) t.push(`${g.wr} Jahre auf den Wechselrichter`);
-  if (g.speicher) t.push(`${g.speicher} Jahre auf den Speicher`);
-  return `<b>Garantie:</b> ${t.join(', ')} (laut Hersteller).`;
-}
 function renderOpts() {
   if (KEIN_SET) return renderKeinSet();
   rechne();
@@ -600,18 +571,18 @@ function renderOpts() {
   for (const p of PAKETE) {
     const b = document.createElement('button');
     b.className = 'opt'; b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', p === sel);
-    b.innerHTML = `<span class="bild">${p.set.bild ? `<img src="${p.set.bild}" alt="${SHOP} ${p.set.titel}" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(document.createRange().createContextualFragment(this.dataset.alt))" data-alt='${produktBild(p)}'>` : produktBild(p)}</span>
-      <span class="name"><span class="titel">${p.name}</span>${garantieBadge(p)}${p.empfehlung ? '<span class="tag">lohnt sich am meisten</span>' : ''}</span>
-      <span class="price"><span class="mwst0" title="Seit 2023 fällt auf Balkonkraftwerke keine Mehrwertsteuer an. Der Preis ist der Endpreis laut Shop.">0 % MwSt.</span>${eur(p.preis)}<small>spart ${eur(p.spart)} im Jahr</small><small class="mwst">rechnet sich nach ${jahreText(p.jahre)}</small></span>
-      <span class="desc">${p.desc} ${garantieText(p)} <a class="produkt" href="${p.set.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${SHOP} ${p.set.titel} ↗</a></span>
+    b.innerHTML = `<span class="bild">${produktBild(p)}</span>
+      <span class="name"><span class="titel">${p.name}</span>${p.empfehlung ? '<span class="tag">lohnt sich am meisten</span>' : ''}</span>
+      <span class="price"><span class="ca" title="Richtpreis für ein typisches Set dieser Art (Stand Okt. 2026), keine Kaufempfehlung">ca.</span> ${eur(p.preis)}<small>spart ${eur(p.spart)} im Jahr</small><small class="mwst">rechnet sich nach ${jahreText(p.jahre)}</small></span>
+      <span class="desc">${p.desc}</span>
       <span class="tech">${nf(p.v.wp)} Watt · ca. ${nf(Math.round(p.v.kwh / 10) * 10)} kWh Strom im Jahr</span>`;
     b.addEventListener('click', () => { sel = p; renderOpts(); if (DREI_OK) { placeModules(); setSun(); } });
     box.appendChild(b);
   }
   $('headline').textContent = `Dein Balkon spart ${eur(sel.spart)} Strom im Jahr.`;
-  $('fine').textContent = `Alle Werte sind Schätzungen auf Basis unserer Modelle und können je nach Nutzung, Wetter und Strompreis abweichen. Beispielpreise laut Shop (Stand 19.10.2026), Versandkosten siehe Shop; gerechnet mit ${nf(preis * 100, 1)} ct/kWh Arbeitspreis (ohne Grundgebühr), ${nf(verbrauch)} kWh Jahresverbrauch und ${({0: 'tagsüber meist niemand', 0.4: 'tagsüber teilweise jemand', 1: 'tagsüber meist jemand'})[zuhause]} zu Hause. Prüfe vor dem Kauf, ob die Halterung zu deinem Geländer passt.`;
+  $('fine').textContent = `Alle Werte sind Schätzungen auf Basis unserer Modelle und können je nach Nutzung, Wetter und Strompreis abweichen. Preise sind Richtwerte für typische Sets (Stand Okt. 2026), keine Empfehlung für ein bestimmtes Produkt; gerechnet mit ${nf(preis * 100, 1)} ct/kWh Arbeitspreis (ohne Grundgebühr), ${nf(verbrauch)} kWh Jahresverbrauch und ${({0: 'tagsüber meist niemand', 0.4: 'tagsüber teilweise jemand', 1: 'tagsüber meist jemand'})[zuhause]} zu Hause. Prüfe vor dem Kauf, ob die Halterung zu deinem Geländer passt.`;
   for (const c of document.querySelectorAll('.house .chip')) c.setAttribute('aria-pressed', c.dataset.da != null ? +c.dataset.da === zuhause : +c.dataset.kwh === verbrauch);
-  renderEco(); renderHow(); renderTabs(); if (typeof renderBestellen === 'function') renderBestellen();
+  renderEco(); renderHow(); renderTabs();
   const r = sel.rendite;
   $('spoiler').textContent = r > ETF ? '(Spoiler: ja.)' : (r > 0.02 ? '(Spoiler: auf Dauer ja.)' : '(Spoiler: knapp.)');
   $('zehnJahre').textContent = eur(sel.kum[10] + sel.preis);
@@ -691,43 +662,11 @@ function renderHow() {
   ].map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join('');
   $('howText').textContent = `Wir haben Nachbarhäuser und Bäume aus dem 3D-Stadtmodell Berlin vermessen und den Ertrag für jede Stunde eines Jahres simuliert (${D.wetter}). ` +
     `Deinen Verbrauch rechnen wir Minute für Minute mit einem typischen Haushalt deiner Größe: Kühlschrank und Standby laufen immer, dazu Kaffee, Kochen, Wasch- und Spülmaschine, Licht und Fernsehen zu üblichen Zeiten – je nachdem, ob tagsüber jemand zu Hause ist. Ein Balkonkraftwerk deckt vor allem diese Grundlast und alles, was mittags läuft. Strom, den du gerade nicht brauchst, geht ohne Vergütung ins Netz` +
-    `${p.speicherKwh ? `, außer der Speicher nimmt ihn auf` : ''}. Preise sind Beispielpreise eines Shops. Das Ergebnis ist eine Schätzung – Wetter, Verbrauch und Montage können es deutlich verändern.`;
+    `${p.speicherKwh ? `, außer der Speicher nimmt ihn auf` : ''}. Preise sind Richtwerte für typische Sets. Das Ergebnis ist eine Schätzung – Wetter, Verbrauch und Montage können es deutlich verändern.`;
 }
 $('howBtn').addEventListener('click', () => $('how').showModal());
 $('howClose').addEventListener('click', () => $('how').close());
 $('preis').addEventListener('input', e => { preis = (+e.target.value || 37) / 100; renderOpts(); });
-// ---------------------------------------------------------------- Bestellen: Partnerlink (Provision) oder unverbindliche Anfrage
-// Links stehen in partner.json (je Set); ohne Link sammelt der Knopf nur eine Anfrage.
-const PARTNER = await fetch('partner.json').then(r => r.ok ? r.json() : null).catch(() => null);
-function partnerLink(p) {
-  const roh = (PARTNER && ((PARTNER.sets || {})[p.set.id] || PARTNER.standard)) || p.set.url;
-  if (!roh || !/^https:\/\//.test(roh)) return null;
-  const subid = `${D.id}-${p.set.id}`;
-  return roh.replaceAll('{subid}', encodeURIComponent(subid)).replaceAll('{angebot}', encodeURIComponent(D.id)).replaceAll('{set}', encodeURIComponent(p.set.id));
-}
-let angefragt = false;
-function renderBestellen() {
-  const link = partnerLink(sel);
-  for (const x of ['order', 'order2']) {
-    if (angefragt && !link) continue;
-    $(x).textContent = link ? `Zum Angebot bei ${(PARTNER && PARTNER.partner) || SHOP}` : 'Unverbindlich anfragen';
-    $(x).disabled = false;
-  }
-  const provision = !!(PARTNER && ((PARTNER.sets || {})[sel.set.id] || PARTNER.standard));
-  for (const x of document.querySelectorAll('.partnerhinweis')) x.hidden = !provision;
-}
-for (const bId of ['order', 'order2']) $(bId).addEventListener('click', () => {
-  const link = partnerLink(sel);
-  if (link) {
-    const daten = JSON.stringify({angebot: D.id, set: sel.set.id, paket: sel.key});
-    try { navigator.sendBeacon('../api/klick', new Blob([daten], {type: 'application/json'})); } catch (e) { /* Zählung ist optional */ }
-    window.open(link, '_blank', 'noopener');
-    return;
-  }
-  angefragt = true;
-  for (const x of ['order', 'order2']) { $(x).textContent = 'Danke – wir melden uns'; $(x).disabled = true; }
-});
-
 // ---------------------------------------------------------------- Zeit und Sonne
 const Y = D.jahr_basis;
 const DST_A = Date.UTC(Y, 2, 31 - ((5 * Y / 4 + 4) | 0) % 7, 1), DST_B = Date.UTC(Y, 9, 31 - ((5 * Y / 4 + 1) | 0) % 7, 1);
