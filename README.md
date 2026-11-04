@@ -1,3 +1,13 @@
+> [!IMPORTANT]
+> **Hinweis: Neuere Version verfügbar (`balki_strom`)**
+> 
+> Dieses Repository dokumentiert die erste Entwicklungsstufe mit **KI-gestützter Fassaden- und Balkonerkennung über die Claude API (Anthropic)** sowie den Vergleich zwischen 3D-Mesh und offenen LoD2-Geodaten.
+> 
+> Die **aktuelle, nicht-kommerzielle und datensparsame Version** (direkte Auswahl im fototexturierten 3D-Stadtmodell, komplett ohne externe API-Abhängigkeiten und unter GNU AGPL-3.0) wird hier aktiv weiterentwickelt:  
+> 👉 **[github.com/janhh011/balki_strom](https://github.com/janhh011/balki_strom)**
+
+---
+
 # Balki-Strom
 
 Ein kostenloser, nicht-kommerzieller Sonnen-Check für Berliner Balkone: Adresse eingeben, Balkon wählen und sehen, ob sich dort ein Balkonkraftwerk lohnt – berechnet aus dem 3D-Stadtmodell von Berlin, mit Verschattung durch Nachbarhäuser und Bäume über das ganze Jahr.
