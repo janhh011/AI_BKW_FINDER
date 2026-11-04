@@ -72,7 +72,7 @@ data/
     mesh/               weitere Mesh-Kacheln
 ```
 
-Hosting, Sicherheit und Datenschutz: [docs/ARCHITEKTUR.md](docs/ARCHITEKTUR.md) · Offene Punkte: [docs/BACKLOG.md](docs/BACKLOG.md)
+Hosting, Sicherheit und Datenschutz: [docs/ARCHITEKTUR.md](docs/ARCHITEKTUR.md) · Offene Punkte: [docs/BACKLOG.md](docs/BACKLOG.md) · Styleguide: [docs/STYLEGUIDE.md](docs/STYLEGUIDE.md) ([PDF](docs/STYLEGUIDE_Solar-Blue.pdf))
 
 ## Daten und Lizenzen
 
